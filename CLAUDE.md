@@ -28,6 +28,7 @@ This is a **Next.js 15 ecommerce application** using the App Router architecture
 - **Order**: Order management with items, addresses, payment status
 - **Category**: Hierarchical category structure with parent/child relationships
 - **CartItem**: User shopping cart with product associations
+- **NotificationSettings**: User preferences for email notifications
 
 ### Frontend Stack
 - **Next.js App Router**: File-based routing with server components
@@ -45,15 +46,37 @@ This is a **Next.js 15 ecommerce application** using the App Router architecture
 ## API Endpoints Structure
 
 - `/api/auth/[...nextauth]` - NextAuth authentication endpoints
-- `/api/register` - User registration
+- `/api/register` - User registration (sends welcome email)
 - `/api/products` - Product CRUD with filtering and pagination
 - `/api/categories` - Category management
 - `/api/cart` - Shopping cart operations (requires authentication)
 - `/api/orders` - Order management (requires authentication)
+- `/api/payments` - Stripe payment processing with email notifications
+- `/api/admin` - Admin panel endpoints (requires ADMIN role)
+- `/api/wishlist` - User wishlist management
+- `/api/notifications` - Email notification system and testing
+- `/api/user/notification-settings` - User notification preferences
+
+## Email Notification System
+
+- **Service**: Resend for email delivery with React Email templates
+- **Templates**: Welcome, order confirmation, order shipped, password reset, stock alerts
+- **Configuration**: `RESEND_API_KEY` and `FROM_EMAIL` in `.env`
+- **User Preferences**: Individual users can control notification types
+- **Automatic Triggers**: Registration welcome, order confirmation, payment success
+
+### Notification Types
+- `WELCOME` - New user registration
+- `ORDER_CONFIRMATION` - Order payment confirmed
+- `ORDER_SHIPPED` - Order dispatched
+- `PASSWORD_RESET` - Password reset request
+- `STOCK_ALERT` - Product back in stock
+- `PROMOTION` - Marketing emails
+- `ACCOUNT_UPDATE` - Account changes
 
 ## Development Notes
 
 - **Package Manager**: Project uses pnpm (not npm)
 - **Database Migrations**: Run `npx prisma migrate dev` after schema changes
-- **Environment**: Configure `.env` with database and NextAuth variables
+- **Environment**: Configure `.env` with database, NextAuth, Stripe, and email variables
 - **Path Aliases**: `@/*` maps to project root for clean imports

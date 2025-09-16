@@ -59,12 +59,16 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  cartItems     CartItem[]
-  reviews       Review[]
-  addresses     Address[]
+  accounts             Account[]
+  sessions             Session[]
+  orders               Order[]
+  cartItems            CartItem[]
+  reviews              Review[]
+  addresses            Address[]
+  inventoryLogs        InventoryLog[]
+  adminActivities      AdminActivity[]
+  wishlistItems        WishlistItem[]
+  notificationSettings NotificationSettings?
 }
 
 model Category {
@@ -100,11 +104,13 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  images      ProductImage[]
-  variants    ProductVariant[]
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  reviews     Review[]
+  images        ProductImage[]
+  variants      ProductVariant[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+  inventoryLogs InventoryLog[]
+  wishlistItems WishlistItem[]
 }
 
 model ProductImage {
@@ -165,11 +171,14 @@ model Order {
   userId            String
   shippingAddressId String
   billingAddressId  String
+  discountId        String?
 
   user            User      @relation(fields: [userId], references: [id])
   shippingAddress Address   @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   billingAddress  Address   @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  discount        Discount? @relation(fields: [discountId], references: [id])
   items           OrderItem[]
+  payments        Payment[]
 }
 
 model OrderItem {
@@ -185,7 +194,8 @@ model OrderItem {
 }
 
 model Address {
-  id           String  @id @default(cuid())
+  id           String      @id @default(cuid())
+  type         AddressType @default(SHIPPING)
   firstName    String
   lastName     String
   company      String?
@@ -196,15 +206,18 @@ model Address {
   postalCode   String
   country      String
   phone        String?
-  isDefault    Boolean @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  vatNumber    String?     // NIF/VAT number for billing addresses
+  isDefault    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   shippingOrders Order[] @relation("ShippingAddress")
   billingOrders  Order[] @relation("BillingAddress")
+
+  @@index([userId, type, isDefault])
 }
 
 model Review {
@@ -251,4 +264,110 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("eur")
+  status          PaymentStatus @default(PENDING)
+  stripePaymentId String?       @unique
+  paymentMethod   String?
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+}
+
+model Discount {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  type        DiscountType
+  value       Decimal     @db.Decimal(10, 2)
+  minAmount   Decimal?    @db.Decimal(10, 2)
+  maxAmount   Decimal?    @db.Decimal(10, 2)
+  maxUses     Int?
+  usedCount   Int         @default(0)
+  validFrom   DateTime    @default(now())
+  validUntil  DateTime?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  orders Order[]
+}
+
+model InventoryLog {
+  id        String            @id @default(cuid())
+  type      InventoryLogType
+  quantity  Int
+  reason    String?
+  createdAt DateTime          @default(now())
+
+  productId String
+  userId    String?
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+}
+
+model AdminActivity {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String
+  entityId    String?
+  oldValues   Json?
+  newValues   Json?
+  description String?
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  productId String
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum InventoryLogType {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  RETURN
+}
+
+model NotificationSettings {
+  id                     String   @id @default(cuid())
+  emailNotifications     Boolean  @default(true)
+  orderConfirmations     Boolean  @default(true)
+  orderUpdates           Boolean  @default(true)
+  stockAlerts            Boolean  @default(false)
+  promotionalEmails      Boolean  @default(false)
+  accountUpdates         Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
 }
