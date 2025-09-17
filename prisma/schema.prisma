@@ -69,6 +69,10 @@ model User {
   adminActivities      AdminActivity[]
   wishlistItems        WishlistItem[]
   notificationSettings NotificationSettings?
+
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
 }
 
 model Category {
@@ -111,6 +115,11 @@ model Product {
   reviews       Review[]
   inventoryLogs InventoryLog[]
   wishlistItems WishlistItem[]
+
+  @@index([categoryId, status])
+  @@index([status, featured])
+  @@index([name])
+  @@index([createdAt])
 }
 
 model ProductImage {
@@ -179,6 +188,11 @@ model Order {
   discount        Discount? @relation(fields: [discountId], references: [id])
   items           OrderItem[]
   payments        Payment[]
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+  @@index([paymentStatus])
+  @@index([createdAt])
 }
 
 model OrderItem {

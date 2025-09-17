@@ -1,0 +1,214 @@
+paths:
+  /api/health:
+    get:
+      summary: Comprehensive health check
+      description: |
+        Performs comprehensive health checks including database connectivity,
+        Redis cache status, and memory usage. Used for monitoring and alerting.
+      tags:
+        - Health
+      responses:
+        '200':
+          description: System is healthy or degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+              examples:
+                healthy:
+                  summary: All systems healthy
+                  value:
+                    status: healthy
+                    timestamp: "2024-01-01T00:00:00.000Z"
+                    uptime: 3600
+                    version: "1.0.0"
+                    environment: "production"
+                    checks:
+                      database:
+                        status: healthy
+                        responseTime: 15
+                      redis:
+                        status: healthy
+                        responseTime: 5
+                      memory:
+                        status: healthy
+                        usage:
+                          used: 256
+                          total: 1024
+                          percentage: 25.0
+                degraded:
+                  summary: Some systems degraded
+                  value:
+                    status: degraded
+                    timestamp: "2024-01-01T00:00:00.000Z"
+                    uptime: 3600
+                    version: "1.0.0"
+                    environment: "production"
+                    checks:
+                      database:
+                        status: healthy
+                        responseTime: 15
+                      redis:
+                        status: unhealthy
+                        responseTime: 1000
+                        error: "Connection timeout"
+                      memory:
+                        status: healthy
+                        usage:
+                          used: 256
+                          total: 1024
+                          percentage: 25.0
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+              example:
+                status: unhealthy
+                timestamp: "2024-01-01T00:00:00.000Z"
+                uptime: 3600
+                version: "1.0.0"
+                environment: "production"
+                checks:
+                  database:
+                    status: unhealthy
+                    responseTime: 5000
+                    error: "Connection refused"
+                  redis:
+                    status: unhealthy
+                    responseTime: 1000
+                    error: "Connection timeout"
+                  memory:
+                    status: healthy
+                    usage:
+                      used: 256
+                      total: 1024
+                      percentage: 25.0
+
+  /api/ready:
+    get:
+      summary: Readiness probe
+      description: |
+        Kubernetes/Docker readiness probe. Checks if the application is ready
+        to serve traffic by validating critical dependencies and configuration.
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Application is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ready]
+                  timestamp:
+                    type: string
+                    format: date-time
+              example:
+                status: ready
+                timestamp: "2024-01-01T00:00:00.000Z"
+        '503':
+          description: Application is not ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [not_ready]
+                  error:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+              example:
+                status: not_ready
+                error: "Missing required environment variables: DATABASE_URL"
+                timestamp: "2024-01-01T00:00:00.000Z"
+
+  /api/metrics:
+    get:
+      summary: System metrics (Admin only)
+      description: |
+        Detailed system and business metrics for monitoring and analytics.
+        Requires ADMIN role authentication.
+      tags:
+        - Health
+        - Admin
+      security:
+        - SessionAuth: []
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: number
+                    description: Process uptime in seconds
+                  memory:
+                    type: object
+                    properties:
+                      used:
+                        type: number
+                        description: Used memory in MB
+                      total:
+                        type: number
+                        description: Total memory in MB
+                      percentage:
+                        type: number
+                        description: Memory usage percentage
+                  process:
+                    type: object
+                    properties:
+                      pid:
+                        type: number
+                      ppid:
+                        type: number
+                      platform:
+                        type: string
+                      version:
+                        type: string
+                  business:
+                    type: object
+                    properties:
+                      totalUsers:
+                        type: number
+                      totalProducts:
+                        type: number
+                      totalOrders:
+                        type: number
+                      totalRevenue:
+                        type: number
+                      ordersToday:
+                        type: number
+                      revenueToday:
+                        type: number
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/admin-auth"
+import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
+import { alertManager } from "@/lib/alerts"
+import { log } from "@/lib/logger"
 
 async function handler(request: NextRequest, context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
     const period = searchParams.get("period") ?? "30" // days
+
+    // Try cache first
+    const cacheKey = `admin:dashboard:${period}`
+    const cachedData = await cache.get(cacheKey)
+    if (cachedData) {
+      return NextResponse.json(cachedData)
+    }
 
     const periodDays = parseInt(period)
     const startDate = new Date()
@@ -107,7 +117,19 @@ async function handler(request: NextRequest, context: { user: any }) {
       }
     })
 
-    return NextResponse.json({
+    // Get active alerts
+    const activeAlerts = await alertManager.getActiveAlerts()
+    const criticalAlerts = activeAlerts.filter(alert => alert.severity === 'critical')
+
+    // Memory usage
+    const memUsage = process.memoryUsage()
+    const memoryUsage = {
+      used: Math.round(memUsage.heapUsed / 1024 / 1024),
+      total: Math.round(memUsage.heapTotal / 1024 / 1024),
+      percentage: Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100)
+    }
+
+    const dashboardData = {
       period: periodDays,
       stats: {
         totalOrders,
@@ -118,9 +140,40 @@ async function handler(request: NextRequest, context: { user: any }) {
       recentOrders,
       topProducts: topProductsWithDetails,
       revenueByDay,
+      alerts: {
+        active: activeAlerts.length,
+        critical: criticalAlerts.length,
+        recent: activeAlerts.slice(0, 5).map(alert => ({
+          id: alert.id,
+          name: alert.name,
+          severity: alert.severity,
+          triggeredAt: alert.triggeredAt,
+          description: alert.description
+        }))
+      },
+      system: {
+        uptime: process.uptime(),
+        memory: memoryUsage,
+        environment: process.env.NODE_ENV || 'development'
+      },
+      timestamp: new Date().toISOString()
+    }
+
+    // Cache for 2 minutes
+    await cache.set(cacheKey, dashboardData, CacheTTL.SHORT * 2)
+
+    log.info('Admin dashboard data collected', {
+      adminUserId: context.user.id,
+      period: periodDays,
+      activeAlerts: activeAlerts.length
     })
+
+    return NextResponse.json(dashboardData)
   } catch (error) {
-    console.error("Error fetching dashboard data:", error)
+    log.error('Failed to fetch dashboard data', {
+      error: error instanceof Error ? error : String(error),
+      adminUserId: context.user?.id
+    })
     return NextResponse.json(
       { error: "Failed to fetch dashboard data" },
       { status: 500 }

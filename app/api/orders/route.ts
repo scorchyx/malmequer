@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getCurrentUser } from "@/lib/auth"
+import { validateRequestBody, createOrderSchema, validateQueryParams, paginationSchema } from "@/lib/validation"
+import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
+import { log } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,9 +16,25 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") ?? "1")
-    const limit = parseInt(searchParams.get("limit") ?? "10")
+
+    // Validate query parameters
+    const validation = validateQueryParams(paginationSchema, searchParams)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: validation.errors },
+        { status: 400 }
+      )
+    }
+
+    const { page = 1, limit = 10 } = validation.data
     const skip = (page - 1) * limit
+
+    // Try cache first
+    const cacheKey = CacheKeys.userOrders(user.id, page)
+    const cachedOrders = await cache.get(cacheKey)
+    if (cachedOrders) {
+      return NextResponse.json(cachedOrders)
+    }
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
@@ -38,7 +57,7 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where: { userId: user.id } }),
     ])
 
-    return NextResponse.json({
+    const result = {
       orders,
       pagination: {
         page,
@@ -46,9 +65,24 @@ export async function GET(request: NextRequest) {
         total,
         pages: Math.ceil(total / limit),
       },
+    }
+
+    // Cache for 2 minutes
+    await cache.set(cacheKey, result, CacheTTL.SHORT * 2)
+
+    log.info('Orders fetched successfully', {
+      userId: user.id,
+      count: orders.length,
+      page,
+      type: 'api_request'
     })
+
+    return NextResponse.json(result)
   } catch (error) {
-    console.error("Error fetching orders:", error)
+    log.error('Failed to fetch orders', {
+      error: error instanceof Error ? error : String(error),
+      userId: user?.id
+    })
     return NextResponse.json(
       { error: "Failed to fetch orders" },
       { status: 500 }
@@ -129,9 +163,24 @@ export async function POST(request: NextRequest) {
       where: { userId: user.id },
     })
 
+    // Invalidate user orders cache
+    await cache.invalidatePattern(`orders:user:${user.id}:*`)
+    await cache.del(CacheKeys.userCart(user.id))
+
+    log.businessEvent('Order created successfully', {
+      event: 'order_creation',
+      userId: user.id,
+      entityType: 'order',
+      entityId: order.id,
+      details: { orderNumber, totalAmount }
+    })
+
     return NextResponse.json(order, { status: 201 })
   } catch (error) {
-    console.error("Error creating order:", error)
+    log.error('Failed to create order', {
+      error: error instanceof Error ? error : String(error),
+      userId: user?.id
+    })
     return NextResponse.json(
       { error: "Failed to create order" },
       { status: 500 }

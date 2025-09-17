@@ -7,6 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm dev` - Start development server with Turbopack (project uses pnpm)
 - `pnpm build` - Build production application with Turbopack
 - `pnpm start` - Start production server
+- `pnpm test` - Run test suite with Jest
+- `pnpm test:watch` - Run tests in watch mode
+- `pnpm test:coverage` - Run tests with coverage report
+- `pnpm lint` - Run ESLint checks
+- `pnpm type-check` - Run TypeScript type checking
 - `npx prisma generate` - Generate Prisma client after schema changes
 - `npx prisma migrate dev` - Create and apply database migrations
 - `npx prisma studio` - Open Prisma Studio for database visualization
@@ -74,9 +79,39 @@ This is a **Next.js 15 ecommerce application** using the App Router architecture
 - `PROMOTION` - Marketing emails
 - `ACCOUNT_UPDATE` - Account changes
 
+## Security & Infrastructure
+
+### Security Features
+- **Rate Limiting**: Implemented with custom middleware for API protection
+- **Input Validation**: Zod schemas for all API endpoints with comprehensive validation
+- **Security Headers**: CSP, HSTS, XSS protection via middleware
+- **Structured Logging**: Pino-based logging with security event tracking
+- **Health Checks**: `/api/health` and `/api/ready` endpoints for monitoring
+
+### Caching & Performance
+- **Redis Caching**: Implemented for products, categories, and user data
+- **Database Optimization**: Comprehensive indexing strategy for queries
+- **Response Caching**: 5-minute TTL for product listings and categories
+
+### Monitoring & Observability
+- **Health Endpoints**:
+  - `/api/health` - Comprehensive system health check
+  - `/api/ready` - Readiness probe for deployments
+  - `/api/metrics` - Admin-only system metrics (requires ADMIN role)
+- **Structured Logging**: Request tracking, security events, business events
+- **Error Tracking**: Centralized error logging with context
+
+### Testing & CI/CD
+- **Testing Framework**: Jest with comprehensive API and unit tests
+- **GitHub Actions**: Automated CI/CD with security scanning, testing, and deployment
+- **Docker Support**: Multi-stage production-ready Docker builds
+- **Security Scanning**: CodeQL, dependency review, secret scanning
+
 ## Development Notes
 
 - **Package Manager**: Project uses pnpm (not npm)
 - **Database Migrations**: Run `npx prisma migrate dev` after schema changes
-- **Environment**: Configure `.env` with database, NextAuth, Stripe, and email variables
+- **Environment**: Configure `.env` with database, NextAuth, Stripe, Redis, and email variables
 - **Path Aliases**: `@/*` maps to project root for clean imports
+- **Testing**: Run `pnpm test` before committing changes
+- **Security**: All API endpoints have input validation and rate limiting

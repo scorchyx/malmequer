@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sendVerificationEmail } from "@/lib/verification"
+import { validateRequestBody, registerSchema } from "@/lib/validation"
+import { log } from "@/lib/logger"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json()
-
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      )
+    // Validate request body
+    const validation = await validateRequestBody(registerSchema)(request)
+    if (!validation.success) {
+      return validation.response
     }
+
+    const { name, email, password } = validation.data
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -20,6 +21,12 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
+      log.securityEvent('Registration attempt with existing email', {
+        event: 'registration_duplicate_email',
+        severity: 'low',
+        ip: request.ip,
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      })
       return NextResponse.json(
         { error: "User already exists" },
         { status: 400 }
@@ -38,9 +45,21 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Log successful registration
+    log.businessEvent('User registered successfully', {
+      event: 'user_registration',
+      userId: user.id,
+      entityType: 'user',
+      entityId: user.id
+    })
+
     // Send email verification (don't wait for it to complete)
     sendVerificationEmail(user.email, user.name).catch(error =>
-      console.error("Failed to send verification email:", error)
+      log.error('Failed to send verification email', {
+        error,
+        userId: user.id,
+        email: user.email
+      })
     )
 
     // Remove password from response
@@ -55,7 +74,11 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error("Error creating user:", error)
+    log.error('User registration failed', {
+      error,
+      ip: request.ip,
+      userAgent: request.headers.get('user-agent') || 'unknown'
+    })
     return NextResponse.json(
       { error: "Failed to create user" },
       { status: 500 }

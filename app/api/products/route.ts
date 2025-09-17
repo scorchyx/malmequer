@@ -1,16 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { validateRequestBody, validateQueryParams, createProductSchema, paginationSchema } from "@/lib/validation"
+import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") ?? "1")
-    const limit = parseInt(searchParams.get("limit") ?? "10")
-    const category = searchParams.get("category")
-    const search = searchParams.get("search")
-    const status = searchParams.get("status") ?? "ACTIVE"
 
+    // Validate query parameters
+    const validation = validateQueryParams(paginationSchema, searchParams)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: validation.errors },
+        { status: 400 }
+      )
+    }
+
+    const { page = 1, limit = 10, search, category, status = 'ACTIVE' } = validation.data
     const skip = (page - 1) * limit
+
+    // Create cache key based on parameters
+    const cacheKey = CacheKeys.products(`${JSON.stringify({ page, limit, search, category, status })}`)
+
+    // Try to get from cache first
+    const cachedResult = await cache.get(cacheKey)
+    if (cachedResult) {
+      return NextResponse.json(cachedResult)
+    }
 
     const where = {
       status: status as any,
@@ -40,7 +56,7 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where }),
     ])
 
-    return NextResponse.json({
+    const result = {
       products,
       pagination: {
         page,
@@ -48,7 +64,12 @@ export async function GET(request: NextRequest) {
         total,
         pages: Math.ceil(total / limit),
       },
-    })
+    }
+
+    // Cache the result for 5 minutes
+    await cache.set(cacheKey, result, CacheTTL.MEDIUM)
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error("Error fetching products:", error)
     return NextResponse.json(
@@ -60,7 +81,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // Validate request body
+    const validation = await validateRequestBody(createProductSchema)(request)
+    if (!validation.success) {
+      return validation.response
+    }
+
     const {
       name,
       slug,
@@ -73,7 +99,7 @@ export async function POST(request: NextRequest) {
       categoryId,
       images,
       variants,
-    } = body
+    } = validation.data
 
     const product = await prisma.product.create({
       data: {
