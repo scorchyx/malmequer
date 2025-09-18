@@ -18,6 +18,16 @@ RUN pnpm install --frozen-lockfile --production=false
 FROM base AS builder
 WORKDIR /app
 
+# Build arguments for environment variables needed during build
+ARG RESEND_API_KEY
+ARG NEXTAUTH_SECRET
+ARG DATABASE_URL
+
+# Set environment variables for build
+ENV RESEND_API_KEY=$RESEND_API_KEY
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV DATABASE_URL=$DATABASE_URL
+
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
