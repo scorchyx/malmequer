@@ -1,17 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
-import { validateRequestBody, createOrderSchema, validateQueryParams, paginationSchema } from "@/lib/validation"
-import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
-import { log } from "@/lib/logger"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
+import { log } from '@/lib/logger'
+import { prisma } from '@/lib/prisma'
+import { validateQueryParams, paginationSchema } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
+  let user
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Invalid query parameters', details: validation.errors },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -44,13 +45,13 @@ export async function GET(request: NextRequest) {
             include: {
               product: {
                 include: {
-                  images: { take: 1, orderBy: { order: "asc" } },
+                  images: { take: 1, orderBy: { order: 'asc' } },
                 },
               },
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -74,29 +75,30 @@ export async function GET(request: NextRequest) {
       userId: user.id,
       count: orders.length,
       page,
-      type: 'api_request'
+      type: 'api_request',
     })
 
     return NextResponse.json(result)
   } catch (error) {
     log.error('Failed to fetch orders', {
       error: error instanceof Error ? error : String(error),
-      userId: user?.id
+      userId: user?.id,
     })
     return NextResponse.json(
-      { error: "Failed to fetch orders" },
-      { status: 500 }
+      { error: 'Failed to fetch orders' },
+      { status: 500 },
     )
   }
 }
 
 export async function POST(request: NextRequest) {
+  let user
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -113,7 +115,7 @@ export async function POST(request: NextRequest) {
     // Calculate totals
     const subtotalAmount = items.reduce(
       (sum: number, item: any) => sum + item.quantity * item.price,
-      0
+      0,
     )
     const taxAmount = subtotalAmount * 0.1 // 10% tax
     const shippingAmount = 10 // Fixed shipping
@@ -172,18 +174,18 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       entityType: 'order',
       entityId: order.id,
-      details: { orderNumber, totalAmount }
+      details: { orderNumber, totalAmount },
     })
 
     return NextResponse.json(order, { status: 201 })
   } catch (error) {
     log.error('Failed to create order', {
       error: error instanceof Error ? error : String(error),
-      userId: user?.id
+      userId: user?.id,
     })
     return NextResponse.json(
-      { error: "Failed to create order" },
-      { status: 500 }
+      { error: 'Failed to create order' },
+      { status: 500 },
     )
   }
 }

@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { withAdminAuth, logAdminActivity } from "@/lib/admin-auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { withAdminAuth, logAdminActivity } from '@/lib/admin-auth'
+import { prisma } from '@/lib/prisma'
 
-async function getHandler(request: NextRequest, context: { user: any }) {
+async function getHandler(request: NextRequest, _context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") ?? "1")
-    const limit = parseInt(searchParams.get("limit") ?? "20")
-    const category = searchParams.get("category")
-    const search = searchParams.get("search")
-    const status = searchParams.get("status")
+    const page = parseInt(searchParams.get('page') ?? '1')
+    const limit = parseInt(searchParams.get('limit') ?? '20')
+    const category = searchParams.get('category')
+    const search = searchParams.get('search')
+    const status = searchParams.get('status')
 
     const skip = (page - 1) * limit
 
@@ -18,9 +18,9 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       ...(status && { status: status as any }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: "insensitive" as const } },
-          { description: { contains: search, mode: "insensitive" as const } },
-          { sku: { contains: search, mode: "insensitive" as const } },
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
+          { sku: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
     }
@@ -30,7 +30,7 @@ async function getHandler(request: NextRequest, context: { user: any }) {
         where,
         include: {
           category: true,
-          images: { take: 1, orderBy: { order: "asc" } },
+          images: { take: 1, orderBy: { order: 'asc' } },
           _count: {
             select: {
               reviews: true,
@@ -38,7 +38,7 @@ async function getHandler(request: NextRequest, context: { user: any }) {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -55,10 +55,10 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       },
     })
   } catch (error) {
-    console.error("Error fetching products:", error)
+    console.error('Error fetching products:', error)
     return NextResponse.json(
-      { error: "Failed to fetch products" },
-      { status: 500 }
+      { error: 'Failed to fetch products' },
+      { status: 500 },
     )
   }
 }
@@ -80,8 +80,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!productId) {
       return NextResponse.json(
-        { error: "Product ID is required" },
-        { status: 400 }
+        { error: 'Product ID is required' },
+        { status: 400 },
       )
     }
 
@@ -91,8 +91,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!existingProduct) {
       return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
+        { error: 'Product not found' },
+        { status: 404 },
       )
     }
 
@@ -122,7 +122,7 @@ async function putHandler(request: NextRequest, context: { user: any }) {
       const quantityDiff = inventory - existingProduct.inventory
       await prisma.inventoryLog.create({
         data: {
-          type: "ADJUSTMENT",
+          type: 'ADJUSTMENT',
           quantity: quantityDiff,
           reason: `Admin adjustment: ${existingProduct.inventory} → ${inventory}`,
           productId,
@@ -142,21 +142,21 @@ async function putHandler(request: NextRequest, context: { user: any }) {
     if (changes.length > 0) {
       await logAdminActivity(
         context.user.id,
-        "UPDATE_PRODUCT",
-        "Product",
+        'UPDATE_PRODUCT',
+        'Product',
         productId,
-        `Updated product ${existingProduct.name}: ${changes.join(", ")}`,
+        `Updated product ${existingProduct.name}: ${changes.join(', ')}`,
         existingProduct,
-        updateData
+        updateData,
       )
     }
 
     return NextResponse.json(updatedProduct)
   } catch (error) {
-    console.error("Error updating product:", error)
+    console.error('Error updating product:', error)
     return NextResponse.json(
-      { error: "Failed to update product" },
-      { status: 500 }
+      { error: 'Failed to update product' },
+      { status: 500 },
     )
   }
 }

@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
 // Base schemas
 export const emailSchema = z.string().email('Invalid email format').min(1, 'Email is required')
@@ -22,12 +22,12 @@ export const slugSchema = z.string()
 export const registerSchema = z.object({
   name: nameSchema,
   email: emailSchema,
-  password: passwordSchema
+  password: passwordSchema,
 })
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, 'Password is required')
+  password: z.string().min(1, 'Password is required'),
 })
 
 // Product validation schemas
@@ -43,29 +43,29 @@ export const createProductSchema = z.object({
   categoryId: z.string().cuid('Invalid category ID'),
   images: z.array(z.object({
     url: z.string().url('Invalid image URL'),
-    alt: z.string().max(200, 'Alt text too long').optional()
+    alt: z.string().max(200, 'Alt text too long').optional(),
   })).optional(),
   variants: z.array(z.object({
     name: z.string().min(1, 'Variant name required').max(50, 'Variant name too long'),
     value: z.string().min(1, 'Variant value required').max(50, 'Variant value too long'),
     price: z.number().positive().optional(),
     sku: z.string().max(50, 'SKU too long').optional(),
-    inventory: z.number().int().min(0, 'Inventory cannot be negative')
-  })).optional()
+    inventory: z.number().int().min(0, 'Inventory cannot be negative'),
+  })).optional(),
 })
 
 // Order validation schemas
 export const createOrderSchema = z.object({
   items: z.array(z.object({
     productId: z.string().cuid('Invalid product ID'),
-    quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high')
+    quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high'),
   })).min(1, 'Order must have at least one item'),
   shippingAddressId: z.string().cuid('Invalid shipping address ID'),
   billingAddressId: z.string().cuid('Invalid billing address ID'),
   discountId: z.string().cuid('Invalid discount ID').optional(),
   paymentMethod: z.string().max(50, 'Payment method name too long').optional(),
   shippingMethod: z.string().max(50, 'Shipping method name too long').optional(),
-  notes: z.string().max(500, 'Notes too long').optional()
+  notes: z.string().max(500, 'Notes too long').optional(),
 })
 
 // Address validation schemas
@@ -82,13 +82,13 @@ export const createAddressSchema = z.object({
   country: z.string().min(2, 'Country is required').max(2, 'Use ISO country code'),
   phone: z.string().max(20, 'Phone number too long').optional(),
   vatNumber: z.string().max(50, 'VAT number too long').optional(),
-  isDefault: z.boolean().optional()
+  isDefault: z.boolean().optional(),
 })
 
 // Cart validation schemas
 export const addToCartSchema = z.object({
   productId: z.string().cuid('Invalid product ID'),
-  quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high')
+  quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high'),
 })
 
 // Category validation schemas
@@ -97,7 +97,7 @@ export const createCategorySchema = z.object({
   slug: slugSchema,
   description: z.string().max(500, 'Description too long').optional(),
   image: z.string().url('Invalid image URL').optional(),
-  parentId: z.string().cuid('Invalid parent category ID').optional()
+  parentId: z.string().cuid('Invalid parent category ID').optional(),
 })
 
 // Pagination and query validation
@@ -106,7 +106,7 @@ export const paginationSchema = z.object({
   limit: z.string().regex(/^\d+$/).transform(Number).refine(n => n > 0 && n <= 100, 'Limit must be between 1 and 100').optional(),
   search: z.string().max(200, 'Search query too long').optional(),
   category: z.string().cuid('Invalid category ID').optional(),
-  status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']).optional()
+  status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']).optional(),
 })
 
 // Validation middleware helper
@@ -123,13 +123,13 @@ export function validateRequestBody<T>(schema: z.ZodSchema<T>) {
           response: NextResponse.json(
             {
               error: 'Validation failed',
-              details: error.errors.map(err => ({
+              details: error.issues.map((err: z.ZodIssue) => ({
                 field: err.path.join('.'),
-                message: err.message
-              }))
+                message: err.message,
+              })),
             },
-            { status: 400 }
-          )
+            { status: 400 },
+          ),
         }
       }
 
@@ -137,8 +137,8 @@ export function validateRequestBody<T>(schema: z.ZodSchema<T>) {
         success: false,
         response: NextResponse.json(
           { error: 'Invalid JSON format' },
-          { status: 400 }
-        )
+          { status: 400 },
+        ),
       }
     }
   }
@@ -158,12 +158,12 @@ export function validateQueryParams<T>(schema: z.ZodSchema<T>, searchParams: URL
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+        errors: error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`),
       }
     }
     return {
       success: false,
-      errors: ['Invalid query parameters']
+      errors: ['Invalid query parameters'],
     }
   }
 }

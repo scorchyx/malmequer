@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { withAdminAuth, logAdminActivity } from "@/lib/admin-auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { withAdminAuth, logAdminActivity } from '@/lib/admin-auth'
+import { prisma } from '@/lib/prisma'
 
-async function getHandler(request: NextRequest, context: { user: any }) {
+async function getHandler(request: NextRequest, _context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") ?? "1")
-    const limit = parseInt(searchParams.get("limit") ?? "20")
-    const isActive = searchParams.get("isActive")
+    const page = parseInt(searchParams.get('page') ?? '1')
+    const limit = parseInt(searchParams.get('limit') ?? '20')
+    const isActive = searchParams.get('isActive')
 
     const skip = (page - 1) * limit
 
     const where = {
-      ...(isActive !== null && { isActive: isActive === "true" }),
+      ...(isActive !== null && { isActive: isActive === 'true' }),
     }
 
     const [discounts, total] = await Promise.all([
@@ -23,7 +23,7 @@ async function getHandler(request: NextRequest, context: { user: any }) {
             select: { orders: true },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -40,10 +40,10 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       },
     })
   } catch (error) {
-    console.error("Error fetching discounts:", error)
+    console.error('Error fetching discounts:', error)
     return NextResponse.json(
-      { error: "Failed to fetch discounts" },
-      { status: 500 }
+      { error: 'Failed to fetch discounts' },
+      { status: 500 },
     )
   }
 }
@@ -64,15 +64,15 @@ async function postHandler(request: NextRequest, context: { user: any }) {
 
     if (!code || !type || !value) {
       return NextResponse.json(
-        { error: "Code, type, and value are required" },
-        { status: 400 }
+        { error: 'Code, type, and value are required' },
+        { status: 400 },
       )
     }
 
-    if (!["PERCENTAGE", "FIXED_AMOUNT"].includes(type)) {
+    if (!['PERCENTAGE', 'FIXED_AMOUNT'].includes(type)) {
       return NextResponse.json(
-        { error: "Invalid discount type" },
-        { status: 400 }
+        { error: 'Invalid discount type' },
+        { status: 400 },
       )
     }
 
@@ -83,8 +83,8 @@ async function postHandler(request: NextRequest, context: { user: any }) {
 
     if (existingDiscount) {
       return NextResponse.json(
-        { error: "Discount code already exists" },
-        { status: 400 }
+        { error: 'Discount code already exists' },
+        { status: 400 },
       )
     }
 
@@ -105,20 +105,20 @@ async function postHandler(request: NextRequest, context: { user: any }) {
     // Log admin activity
     await logAdminActivity(
       context.user.id,
-      "CREATE_DISCOUNT",
-      "Discount",
+      'CREATE_DISCOUNT',
+      'Discount',
       discount.id,
       `Created discount code: ${code}`,
       null,
-      discount
+      discount,
     )
 
     return NextResponse.json(discount, { status: 201 })
   } catch (error) {
-    console.error("Error creating discount:", error)
+    console.error('Error creating discount:', error)
     return NextResponse.json(
-      { error: "Failed to create discount" },
-      { status: 500 }
+      { error: 'Failed to create discount' },
+      { status: 500 },
     )
   }
 }
@@ -140,8 +140,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!discountId) {
       return NextResponse.json(
-        { error: "Discount ID is required" },
-        { status: 400 }
+        { error: 'Discount ID is required' },
+        { status: 400 },
       )
     }
 
@@ -151,8 +151,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!existingDiscount) {
       return NextResponse.json(
-        { error: "Discount not found" },
-        { status: 404 }
+        { error: 'Discount not found' },
+        { status: 404 },
       )
     }
 
@@ -183,21 +183,21 @@ async function putHandler(request: NextRequest, context: { user: any }) {
     if (changes.length > 0) {
       await logAdminActivity(
         context.user.id,
-        "UPDATE_DISCOUNT",
-        "Discount",
+        'UPDATE_DISCOUNT',
+        'Discount',
         discountId,
-        `Updated discount ${existingDiscount.code}: ${changes.join(", ")}`,
+        `Updated discount ${existingDiscount.code}: ${changes.join(', ')}`,
         existingDiscount,
-        updateData
+        updateData,
       )
     }
 
     return NextResponse.json(updatedDiscount)
   } catch (error) {
-    console.error("Error updating discount:", error)
+    console.error('Error updating discount:', error)
     return NextResponse.json(
-      { error: "Failed to update discount" },
-      { status: 500 }
+      { error: 'Failed to update discount' },
+      { status: 500 },
     )
   }
 }

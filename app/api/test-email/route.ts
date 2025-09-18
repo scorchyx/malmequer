@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { sendEmail } from "@/lib/email"
+import { NextRequest, NextResponse } from 'next/server'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, name, type = "WELCOME" } = await request.json()
+    const { email, name, type = 'WELCOME' } = await request.json()
 
     if (!email || !name) {
       return NextResponse.json(
-        { error: "Email and name are required" },
-        { status: 400 }
+        { error: 'Email and name are required' },
+        { status: 400 },
       )
     }
 
@@ -50,24 +50,24 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: email,
-      subject: "Welcome to Malmequer! 🌼",
-      html
+      subject: 'Welcome to Malmequer! 🌼',
+      html,
     })
 
     return NextResponse.json({
-      message: "Test email sent successfully!",
+      message: 'Test email sent successfully!',
       email,
       name,
-      type
+      type,
     })
   } catch (error) {
-    console.error("Error sending test email:", error)
+    console.error('Error sending test email:', error)
     return NextResponse.json(
       {
-        error: "Failed to send test email",
-        details: error instanceof Error ? error.message : "Unknown error"
+        error: 'Failed to send test email',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

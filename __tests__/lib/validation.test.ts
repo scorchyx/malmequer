@@ -1,13 +1,12 @@
+import { NextRequest } from 'next/server'
 import {
   registerSchema,
-  loginSchema,
   createProductSchema,
   addToCartSchema,
   validateRequestBody,
   validateQueryParams,
-  paginationSchema
+  paginationSchema,
 } from '@/lib/validation'
-import { NextRequest } from 'next/server'
 
 describe('Validation Schemas', () => {
   describe('registerSchema', () => {
@@ -15,7 +14,7 @@ describe('Validation Schemas', () => {
       const validData = {
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'StrongPass123'
+        password: 'StrongPass123',
       }
 
       const result = registerSchema.safeParse(validData)
@@ -26,13 +25,13 @@ describe('Validation Schemas', () => {
       const invalidData = {
         name: 'John Doe',
         email: 'invalid-email',
-        password: 'StrongPass123'
+        password: 'StrongPass123',
       }
 
       const result = registerSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Invalid email format')
+        expect(result.error.issues[0].message).toContain('Invalid email format')
       }
     })
 
@@ -40,13 +39,13 @@ describe('Validation Schemas', () => {
       const invalidData = {
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'weak'
+        password: 'weak',
       }
 
       const result = registerSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Password must be at least 8 characters')
+        expect(result.error.issues[0].message).toContain('Password must be at least 8 characters')
       }
     })
 
@@ -54,13 +53,13 @@ describe('Validation Schemas', () => {
       const invalidData = {
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'simpleallinlowercase'
+        password: 'simpleallinlowercase',
       }
 
       const result = registerSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('uppercase letter')
+        expect(result.error.issues[0].message).toContain('uppercase letter')
       }
     })
 
@@ -68,13 +67,13 @@ describe('Validation Schemas', () => {
       const invalidData = {
         name: 'John123Doe',
         email: 'john@example.com',
-        password: 'StrongPass123'
+        password: 'StrongPass123',
       }
 
       const result = registerSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('invalid characters')
+        expect(result.error.issues[0].message).toContain('invalid characters')
       }
     })
   })
@@ -87,7 +86,7 @@ describe('Validation Schemas', () => {
         description: 'A test product',
         price: 29.99,
         inventory: 100,
-        categoryId: 'clfx123456789'
+        categoryId: 'clfx123456789',
       }
 
       const result = createProductSchema.safeParse(validData)
@@ -100,13 +99,13 @@ describe('Validation Schemas', () => {
         slug: 'test-product',
         price: -10,
         inventory: 100,
-        categoryId: 'clfx123456789'
+        categoryId: 'clfx123456789',
       }
 
       const result = createProductSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Price must be positive')
+        expect(result.error.issues[0].message).toContain('Price must be positive')
       }
     })
 
@@ -116,13 +115,13 @@ describe('Validation Schemas', () => {
         slug: 'Test Product With Spaces',
         price: 29.99,
         inventory: 100,
-        categoryId: 'clfx123456789'
+        categoryId: 'clfx123456789',
       }
 
       const result = createProductSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('lowercase letters, numbers, and hyphens')
+        expect(result.error.issues[0].message).toContain('lowercase letters, numbers, and hyphens')
       }
     })
 
@@ -132,13 +131,13 @@ describe('Validation Schemas', () => {
         slug: 'test-product',
         price: 29.99,
         inventory: -5,
-        categoryId: 'clfx123456789'
+        categoryId: 'clfx123456789',
       }
 
       const result = createProductSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Inventory cannot be negative')
+        expect(result.error.issues[0].message).toContain('Inventory cannot be negative')
       }
     })
   })
@@ -147,7 +146,7 @@ describe('Validation Schemas', () => {
     it('should validate correct cart data', () => {
       const validData = {
         productId: 'clfx123456789',
-        quantity: 2
+        quantity: 2,
       }
 
       const result = addToCartSchema.safeParse(validData)
@@ -157,26 +156,26 @@ describe('Validation Schemas', () => {
     it('should reject zero quantity', () => {
       const invalidData = {
         productId: 'clfx123456789',
-        quantity: 0
+        quantity: 0,
       }
 
       const result = addToCartSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Quantity must be positive')
+        expect(result.error.issues[0].message).toContain('Quantity must be positive')
       }
     })
 
     it('should reject excessive quantity', () => {
       const invalidData = {
         productId: 'clfx123456789',
-        quantity: 150
+        quantity: 150,
       }
 
       const result = addToCartSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Quantity too high')
+        expect(result.error.issues[0].message).toContain('Quantity too high')
       }
     })
   })
@@ -186,7 +185,7 @@ describe('Validation Schemas', () => {
       const validParams = {
         page: '1',
         limit: '10',
-        search: 'test query'
+        search: 'test query',
       }
 
       const result = paginationSchema.safeParse(validParams)
@@ -200,26 +199,26 @@ describe('Validation Schemas', () => {
     it('should reject invalid page number', () => {
       const invalidParams = {
         page: '0',
-        limit: '10'
+        limit: '10',
       }
 
       const result = paginationSchema.safeParse(invalidParams)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Page must be positive')
+        expect(result.error.issues[0].message).toContain('Page must be positive')
       }
     })
 
     it('should reject excessive limit', () => {
       const invalidParams = {
         page: '1',
-        limit: '200'
+        limit: '200',
       }
 
       const result = paginationSchema.safeParse(invalidParams)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Limit must be between 1 and 100')
+        expect(result.error.issues[0].message).toContain('Limit must be between 1 and 100')
       }
     })
   })
@@ -231,15 +230,15 @@ describe('Validation Helpers', () => {
       const validBody = {
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'StrongPass123'
+        password: 'StrongPass123',
       }
 
       const request = new NextRequest('http://localhost:3000/test', {
         method: 'POST',
         body: JSON.stringify(validBody),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
       const validator = validateRequestBody(registerSchema)
@@ -255,15 +254,15 @@ describe('Validation Helpers', () => {
       const invalidBody = {
         name: 'John Doe',
         email: 'invalid-email',
-        password: 'weak'
+        password: 'weak',
       }
 
       const request = new NextRequest('http://localhost:3000/test', {
         method: 'POST',
         body: JSON.stringify(invalidBody),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
       const validator = validateRequestBody(registerSchema)

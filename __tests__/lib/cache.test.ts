@@ -10,11 +10,11 @@ const mockRedisClient = {
   exists: jest.fn(),
   incr: jest.fn(),
   expire: jest.fn(),
-  on: jest.fn()
+  on: jest.fn(),
 }
 
 jest.mock('redis', () => ({
-  createClient: jest.fn(() => mockRedisClient)
+  createClient: jest.fn(() => mockRedisClient),
 }))
 
 describe('CacheService', () => {
@@ -64,7 +64,7 @@ describe('CacheService', () => {
       expect(mockRedisClient.setEx).toHaveBeenCalledWith(
         'test-key',
         300,
-        JSON.stringify(testData)
+        JSON.stringify(testData),
       )
     })
 
@@ -144,7 +144,7 @@ describe('CacheService', () => {
       expect(mockRedisClient.setEx).toHaveBeenCalledWith(
         'test-key',
         300,
-        JSON.stringify(freshData)
+        JSON.stringify(freshData),
       )
     })
 

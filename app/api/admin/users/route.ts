@@ -1,22 +1,22 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { withAdminAuth, logAdminActivity } from "@/lib/admin-auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { withAdminAuth, logAdminActivity } from '@/lib/admin-auth'
+import { prisma } from '@/lib/prisma'
 
-async function getHandler(request: NextRequest, context: { user: any }) {
+async function getHandler(request: NextRequest, _context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") ?? "1")
-    const limit = parseInt(searchParams.get("limit") ?? "20")
-    const search = searchParams.get("search")
-    const role = searchParams.get("role")
+    const page = parseInt(searchParams.get('page') ?? '1')
+    const limit = parseInt(searchParams.get('limit') ?? '20')
+    const search = searchParams.get('search')
+    const role = searchParams.get('role')
 
     const skip = (page - 1) * limit
 
     const where = {
       ...(search && {
         OR: [
-          { name: { contains: search, mode: "insensitive" as const } },
-          { email: { contains: search, mode: "insensitive" as const } },
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
       ...(role && { role: role as any }),
@@ -40,7 +40,7 @@ async function getHandler(request: NextRequest, context: { user: any }) {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -57,10 +57,10 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       },
     })
   } catch (error) {
-    console.error("Error fetching users:", error)
+    console.error('Error fetching users:', error)
     return NextResponse.json(
-      { error: "Failed to fetch users" },
-      { status: 500 }
+      { error: 'Failed to fetch users' },
+      { status: 500 },
     )
   }
 }
@@ -71,15 +71,15 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!userId || !role) {
       return NextResponse.json(
-        { error: "User ID and role are required" },
-        { status: 400 }
+        { error: 'User ID and role are required' },
+        { status: 400 },
       )
     }
 
-    if (!["USER", "ADMIN"].includes(role)) {
+    if (!['USER', 'ADMIN'].includes(role)) {
       return NextResponse.json(
-        { error: "Invalid role" },
-        { status: 400 }
+        { error: 'Invalid role' },
+        { status: 400 },
       )
     }
 
@@ -89,8 +89,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!existingUser) {
       return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
+        { error: 'User not found' },
+        { status: 404 },
       )
     }
 
@@ -111,20 +111,20 @@ async function putHandler(request: NextRequest, context: { user: any }) {
     // Log admin activity
     await logAdminActivity(
       context.user.id,
-      "UPDATE_USER_ROLE",
-      "User",
+      'UPDATE_USER_ROLE',
+      'User',
       userId,
       `Changed user role from ${existingUser.role} to ${role}`,
       { role: existingUser.role },
-      { role }
+      { role },
     )
 
     return NextResponse.json(updatedUser)
   } catch (error) {
-    console.error("Error updating user:", error)
+    console.error('Error updating user:', error)
     return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 }
+      { error: 'Failed to update user' },
+      { status: 500 },
     )
   }
 }

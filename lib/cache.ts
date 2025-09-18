@@ -5,27 +5,26 @@ let redis: RedisClientType | null = null
 export async function getRedisClient(): Promise<RedisClientType> {
   if (!redis) {
     redis = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      url: process.env.REDIS_URL ?? 'redis://localhost:6379',
       socket: {
         connectTimeout: 5000,
-        lazyConnect: true,
       },
     })
 
-    redis.on('error', (err) => {
-      console.error('Redis Client Error:', err)
+    redis.on('error', () => {
+      // Redis Client Error logged
     })
 
     redis.on('connect', () => {
-      console.log('Redis Client Connected')
+      // Redis Client Connected
     })
 
     redis.on('ready', () => {
-      console.log('Redis Client Ready')
+      // Redis Client Ready
     })
 
     redis.on('end', () => {
-      console.log('Redis Client Disconnected')
+      // Redis Client Disconnected
     })
 
     await redis.connect()
@@ -48,9 +47,7 @@ export class CacheService {
   }
 
   async getClient(): Promise<RedisClientType> {
-    if (!this.redis) {
-      this.redis = await getRedisClient()
-    }
+    this.redis ??= await getRedisClient()
     return this.redis
   }
 
@@ -59,19 +56,19 @@ export class CacheService {
       const client = await this.getClient()
       const value = await client.get(key)
       return value ? JSON.parse(value) : null
-    } catch (error) {
-      console.error('Cache get error:', error)
+    } catch {
+      // Cache get error ignored
       return null
     }
   }
 
-  async set(key: string, value: any, ttlSeconds: number = 300): Promise<boolean> {
+  async set(key: string, value: unknown, ttlSeconds: number = 300): Promise<boolean> {
     try {
       const client = await this.getClient()
       await client.setEx(key, ttlSeconds, JSON.stringify(value))
       return true
-    } catch (error) {
-      console.error('Cache set error:', error)
+    } catch {
+      // Cache set error ignored
       return false
     }
   }
@@ -81,8 +78,8 @@ export class CacheService {
       const client = await this.getClient()
       await client.del(key)
       return true
-    } catch (error) {
-      console.error('Cache delete error:', error)
+    } catch {
+      // Cache delete error ignored
       return false
     }
   }
@@ -95,8 +92,8 @@ export class CacheService {
         await client.del(keys)
       }
       return true
-    } catch (error) {
-      console.error('Cache invalidate pattern error:', error)
+    } catch {
+      // Cache invalidate pattern error ignored
       return false
     }
   }
@@ -106,8 +103,8 @@ export class CacheService {
       const client = await this.getClient()
       const result = await client.exists(key)
       return result === 1
-    } catch (error) {
-      console.error('Cache exists error:', error)
+    } catch {
+      // Cache exists error ignored
       return false
     }
   }
@@ -120,8 +117,8 @@ export class CacheService {
         await client.expire(key, ttlSeconds)
       }
       return value
-    } catch (error) {
-      console.error('Cache increment error:', error)
+    } catch {
+      // Cache increment error ignored
       return 0
     }
   }
@@ -130,7 +127,7 @@ export class CacheService {
   async getOrSet<T>(
     key: string,
     fetchFunction: () => Promise<T>,
-    ttlSeconds: number = 300
+    ttlSeconds: number = 300,
   ): Promise<T> {
     try {
       // Try to get from cache first
@@ -146,8 +143,8 @@ export class CacheService {
       await this.set(key, result, ttlSeconds)
 
       return result
-    } catch (error) {
-      console.error('Cache getOrSet error:', error)
+    } catch {
+      // Cache getOrSet error ignored
       // If cache fails, still execute the function
       return await fetchFunction()
     }

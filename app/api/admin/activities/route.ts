@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { withAdminAuth } from "@/lib/admin-auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { withAdminAuth } from '@/lib/admin-auth'
+import { prisma } from '@/lib/prisma'
 
-async function handler(request: NextRequest, context: { user: any }) {
+async function handler(request: NextRequest, _context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") ?? "1")
-    const limit = parseInt(searchParams.get("limit") ?? "50")
-    const action = searchParams.get("action")
-    const entityType = searchParams.get("entityType")
-    const userId = searchParams.get("userId")
+    const page = parseInt(searchParams.get('page') ?? '1')
+    const limit = parseInt(searchParams.get('limit') ?? '50')
+    const action = searchParams.get('action')
+    const entityType = searchParams.get('entityType')
+    const userId = searchParams.get('userId')
 
     const skip = (page - 1) * limit
 
@@ -25,7 +25,7 @@ async function handler(request: NextRequest, context: { user: any }) {
         include: {
           user: { select: { name: true, email: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -42,10 +42,10 @@ async function handler(request: NextRequest, context: { user: any }) {
       },
     })
   } catch (error) {
-    console.error("Error fetching admin activities:", error)
+    console.error('Error fetching admin activities:', error)
     return NextResponse.json(
-      { error: "Failed to fetch admin activities" },
-      { status: 500 }
+      { error: 'Failed to fetch admin activities' },
+      { status: 500 },
     )
   }
 }

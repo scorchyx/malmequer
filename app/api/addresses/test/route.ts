@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,20 +7,20 @@ export async function POST(request: NextRequest) {
 
     if (!userEmail) {
       return NextResponse.json(
-        { error: "userEmail is required for testing" },
-        { status: 400 }
+        { error: 'userEmail is required for testing' },
+        { status: 400 },
       )
     }
 
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { email: userEmail },
     })
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
+        { error: 'User not found' },
+        { status: 404 },
       )
     }
 
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
         country: 'Portugal',
         phone: '+351912345678',
         isDefault: true,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     })
 
     // Create test billing address
@@ -56,20 +56,20 @@ export async function POST(request: NextRequest) {
         phone: '+351912345678',
         vatNumber: '123456789', // NIF português de exemplo
         isDefault: true,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     })
 
     return NextResponse.json({
-      message: "Test addresses created successfully",
+      message: 'Test addresses created successfully',
       shipping: shippingAddress,
-      billing: billingAddress
+      billing: billingAddress,
     })
   } catch (error) {
-    console.error("Error creating test addresses:", error)
+    console.error('Error creating test addresses:', error)
     return NextResponse.json(
-      { error: "Failed to create test addresses" },
-      { status: 500 }
+      { error: 'Failed to create test addresses' },
+      { status: 500 },
     )
   }
 }
@@ -81,20 +81,20 @@ export async function GET(request: NextRequest) {
 
     if (!userEmail) {
       return NextResponse.json(
-        { error: "userEmail parameter is required" },
-        { status: 400 }
+        { error: 'userEmail parameter is required' },
+        { status: 400 },
       )
     }
 
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { email: userEmail },
     })
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
+        { error: 'User not found' },
+        { status: 404 },
       )
     }
 
@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { type: 'asc' },      // BILLING before SHIPPING
         { isDefault: 'desc' }, // Default first
-        { createdAt: 'desc' }  // Most recent first
-      ]
+        { createdAt: 'desc' },  // Most recent first
+      ],
     })
 
     // Group by type
@@ -113,17 +113,17 @@ export async function GET(request: NextRequest) {
       shipping: addresses.filter(addr => addr.type === 'SHIPPING'),
       billing: addresses.filter(addr => addr.type === 'BILLING'),
       defaults: {
-        shipping: addresses.find(addr => addr.type === 'SHIPPING' && addr.isDefault) || null,
-        billing: addresses.find(addr => addr.type === 'BILLING' && addr.isDefault) || null
-      }
+        shipping: addresses.find(addr => addr.type === 'SHIPPING' && addr.isDefault) ?? null,
+        billing: addresses.find(addr => addr.type === 'BILLING' && addr.isDefault) ?? null,
+      },
     }
 
     return NextResponse.json(grouped)
   } catch (error) {
-    console.error("Error fetching test addresses:", error)
+    console.error('Error fetching test addresses:', error)
     return NextResponse.json(
-      { error: "Failed to fetch test addresses" },
-      { status: 500 }
+      { error: 'Failed to fetch test addresses' },
+      { status: 500 },
     )
   }
 }

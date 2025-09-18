@@ -1,8 +1,8 @@
 import { sendEmail } from './email'
-import { prisma } from './prisma'
 import {
   renderSimpleWelcomeEmail,
 } from './email-templates-new'
+import { prisma } from './prisma'
 
 export enum NotificationType {
   WELCOME = 'WELCOME',
@@ -62,13 +62,13 @@ export class NotificationService {
       // Check user's notification preferences if userId is provided
       if (data.userId) {
         const settings = await prisma.notificationSettings.findUnique({
-          where: { userId: data.userId }
+          where: { userId: data.userId },
         })
 
         // If settings exist, check if the specific notification type is enabled
         if (settings) {
           if (!settings.emailNotifications) {
-            console.log(`Email notifications disabled for user ${data.userId}`)
+            // Email notifications disabled
             return
           }
 
@@ -77,25 +77,25 @@ export class NotificationService {
             case NotificationType.ORDER_CONFIRMATION:
             case NotificationType.ORDER_SHIPPED:
               if (!settings.orderConfirmations && !settings.orderUpdates) {
-                console.log(`Order notifications disabled for user ${data.userId}`)
+                // Order notifications disabled
                 return
               }
               break
             case NotificationType.STOCK_ALERT:
               if (!settings.stockAlerts) {
-                console.log(`Stock alerts disabled for user ${data.userId}`)
+                // Stock alerts disabled
                 return
               }
               break
             case NotificationType.PROMOTION:
               if (!settings.promotionalEmails) {
-                console.log(`Promotional emails disabled for user ${data.userId}`)
+                // Promotional emails disabled
                 return
               }
               break
             case NotificationType.ACCOUNT_UPDATE:
               if (!settings.accountUpdates) {
-                console.log(`Account updates disabled for user ${data.userId}`)
+                // Account updates disabled
                 return
               }
               break
@@ -136,7 +136,7 @@ export class NotificationService {
           break
 
         default:
-          throw new Error(`Unsupported notification type: ${(data as any).type}`)
+          throw new Error(`Unsupported notification type: ${(data as { type: string }).type}`)
       }
 
       await sendEmail({
@@ -145,9 +145,9 @@ export class NotificationService {
         html,
       })
 
-      console.log(`Notification sent successfully: ${data.type} to ${data.recipientEmail}`)
+      // Notification sent successfully
     } catch (error) {
-      console.error('Failed to send notification:', error)
+      // Failed to send notification - error logged
       throw error
     }
   }
@@ -157,7 +157,7 @@ export class NotificationService {
     email: string,
     name: string,
     userId?: string,
-    verificationUrl?: string
+    verificationUrl?: string,
   ): Promise<void> {
     await this.sendNotification({
       type: NotificationType.WELCOME,
@@ -174,7 +174,7 @@ export class NotificationService {
     orderNumber: string,
     orderTotal: string,
     orderItems: Array<{ name: string; quantity: number; price: string }>,
-    userId?: string
+    userId?: string,
   ): Promise<void> {
     await this.sendNotification({
       type: NotificationType.ORDER_CONFIRMATION,
@@ -194,7 +194,7 @@ export class NotificationService {
     orderTotal: string,
     orderItems: Array<{ name: string; quantity: number; price: string }>,
     userId?: string,
-    trackingUrl?: string
+    trackingUrl?: string,
   ): Promise<void> {
     await this.sendNotification({
       type: NotificationType.ORDER_SHIPPED,
@@ -212,7 +212,7 @@ export class NotificationService {
     email: string,
     name: string,
     resetUrl: string,
-    userId?: string
+    userId?: string,
   ): Promise<void> {
     await this.sendNotification({
       type: NotificationType.PASSWORD_RESET,
@@ -228,7 +228,7 @@ export class NotificationService {
     name: string,
     productName: string,
     productUrl: string,
-    userId?: string
+    userId?: string,
   ): Promise<void> {
     await this.sendNotification({
       type: NotificationType.STOCK_ALERT,

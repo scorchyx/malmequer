@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -20,22 +20,22 @@ export async function PATCH(
     const address = await prisma.address.findFirst({
       where: {
         id,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     })
 
     if (!address) {
       return NextResponse.json(
-        { error: "Address not found" },
-        { status: 404 }
+        { error: 'Address not found' },
+        { status: 404 },
       )
     }
 
     // If already default, nothing to do
     if (address.isDefault) {
       return NextResponse.json({
-        message: "Address is already the default",
-        address
+        message: 'Address is already the default',
+        address,
       })
     }
 
@@ -46,29 +46,29 @@ export async function PATCH(
         where: {
           userId: user.id,
           type: address.type,
-          isDefault: true
+          isDefault: true,
         },
         data: {
-          isDefault: false
-        }
+          isDefault: false,
+        },
       })
 
       // Set this address as default
       return await tx.address.update({
         where: { id },
-        data: { isDefault: true }
+        data: { isDefault: true },
       })
     })
 
     return NextResponse.json({
       message: `Address set as default ${address.type.toLowerCase()} address`,
-      address: updatedAddress
+      address: updatedAddress,
     })
   } catch (error) {
-    console.error("Error setting default address:", error)
+    console.error('Error setting default address:', error)
     return NextResponse.json(
-      { error: "Failed to set default address" },
-      { status: 500 }
+      { error: 'Failed to set default address' },
+      { status: 500 },
     )
   }
 }

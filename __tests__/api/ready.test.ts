@@ -3,8 +3,8 @@ import { GET } from '@/app/api/ready/route'
 // Mock Prisma
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }])
-  }
+    $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+  },
 }))
 
 describe('/api/ready', () => {
@@ -17,7 +17,7 @@ describe('/api/ready', () => {
       ...originalEnv,
       DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
       NEXTAUTH_SECRET: 'test-secret',
-      NEXTAUTH_URL: 'http://localhost:3000'
+      NEXTAUTH_URL: 'http://localhost:3000',
     }
   })
 

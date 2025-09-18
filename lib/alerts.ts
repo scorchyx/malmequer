@@ -1,5 +1,5 @@
-import { log } from './logger'
 import { cache } from './cache'
+import { log } from './logger'
 
 export interface AlertConfig {
   name: string
@@ -26,7 +26,7 @@ export interface Alert {
   triggeredAt: Date
   resolvedAt?: Date
   description: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export class AlertManager {
@@ -53,7 +53,7 @@ export class AlertManager {
         duration: 300, // 5 minutes
         severity: 'high',
         description: 'Memory usage is above 85% for 5 minutes',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'database_response_slow',
@@ -61,7 +61,7 @@ export class AlertManager {
         duration: 60, // 1 minute
         severity: 'medium',
         description: 'Database response time above 1 second',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'high_error_rate',
@@ -69,7 +69,7 @@ export class AlertManager {
         duration: 120, // 2 minutes
         severity: 'high',
         description: 'Error rate above 5% for 2 minutes',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'redis_connection_failed',
@@ -77,7 +77,7 @@ export class AlertManager {
         duration: 0, // immediate
         severity: 'medium',
         description: 'Redis connection failure detected',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'critical_service_down',
@@ -85,8 +85,8 @@ export class AlertManager {
         duration: 0, // immediate
         severity: 'critical',
         description: 'Critical service is down',
-        enabled: true
-      }
+        enabled: true,
+      },
     ]
 
     defaultConfigs.forEach(config => {
@@ -102,11 +102,11 @@ export class AlertManager {
       metric: 'memory_usage_percentage',
       operator: 'gt',
       value: percentage,
-      timeWindow: 300
+      timeWindow: 300,
     }, {
       currentUsage: percentage,
       heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024)
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
     })
   }
 
@@ -115,10 +115,10 @@ export class AlertManager {
       metric: 'database_response_time',
       operator: 'gt',
       value: responseTime,
-      timeWindow: 60
+      timeWindow: 60,
     }, {
       responseTime,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
   }
 
@@ -129,11 +129,11 @@ export class AlertManager {
       metric: 'error_rate_percentage',
       operator: 'gt',
       value: errorRate,
-      timeWindow: 120
+      timeWindow: 120,
     }, {
       errorRate,
       errorCount,
-      totalRequests
+      totalRequests,
     })
   }
 
@@ -143,11 +143,11 @@ export class AlertManager {
         metric: 'service_health',
         operator: 'eq',
         value: 0, // 0 = down, 1 = up
-        timeWindow: 0
+        timeWindow: 0,
       }, {
         serviceName,
         status: 'down',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     }
   }
@@ -155,10 +155,10 @@ export class AlertManager {
   private async evaluateCondition(
     alertName: string,
     condition: AlertCondition,
-    metadata: Record<string, any>
+    metadata: Record<string, unknown>,
   ): Promise<void> {
     const config = this.configs.get(alertName)
-    if (!config || !config.enabled) {
+    if (!config?.enabled) {
       return
     }
 
@@ -175,7 +175,7 @@ export class AlertManager {
         status: 'triggered',
         triggeredAt: new Date(),
         description: config.description,
-        metadata
+        metadata,
       }
 
       this.alerts.set(alertName, alert)
@@ -215,7 +215,7 @@ export class AlertManager {
       severity: alert.severity,
       description: alert.description,
       metadata: alert.metadata,
-      type: 'alert_triggered'
+      type: 'alert_triggered',
     })
 
     // Cache alert for monitoring dashboard
@@ -228,10 +228,10 @@ export class AlertManager {
     // - Update monitoring dashboards
     // - Send SMS for critical alerts
 
-    console.log(`🚨 ALERT TRIGGERED: ${alert.name}`)
-    console.log(`Severity: ${alert.severity.toUpperCase()}`)
-    console.log(`Description: ${alert.description}`)
-    console.log(`Metadata:`, alert.metadata)
+    // Alert triggered - using logger instead
+    // Severity: ${alert.severity.toUpperCase()}
+    // Description: ${alert.description}
+    // Metadata logged separately
   }
 
   private async resolveAlert(alert: Alert): Promise<void> {
@@ -240,14 +240,14 @@ export class AlertManager {
       alertName: alert.name,
       severity: alert.severity,
       duration: alert.resolvedAt ? alert.resolvedAt.getTime() - alert.triggeredAt.getTime() : 0,
-      type: 'alert_resolved'
+      type: 'alert_resolved',
     })
 
     // Update cached alert
     await cache.set(`alert:${alert.id}`, alert, 86400)
 
-    console.log(`✅ ALERT RESOLVED: ${alert.name}`)
-    console.log(`Duration: ${alert.resolvedAt ? Math.round((alert.resolvedAt.getTime() - alert.triggeredAt.getTime()) / 1000) : 0}s`)
+    // Alert resolved - using logger instead
+    // Duration logged separately
   }
 
   async getActiveAlerts(): Promise<Alert[]> {
@@ -257,7 +257,7 @@ export class AlertManager {
   async getAlertHistory(hours: number = 24): Promise<Alert[]> {
     const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000)
     return Array.from(this.alerts.values()).filter(
-      alert => alert.triggeredAt >= cutoff
+      alert => alert.triggeredAt >= cutoff,
     )
   }
 
@@ -293,7 +293,7 @@ export function createMonitoringMiddleware() {
 
       // Additional periodic checks can be added here
     } catch (error) {
-      log.error('Monitoring middleware error', { error })
+      log.error('Monitoring middleware error', { error: error instanceof Error ? error.message : String(error) })
     }
   }
 }

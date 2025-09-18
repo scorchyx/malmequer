@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
-import { validateRequestBody, addToCartSchema } from "@/lib/validation"
-import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
-import { log } from "@/lib/logger"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
+import { log } from '@/lib/logger'
+import { prisma } from '@/lib/prisma'
+import { validateRequestBody, addToCartSchema } from '@/lib/validation'
 
 export async function GET() {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -27,17 +27,17 @@ export async function GET() {
       include: {
         product: {
           include: {
-            images: { take: 1, orderBy: { order: "asc" } },
+            images: { take: 1, orderBy: { order: 'asc' } },
             category: true,
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     })
 
     const total = cartItems.reduce(
       (sum, item) => sum + item.quantity * Number(item.product.price),
-      0
+      0,
     )
 
     const result = {
@@ -52,11 +52,11 @@ export async function GET() {
     return NextResponse.json(result)
   } catch (error) {
     log.error('Failed to fetch cart', {
-      error: error instanceof Error ? error : String(error)
+      error: error instanceof Error ? error : String(error),
     })
     return NextResponse.json(
-      { error: "Failed to fetch cart" },
-      { status: 500 }
+      { error: 'Failed to fetch cart' },
+      { status: 500 },
     )
   }
 }
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         include: {
           product: {
             include: {
-              images: { take: 1, orderBy: { order: "asc" } },
+              images: { take: 1, orderBy: { order: 'asc' } },
             },
           },
         },
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         include: {
           product: {
             include: {
-              images: { take: 1, orderBy: { order: "asc" } },
+              images: { take: 1, orderBy: { order: 'asc' } },
             },
           },
         },
@@ -126,17 +126,17 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       entityType: 'cart_item',
       entityId: cartItem.id,
-      details: { productId, quantity }
+      details: { productId, quantity },
     })
 
     return NextResponse.json(cartItem, { status: 201 })
   } catch (error) {
     log.error('Failed to add to cart', {
-      error: error instanceof Error ? error : String(error)
+      error: error instanceof Error ? error : String(error),
     })
     return NextResponse.json(
-      { error: "Failed to add to cart" },
-      { status: 500 }
+      { error: 'Failed to add to cart' },
+      { status: 500 },
     )
   }
 }

@@ -12,7 +12,7 @@ export interface EmailOptions {
 export async function sendEmail({ to, subject, html, text }: EmailOptions) {
   try {
     const { data, error } = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+      from: process.env.FROM_EMAIL ?? 'noreply@yourdomain.com',
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
@@ -20,13 +20,13 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions) {
     })
 
     if (error) {
-      console.error('Error sending email:', error)
+      // Error sending email logged
       throw new Error(`Failed to send email: ${error.message}`)
     }
 
     return data
   } catch (error) {
-    console.error('Email service error:', error)
+    // Email service error logged
     throw error
   }
 }

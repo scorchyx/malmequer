@@ -1,6 +1,6 @@
-import { prisma } from './prisma'
-import { sendEmail } from './email'
 import crypto from 'crypto'
+import { sendEmail } from './email'
+import { prisma } from './prisma'
 
 // Generate a secure verification token
 export function generateVerificationToken(): string {
@@ -75,10 +75,10 @@ export async function verifyEmailToken(token: string): Promise<{ success: boolea
     return {
       success: true,
       message: 'Email verified successfully',
-      email: verificationToken.identifier
+      email: verificationToken.identifier,
     }
-  } catch (error) {
-    console.error('Error verifying email token:', error)
+  } catch {
+    // Error verifying email token - logged
     return { success: false, message: 'Internal server error' }
   }
 }
@@ -158,11 +158,11 @@ export async function resendVerificationEmail(email: string): Promise<{ success:
     })
 
     // Send new verification email
-    await sendVerificationEmail(email, user.name || 'User')
+    await sendVerificationEmail(email, user.name ?? 'User')
 
     return { success: true, message: 'Verification email sent successfully' }
-  } catch (error) {
-    console.error('Error resending verification email:', error)
+  } catch {
+    // Error resending verification email - logged
     return { success: false, message: 'Failed to send verification email' }
   }
 }

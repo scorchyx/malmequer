@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
 import { alertManager } from '@/lib/alerts'
+import { getCurrentUser } from '@/lib/auth'
 import { log } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
@@ -9,13 +9,13 @@ export async function GET(request: NextRequest) {
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },
-        { status: 403 }
+        { status: 403 },
       )
     }
 
     const { searchParams } = new URL(request.url)
-    const type = searchParams.get('type') || 'active'
-    const hours = parseInt(searchParams.get('hours') || '24')
+    const type = searchParams.get('type') ?? 'active'
+    const hours = parseInt(searchParams.get('hours') ?? '24')
 
     let alerts
     if (type === 'active') {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     } else {
       return NextResponse.json(
         { error: 'Invalid alert type. Use "active" or "history"' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -33,21 +33,21 @@ export async function GET(request: NextRequest) {
       adminUserId: user.id,
       type,
       count: alerts.length,
-      hours: type === 'history' ? hours : undefined
+      hours: type === 'history' ? hours : undefined,
     })
 
     return NextResponse.json({
       alerts,
       type,
       count: alerts.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
 
   } catch (error) {
     log.error('Failed to retrieve alerts', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Failed to retrieve alerts' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },
-        { status: 403 }
+        { status: 403 },
       )
     }
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (!action || !alertName) {
       return NextResponse.json(
         { error: 'Missing required fields: action, alertName' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         log.info('Alert enabled', {
           adminUserId: user.id,
           alertName,
-          action: 'enable'
+          action: 'enable',
         })
         break
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         log.info('Alert disabled', {
           adminUserId: user.id,
           alertName,
-          action: 'disable'
+          action: 'disable',
         })
         break
 
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         if (!config) {
           return NextResponse.json(
             { error: 'Config is required for configure action' },
-            { status: 400 }
+            { status: 400 },
           )
         }
         alertManager.configureAlert(alertName, config)
@@ -103,14 +103,14 @@ export async function POST(request: NextRequest) {
           adminUserId: user.id,
           alertName,
           action: 'configure',
-          config
+          config,
         })
         break
 
       default:
         return NextResponse.json(
           { error: 'Invalid action. Use "enable", "disable", or "configure"' },
-          { status: 400 }
+          { status: 400 },
         )
     }
 
@@ -118,14 +118,14 @@ export async function POST(request: NextRequest) {
       success: true,
       action,
       alertName,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
 
   } catch (error) {
     log.error('Failed to manage alert', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Failed to manage alert' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

@@ -1,36 +1,36 @@
-import { GET, POST } from '@/app/api/categories/route'
 import { NextRequest } from 'next/server'
+import { GET, POST } from '@/app/api/categories/route'
 
 // Mock dependencies
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     category: {
       findMany: jest.fn(),
-      create: jest.fn()
-    }
-  }
+      create: jest.fn(),
+    },
+  },
 }))
 
 jest.mock('@/lib/cache', () => ({
   cache: {
     get: jest.fn(),
     set: jest.fn(),
-    del: jest.fn()
+    del: jest.fn(),
   },
   CacheKeys: {
-    categories: () => 'categories:all'
+    categories: () => 'categories:all',
   },
   CacheTTL: {
-    LONG: 900
-  }
+    LONG: 900,
+  },
 }))
 
 jest.mock('@/lib/logger', () => ({
   log: {
     info: jest.fn(),
     error: jest.fn(),
-    businessEvent: jest.fn()
-  }
+    businessEvent: jest.fn(),
+  },
 }))
 
 jest.mock('@/lib/validation', () => ({
@@ -39,10 +39,10 @@ jest.mock('@/lib/validation', () => ({
     data: {
       name: 'Test Category',
       slug: 'test-category',
-      description: 'Test description'
-    }
+      description: 'Test description',
+    },
   })),
-  createCategorySchema: {}
+  createCategorySchema: {},
 }))
 
 describe('/api/categories', () => {
@@ -54,7 +54,7 @@ describe('/api/categories', () => {
     it('should return cached categories when available', async () => {
       const mockCategories = [
         { id: '1', name: 'Category 1', slug: 'category-1' },
-        { id: '2', name: 'Category 2', slug: 'category-2' }
+        { id: '2', name: 'Category 2', slug: 'category-2' },
       ]
 
       const { cache } = require('@/lib/cache')
@@ -76,8 +76,8 @@ describe('/api/categories', () => {
           slug: 'category-1',
           parent: null,
           children: [],
-          _count: { products: 5 }
-        }
+          _count: { products: 5 },
+        },
       ]
 
       const { cache } = require('@/lib/cache')
@@ -99,7 +99,7 @@ describe('/api/categories', () => {
             select: { products: true },
           },
         },
-        orderBy: { name: "asc" },
+        orderBy: { name: 'asc' },
       })
       expect(cache.set).toHaveBeenCalledWith('categories:all', mockCategories, 900)
     })
@@ -127,7 +127,7 @@ describe('/api/categories', () => {
         slug: 'test-category',
         description: 'Test description',
         parent: null,
-        children: []
+        children: [],
       }
 
       const { prisma } = require('@/lib/prisma')
@@ -140,11 +140,11 @@ describe('/api/categories', () => {
         body: JSON.stringify({
           name: 'Test Category',
           slug: 'test-category',
-          description: 'Test description'
+          description: 'Test description',
         }),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
       const response = await POST(request)
@@ -161,16 +161,16 @@ describe('/api/categories', () => {
         success: false,
         response: new Response(JSON.stringify({
           error: 'Validation failed',
-          details: [{ field: 'name', message: 'Name is required' }]
-        }), { status: 400 })
+          details: [{ field: 'name', message: 'Name is required' }],
+        }), { status: 400 }),
       }))
 
       const request = new NextRequest('http://localhost:3000/api/categories', {
         method: 'POST',
         body: JSON.stringify({}),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
       const response = await POST(request)
@@ -188,11 +188,11 @@ describe('/api/categories', () => {
         method: 'POST',
         body: JSON.stringify({
           name: 'Test Category',
-          slug: 'test-category'
+          slug: 'test-category',
         }),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
       const response = await POST(request)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { addSecurityHeaders } from '@/lib/security-headers'
 import { generalRateLimit, authRateLimit } from '@/lib/rate-limiter'
+import { addSecurityHeaders } from '@/lib/security-headers'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl

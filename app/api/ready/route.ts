@@ -16,7 +16,7 @@ export async function GET() {
     const requiredEnvVars = [
       'DATABASE_URL',
       'NEXTAUTH_SECRET',
-      'NEXTAUTH_URL'
+      'NEXTAUTH_URL',
     ]
 
     const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar])
@@ -24,20 +24,20 @@ export async function GET() {
     if (missingEnvVars.length > 0) {
       return NextResponse.json({
         status: 'not_ready',
-        error: `Missing required environment variables: ${missingEnvVars.join(', ')}`
+        error: `Missing required environment variables: ${missingEnvVars.join(', ')}`,
       }, { status: 503 })
     }
 
     return NextResponse.json({
       status: 'ready',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
 
   } catch (error) {
     return NextResponse.json({
       status: 'not_ready',
       error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     }, { status: 503 })
   }
 }

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { sendVerificationEmail } from "@/lib/verification"
-import { validateRequestBody, registerSchema } from "@/lib/validation"
-import { log } from "@/lib/logger"
-import bcrypt from "bcryptjs"
+import bcrypt from 'bcryptjs'
+import { NextRequest, NextResponse } from 'next/server'
+import { log } from '@/lib/logger'
+import { prisma } from '@/lib/prisma'
+import { validateRequestBody, registerSchema } from '@/lib/validation'
+import { sendVerificationEmail } from '@/lib/verification'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,12 +24,12 @@ export async function POST(request: NextRequest) {
       log.securityEvent('Registration attempt with existing email', {
         event: 'registration_duplicate_email',
         severity: 'low',
-        ip: request.ip,
-        userAgent: request.headers.get('user-agent') || 'unknown'
+        ip: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown',
+        userAgent: request.headers.get('user-agent') ?? 'unknown',
       })
       return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
+        { error: 'User already exists' },
+        { status: 400 },
       )
     }
 
@@ -50,38 +50,39 @@ export async function POST(request: NextRequest) {
       event: 'user_registration',
       userId: user.id,
       entityType: 'user',
-      entityId: user.id
+      entityId: user.id,
     })
 
     // Send email verification (don't wait for it to complete)
-    sendVerificationEmail(user.email, user.name).catch(error =>
+    sendVerificationEmail(user.email, user.name ?? '').catch(error =>
       log.error('Failed to send verification email', {
         error,
         userId: user.id,
-        email: user.email
-      })
+        email: user.email,
+      }),
     )
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user
+     
+    const { password: _password, ...userWithoutPassword } = user
 
     return NextResponse.json(
       {
-        message: "User created successfully. Please check your email to verify your account.",
+        message: 'User created successfully. Please check your email to verify your account.',
         user: userWithoutPassword,
-        emailVerificationSent: true
+        emailVerificationSent: true,
       },
-      { status: 201 }
+      { status: 201 },
     )
   } catch (error) {
     log.error('User registration failed', {
-      error,
-      ip: request.ip,
-      userAgent: request.headers.get('user-agent') || 'unknown'
+      error: error instanceof Error ? error.message : String(error),
+      ip: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown',
+      userAgent: request.headers.get('user-agent') ?? 'unknown',
     })
     return NextResponse.json(
-      { error: "Failed to create user" },
-      { status: 500 }
+      { error: 'Failed to create user' },
+      { status: 500 },
     )
   }
 }

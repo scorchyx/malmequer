@@ -1,19 +1,18 @@
 import { GET } from '@/app/api/health/route'
-import { NextRequest } from 'next/server'
 
 // Mock dependencies
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }])
-  }
+    $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+  },
 }))
 
 jest.mock('@/lib/cache', () => ({
   cache: {
     set: jest.fn().mockResolvedValue(true),
     get: jest.fn().mockResolvedValue('test-value'),
-    del: jest.fn().mockResolvedValue(true)
-  }
+    del: jest.fn().mockResolvedValue(true),
+  },
 }))
 
 jest.mock('@/lib/logger', () => ({
@@ -21,8 +20,8 @@ jest.mock('@/lib/logger', () => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn()
-  }
+    debug: jest.fn(),
+  },
 }))
 
 describe('/api/health', () => {
@@ -31,7 +30,6 @@ describe('/api/health', () => {
   })
 
   it('should return healthy status when all checks pass', async () => {
-    const request = new NextRequest('http://localhost:3000/api/health')
     const response = await GET()
     const data = await response.json()
 

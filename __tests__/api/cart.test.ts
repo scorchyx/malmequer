@@ -1,5 +1,5 @@
-import { GET, POST } from '@/app/api/cart/route'
 import { NextRequest } from 'next/server'
+import { GET, POST } from '@/app/api/cart/route'
 
 // Mock dependencies
 jest.mock('@/lib/prisma', () => ({
@@ -8,34 +8,34 @@ jest.mock('@/lib/prisma', () => ({
       findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
-      update: jest.fn()
-    }
-  }
+      update: jest.fn(),
+    },
+  },
 }))
 
 jest.mock('@/lib/auth', () => ({
-  getCurrentUser: jest.fn()
+  getCurrentUser: jest.fn(),
 }))
 
 jest.mock('@/lib/cache', () => ({
   cache: {
     get: jest.fn(),
     set: jest.fn(),
-    del: jest.fn()
+    del: jest.fn(),
   },
   CacheKeys: {
-    userCart: (userId: string) => `cart:user:${userId}`
+    userCart: (userId: string) => `cart:user:${userId}`,
   },
   CacheTTL: {
-    SHORT: 60
-  }
+    SHORT: 60,
+  },
 }))
 
 jest.mock('@/lib/logger', () => ({
   log: {
     error: jest.fn(),
-    businessEvent: jest.fn()
-  }
+    businessEvent: jest.fn(),
+  },
 }))
 
 jest.mock('@/lib/validation', () => ({
@@ -43,10 +43,10 @@ jest.mock('@/lib/validation', () => ({
     success: true,
     data: {
       productId: 'product-1',
-      quantity: 2
-    }
+      quantity: 2,
+    },
   })),
-  addToCartSchema: {}
+  addToCartSchema: {},
 }))
 
 describe('/api/cart', () => {
@@ -54,7 +54,7 @@ describe('/api/cart', () => {
     id: 'user-1',
     email: 'test@example.com',
     name: 'Test User',
-    role: 'USER'
+    role: 'USER',
   }
 
   beforeEach(() => {
@@ -80,7 +80,7 @@ describe('/api/cart', () => {
       const mockCart = {
         items: [],
         total: 0,
-        count: 0
+        count: 0,
       }
 
       getCurrentUser.mockResolvedValueOnce(mockUser)
@@ -108,9 +108,9 @@ describe('/api/cart', () => {
             name: 'Test Product',
             price: 10.99,
             images: [{ url: 'image.jpg' }],
-            category: { name: 'Category 1' }
-          }
-        }
+            category: { name: 'Category 1' },
+          },
+        },
       ]
 
       getCurrentUser.mockResolvedValueOnce(mockUser)
@@ -152,7 +152,7 @@ describe('/api/cart', () => {
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
         body: JSON.stringify({ productId: 'product-1', quantity: 2 }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       })
 
       const response = await POST(request)
@@ -173,8 +173,8 @@ describe('/api/cart', () => {
         product: {
           id: 'product-1',
           name: 'Test Product',
-          images: [{ url: 'image.jpg' }]
-        }
+          images: [{ url: 'image.jpg' }],
+        },
       }
 
       getCurrentUser.mockResolvedValueOnce(mockUser)
@@ -184,7 +184,7 @@ describe('/api/cart', () => {
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
         body: JSON.stringify({ productId: 'product-1', quantity: 2 }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       })
 
       const response = await POST(request)
@@ -201,7 +201,7 @@ describe('/api/cart', () => {
 
       const existingItem = {
         id: 'item-1',
-        quantity: 1
+        quantity: 1,
       }
 
       const updatedItem = {
@@ -210,8 +210,8 @@ describe('/api/cart', () => {
         product: {
           id: 'product-1',
           name: 'Test Product',
-          images: [{ url: 'image.jpg' }]
-        }
+          images: [{ url: 'image.jpg' }],
+        },
       }
 
       getCurrentUser.mockResolvedValueOnce(mockUser)
@@ -221,7 +221,7 @@ describe('/api/cart', () => {
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
         body: JSON.stringify({ productId: 'product-1', quantity: 2 }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       })
 
       const response = await POST(request)
@@ -235,7 +235,7 @@ describe('/api/cart', () => {
         include: {
           product: {
             include: {
-              images: { take: 1, orderBy: { order: "asc" } },
+              images: { take: 1, orderBy: { order: 'asc' } },
             },
           },
         },
@@ -251,14 +251,14 @@ describe('/api/cart', () => {
         success: false,
         response: new Response(JSON.stringify({
           error: 'Validation failed',
-          details: [{ field: 'quantity', message: 'Quantity must be positive' }]
-        }), { status: 400 })
+          details: [{ field: 'quantity', message: 'Quantity must be positive' }],
+        }), { status: 400 }),
       }))
 
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
         body: JSON.stringify({ productId: 'product-1', quantity: 0 }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       })
 
       const response = await POST(request)

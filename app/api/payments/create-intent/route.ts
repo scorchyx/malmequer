@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { stripe } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
 
     if (!orderId) {
       return NextResponse.json(
-        { error: "Order ID is required" },
-        { status: 400 }
+        { error: 'Order ID is required' },
+        { status: 400 },
       )
     }
 
@@ -37,15 +37,15 @@ export async function POST(request: NextRequest) {
 
     if (!order) {
       return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
+        { error: 'Order not found' },
+        { status: 404 },
       )
     }
 
     if (order.userId !== user.id) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
+        { error: 'Unauthorized' },
+        { status: 403 },
       )
     }
 
@@ -82,10 +82,10 @@ export async function POST(request: NextRequest) {
       paymentIntentId: paymentIntent.id,
     })
   } catch (error) {
-    console.error("Error creating payment intent:", error)
+    console.error('Error creating payment intent:', error)
     return NextResponse.json(
-      { error: "Failed to create payment intent" },
-      { status: 500 }
+      { error: 'Failed to create payment intent' },
+      { status: 500 },
     )
   }
 }

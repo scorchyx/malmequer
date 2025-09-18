@@ -11,12 +11,12 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: blob:",
       "connect-src 'self' https://api.stripe.com https://uploads.stripe.com",
-      "frame-src https://js.stripe.com https://hooks.stripe.com",
+      'frame-src https://js.stripe.com https://hooks.stripe.com',
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      "frame-ancestors 'none'"
-    ].join('; ')
+      "frame-ancestors 'none'",
+    ].join('; '),
   )
 
   // Security headers
@@ -28,7 +28,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   // HTTPS enforcement
   response.headers.set(
     'Strict-Transport-Security',
-    'max-age=31536000; includeSubDomains; preload'
+    'max-age=31536000; includeSubDomains; preload',
   )
 
   // Remove server information
@@ -42,8 +42,8 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
       'camera=()',
       'microphone=()',
       'geolocation=()',
-      'interest-cohort=()'
-    ].join(', ')
+      'interest-cohort=()',
+    ].join(', '),
   )
 
   return response

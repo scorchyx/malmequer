@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
 
     if (!productId) {
       return NextResponse.json(
-        { error: "Product ID is required" },
-        { status: 400 }
+        { error: 'Product ID is required' },
+        { status: 400 },
       )
     }
 
@@ -36,23 +36,23 @@ export async function POST(request: NextRequest) {
 
     if (!wishlistItem) {
       return NextResponse.json(
-        { error: "Product not found in wishlist" },
-        { status: 404 }
+        { error: 'Product not found in wishlist' },
+        { status: 404 },
       )
     }
 
     // Check if product is available
-    if (wishlistItem.product.status !== "ACTIVE") {
+    if (wishlistItem.product.status !== 'ACTIVE') {
       return NextResponse.json(
-        { error: "Product is not available" },
-        { status: 400 }
+        { error: 'Product is not available' },
+        { status: 400 },
       )
     }
 
     if (wishlistItem.product.inventory < quantity) {
       return NextResponse.json(
-        { error: "Insufficient inventory" },
-        { status: 400 }
+        { error: 'Insufficient inventory' },
+        { status: 400 },
       )
     }
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
           include: {
             product: {
               include: {
-                images: { take: 1, orderBy: { order: "asc" } },
+                images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
           },
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
           include: {
             product: {
               include: {
-                images: { take: 1, orderBy: { order: "asc" } },
+                images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
           },
@@ -109,14 +109,14 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      message: "Product moved to cart successfully",
+      message: 'Product moved to cart successfully',
       cartItem: result,
     })
   } catch (error) {
-    console.error("Error moving to cart:", error)
+    console.error('Error moving to cart:', error)
     return NextResponse.json(
-      { error: "Failed to move product to cart" },
-      { status: 500 }
+      { error: 'Failed to move product to cart' },
+      { status: 500 },
     )
   }
 }

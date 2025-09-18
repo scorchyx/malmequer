@@ -1,20 +1,20 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
     // Get or create notification settings for user
     let settings = await prisma.notificationSettings.findUnique({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
 
     if (!settings) {
@@ -28,16 +28,16 @@ export async function GET() {
           stockAlerts: false,
           promotionalEmails: false,
           accountUpdates: true,
-        }
+        },
       })
     }
 
     return NextResponse.json(settings)
   } catch (error) {
-    console.error("Error fetching notification settings:", error)
+    console.error('Error fetching notification settings:', error)
     return NextResponse.json(
-      { error: "Failed to fetch notification settings" },
-      { status: 500 }
+      { error: 'Failed to fetch notification settings' },
+      { status: 500 },
     )
   }
 }
@@ -47,8 +47,8 @@ export async function PUT(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -76,14 +76,14 @@ export async function PUT(request: NextRequest) {
       if (value !== undefined && typeof value !== 'boolean') {
         return NextResponse.json(
           { error: `${key} must be a boolean` },
-          { status: 400 }
+          { status: 400 },
         )
       }
     }
 
     // Get existing settings or create default ones
     let settings = await prisma.notificationSettings.findUnique({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
 
     if (!settings) {
@@ -97,7 +97,7 @@ export async function PUT(request: NextRequest) {
           stockAlerts: stockAlerts ?? false,
           promotionalEmails: promotionalEmails ?? false,
           accountUpdates: accountUpdates ?? true,
-        }
+        },
       })
     } else {
       // Update existing settings (only update provided fields)
@@ -111,19 +111,19 @@ export async function PUT(request: NextRequest) {
 
       settings = await prisma.notificationSettings.update({
         where: { userId: user.id },
-        data: updateData
+        data: updateData,
       })
     }
 
     return NextResponse.json({
-      message: "Notification settings updated successfully",
-      settings
+      message: 'Notification settings updated successfully',
+      settings,
     })
   } catch (error) {
-    console.error("Error updating notification settings:", error)
+    console.error('Error updating notification settings:', error)
     return NextResponse.json(
-      { error: "Failed to update notification settings" },
-      { status: 500 }
+      { error: 'Failed to update notification settings' },
+      { status: 500 },
     )
   }
 }

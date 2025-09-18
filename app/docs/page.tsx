@@ -16,7 +16,7 @@ export default function ApiDocsPage() {
         setSpec(data)
         setLoading(false)
       })
-      .catch(err => {
+      .catch(_err => {
         setError('Failed to load API documentation')
         setLoading(false)
       })
@@ -60,7 +60,7 @@ export default function ApiDocsPage() {
       {spec && (
         <SwaggerUI
           spec={spec}
-          docExpansion="tag"
+          docExpansion="list"
           defaultModelsExpandDepth={2}
           defaultModelExpandDepth={2}
           displayOperationId={false}
@@ -70,7 +70,7 @@ export default function ApiDocsPage() {
             return request
           }}
           onComplete={() => {
-            console.log('Swagger UI loaded successfully')
+            // Swagger UI loaded successfully
           }}
         />
       )}

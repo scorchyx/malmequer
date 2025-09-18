@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { stripe } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user || user.role !== "ADMIN") {
+    if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
 
     if (!paymentId) {
       return NextResponse.json(
-        { error: "Payment ID is required" },
-        { status: 400 }
+        { error: 'Payment ID is required' },
+        { status: 400 },
       )
     }
 
@@ -30,15 +30,15 @@ export async function POST(request: NextRequest) {
 
     if (!payment || !payment.stripePaymentId) {
       return NextResponse.json(
-        { error: "Payment not found" },
-        { status: 404 }
+        { error: 'Payment not found' },
+        { status: 404 },
       )
     }
 
-    if (payment.status !== "PAID") {
+    if (payment.status !== 'PAID') {
       return NextResponse.json(
-        { error: "Payment cannot be refunded" },
-        { status: 400 }
+        { error: 'Payment cannot be refunded' },
+        { status: 400 },
       )
     }
 
@@ -46,11 +46,11 @@ export async function POST(request: NextRequest) {
     const refund = await stripe.refunds.create({
       payment_intent: payment.stripePaymentId,
       amount: amount ? Math.round(Number(amount) * 100) : undefined, // Convert to cents
-      reason: reason || "requested_by_customer",
+      reason: reason ?? 'requested_by_customer',
       metadata: {
         orderId: payment.orderId,
         userId: user.id,
-        adminReason: reason || "Admin refund",
+        adminReason: reason ?? 'Admin refund',
       },
     })
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     await prisma.payment.update({
       where: { id: paymentId },
       data: {
-        status: "REFUNDED",
+        status: 'REFUNDED',
         metadata: {
           ...(payment.metadata as any),
           refundId: refund.id,
@@ -72,16 +72,16 @@ export async function POST(request: NextRequest) {
     await prisma.order.update({
       where: { id: payment.orderId },
       data: {
-        paymentStatus: "REFUNDED",
-        status: "REFUNDED",
+        paymentStatus: 'REFUNDED',
+        status: 'REFUNDED',
       },
     })
 
     // Log admin activity
     await prisma.adminActivity.create({
       data: {
-        action: "REFUND_PAYMENT",
-        entityType: "Payment",
+        action: 'REFUND_PAYMENT',
+        entityType: 'Payment',
         entityId: paymentId,
         description: `Refunded ${refund.amount / 100}€ for order ${payment.order.orderNumber}`,
         userId: user.id,
@@ -99,10 +99,10 @@ export async function POST(request: NextRequest) {
       status: refund.status,
     })
   } catch (error) {
-    console.error("Error processing refund:", error)
+    console.error('Error processing refund:', error)
     return NextResponse.json(
-      { error: "Failed to process refund" },
-      { status: 500 }
+      { error: 'Failed to process refund' },
+      { status: 500 },
     )
   }
 }

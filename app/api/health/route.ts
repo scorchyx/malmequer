@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { cache } from '@/lib/cache'
 import { log } from '@/lib/logger'
+import { prisma } from '@/lib/prisma'
 
 interface HealthCheckResult {
   status: 'healthy' | 'unhealthy' | 'degraded'
@@ -42,30 +42,30 @@ export async function GET() {
       status: overallStatus,
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      version: process.env.npm_package_version || '1.0.0',
-      environment: process.env.NODE_ENV || 'development',
-      checks
+      version: process.env.npm_package_version ?? '1.0.0',
+      environment: process.env.NODE_ENV ?? 'development',
+      checks,
     }
 
     // Log health check
     log.info('Health check performed', {
       status: overallStatus,
       duration: Date.now() - startTime,
-      type: 'health_check'
+      type: 'health_check',
     })
 
     const statusCode = overallStatus === 'healthy' ? 200 :
-                      overallStatus === 'degraded' ? 200 : 503
+      overallStatus === 'degraded' ? 200 : 503
 
     return NextResponse.json(healthResult, { status: statusCode })
 
   } catch (error) {
-    log.error('Health check failed', { error })
+    log.error('Health check failed', { error: error instanceof Error ? error.message : String(error) })
 
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: 'Health check failed'
+      error: 'Health check failed',
     }, { status: 503 })
   }
 }
@@ -74,7 +74,7 @@ async function performHealthChecks() {
   const checks = {
     database: await checkDatabase(),
     redis: await checkRedis(),
-    memory: checkMemory()
+    memory: checkMemory(),
   }
 
   return checks
@@ -89,13 +89,13 @@ async function checkDatabase() {
 
     return {
       status: 'healthy' as const,
-      responseTime: Date.now() - startTime
+      responseTime: Date.now() - startTime,
     }
   } catch (error) {
     return {
       status: 'unhealthy' as const,
       responseTime: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Database connection failed'
+      error: error instanceof Error ? error.message : 'Database connection failed',
     }
   }
 }
@@ -119,13 +119,13 @@ async function checkRedis() {
 
     return {
       status: 'healthy' as const,
-      responseTime: Date.now() - startTime
+      responseTime: Date.now() - startTime,
     }
   } catch (error) {
     return {
       status: 'unhealthy' as const,
       responseTime: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Redis connection failed'
+      error: error instanceof Error ? error.message : 'Redis connection failed',
     }
   }
 }
@@ -137,15 +137,15 @@ function checkMemory() {
   const percentage = (usedMem / totalMem) * 100
 
   // Consider memory unhealthy if usage is above 90%
-  const status = percentage > 90 ? 'unhealthy' : 'healthy'
+  const status: 'healthy' | 'unhealthy' = percentage > 90 ? 'unhealthy' : 'healthy'
 
   return {
-    status: status as const,
+    status,
     usage: {
       used: Math.round(usedMem / 1024 / 1024), // MB
       total: Math.round(totalMem / 1024 / 1024), // MB
-      percentage: Math.round(percentage * 100) / 100
-    }
+      percentage: Math.round(percentage * 100) / 100,
+    },
   }
 }
 

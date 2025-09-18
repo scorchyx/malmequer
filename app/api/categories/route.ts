@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { validateRequestBody, createCategorySchema } from "@/lib/validation"
-import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
-import { log } from "@/lib/logger"
+import { NextRequest, NextResponse } from 'next/server'
+import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
+import { log } from '@/lib/logger'
+import { prisma } from '@/lib/prisma'
+import { validateRequestBody, createCategorySchema } from '@/lib/validation'
 
 export async function GET() {
   try {
@@ -20,7 +20,7 @@ export async function GET() {
           select: { products: true },
         },
       },
-      orderBy: { name: "asc" },
+      orderBy: { name: 'asc' },
     })
 
     // Cache categories for 15 minutes
@@ -28,15 +28,15 @@ export async function GET() {
 
     log.info('Categories fetched successfully', {
       count: categories.length,
-      type: 'api_request'
+      type: 'api_request',
     })
 
     return NextResponse.json(categories)
   } catch (error) {
     log.error('Failed to fetch categories', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
-      { error: "Failed to fetch categories" },
-      { status: 500 }
+      { error: 'Failed to fetch categories' },
+      { status: 500 },
     )
   }
 }
@@ -72,15 +72,15 @@ export async function POST(request: NextRequest) {
       event: 'category_creation',
       entityType: 'category',
       entityId: category.id,
-      details: { name, slug }
+      details: { name, slug },
     })
 
     return NextResponse.json(category, { status: 201 })
   } catch (error) {
-    log.error('Failed to create category', { error })
+    log.error('Failed to create category', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
-      { error: "Failed to create category" },
-      { status: 500 }
+      { error: 'Failed to create category' },
+      { status: 500 },
     )
   }
 }

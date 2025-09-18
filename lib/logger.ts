@@ -12,14 +12,14 @@ export const LOG_LEVELS = {
 
 // Create logger instance
 const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL ?? 'info',
   transport: process.env.NODE_ENV === 'development' ? {
     target: 'pino-pretty',
     options: {
       colorize: true,
       ignore: 'pid,hostname',
       translateTime: 'yyyy-mm-dd HH:MM:ss.l',
-    }
+    },
   } : undefined,
   formatters: {
     level: (label) => {
@@ -45,7 +45,7 @@ export interface LogContext {
   statusCode?: number
   duration?: number
   error?: Error | string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 // Logger service with context
@@ -119,7 +119,7 @@ export class Logger {
   }): void {
     this.info(message, {
       ...context,
-      type: 'api_request'
+      type: 'api_request',
     })
   }
 
@@ -130,11 +130,11 @@ export class Logger {
     userId?: string
     ip?: string
     userAgent?: string
-    details?: any
+    details?: unknown
   }): void {
     this.warn(message, {
       ...context,
-      type: 'security_event'
+      type: 'security_event',
     })
   }
 
@@ -144,11 +144,11 @@ export class Logger {
     userId?: string
     entityType?: string
     entityId?: string
-    details?: any
+    details?: unknown
   }): void {
     this.info(message, {
       ...context,
-      type: 'business_event'
+      type: 'business_event',
     })
   }
 
@@ -162,7 +162,7 @@ export class Logger {
   }): void {
     this.debug(message, {
       ...context,
-      type: 'db_operation'
+      type: 'db_operation',
     })
   }
 
@@ -178,12 +178,12 @@ export class Logger {
     if (context.success) {
       this.info(message, {
         ...context,
-        type: 'external_service'
+        type: 'external_service',
       })
     } else {
       this.error(message, {
         ...context,
-        type: 'external_service'
+        type: 'external_service',
       })
     }
   }
@@ -194,6 +194,7 @@ export const log = Logger.getInstance()
 
 // Middleware for request logging
 export function createRequestLogger() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (req: any, res: any, next: any) => {
     const startTime = Date.now()
     const requestId = Math.random().toString(36).substring(7)
@@ -207,23 +208,23 @@ export function createRequestLogger() {
       method: req.method,
       url: req.url,
       userAgent: req.headers['user-agent'],
-      ip: req.ip || req.connection.remoteAddress,
-      type: 'request_start'
+      ip: req.ip ?? req.connection.remoteAddress,
+      type: 'request_start',
     })
 
     // Override res.end to capture response
     const originalEnd = res.end
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     res.end = function(chunk: any, encoding: any) {
       const duration = Date.now() - startTime
 
       log.apiRequest('Request completed', {
-        requestId,
         method: req.method,
         url: req.url,
         statusCode: res.statusCode,
         duration,
-        ip: req.ip || req.connection.remoteAddress,
-        userAgent: req.headers['user-agent']
+        ip: req.ip ?? req.connection.remoteAddress,
+        userAgent: req.headers['user-agent'],
       })
 
       return originalEnd.call(this, chunk, encoding)

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server"
-import { resendVerificationEmail } from "@/lib/verification"
+import { NextRequest, NextResponse } from 'next/server'
+import { resendVerificationEmail } from '@/lib/verification'
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,8 +7,8 @@ export async function POST(request: NextRequest) {
 
     if (!email) {
       return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
+        { error: 'Email is required' },
+        { status: 400 },
       )
     }
 
@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
+        { error: 'Invalid email format' },
+        { status: 400 },
       )
     }
 
@@ -26,19 +26,19 @@ export async function POST(request: NextRequest) {
     if (result.success) {
       return NextResponse.json({
         success: true,
-        message: result.message
+        message: result.message,
       })
     } else {
       return NextResponse.json(
         { error: result.message },
-        { status: 400 }
+        { status: 400 },
       )
     }
   } catch (error) {
-    console.error("Error resending verification email:", error)
+    console.error('Error resending verification email:', error)
     return NextResponse.json(
-      { error: "Failed to resend verification email" },
-      { status: 500 }
+      { error: 'Failed to resend verification email' },
+      { status: 500 },
     )
   }
 }

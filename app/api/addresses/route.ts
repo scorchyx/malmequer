@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -24,16 +24,16 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: [
         { isDefault: 'desc' }, // Default addresses first
-        { createdAt: 'desc' }   // Most recent first
-      ]
+        { createdAt: 'desc' },   // Most recent first
+      ],
     })
 
     return NextResponse.json(addresses)
   } catch (error) {
-    console.error("Error fetching addresses:", error)
+    console.error('Error fetching addresses:', error)
     return NextResponse.json(
-      { error: "Failed to fetch addresses" },
-      { status: 500 }
+      { error: 'Failed to fetch addresses' },
+      { status: 500 },
     )
   }
 }
@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -61,22 +61,22 @@ export async function POST(request: NextRequest) {
       country,
       phone,
       vatNumber,
-      isDefault = false
+      isDefault = false,
     } = await request.json()
 
     // Validate required fields
     if (!firstName || !lastName || !addressLine1 || !city || !state || !postalCode || !country) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
+        { error: 'Missing required fields' },
+        { status: 400 },
       )
     }
 
     // Validate VAT number for billing addresses
     if (type === 'BILLING' && !vatNumber) {
       return NextResponse.json(
-        { error: "VAT number is required for billing addresses" },
-        { status: 400 }
+        { error: 'VAT number is required for billing addresses' },
+        { status: 400 },
       )
     }
 
@@ -86,11 +86,11 @@ export async function POST(request: NextRequest) {
         where: {
           userId: user.id,
           type: type,
-          isDefault: true
+          isDefault: true,
         },
         data: {
-          isDefault: false
-        }
+          isDefault: false,
+        },
       })
     }
 
@@ -110,16 +110,16 @@ export async function POST(request: NextRequest) {
         phone,
         vatNumber: type === 'BILLING' ? vatNumber : null,
         isDefault,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     })
 
     return NextResponse.json(address, { status: 201 })
   } catch (error) {
-    console.error("Error creating address:", error)
+    console.error('Error creating address:', error)
     return NextResponse.json(
-      { error: "Failed to create address" },
-      { status: 500 }
+      { error: 'Failed to create address' },
+      { status: 500 },
     )
   }
 }

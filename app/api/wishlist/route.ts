@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getCurrentUser } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -17,7 +17,7 @@ export async function GET() {
       include: {
         product: {
           include: {
-            images: { take: 1, orderBy: { order: "asc" } },
+            images: { take: 1, orderBy: { order: 'asc' } },
             category: true,
             _count: {
               select: { reviews: true },
@@ -25,7 +25,7 @@ export async function GET() {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     })
 
     // Calculate average rating for each product
@@ -40,10 +40,10 @@ export async function GET() {
           ...item,
           product: {
             ...item.product,
-            averageRating: avgRating._avg.rating || 0,
+            averageRating: avgRating._avg.rating ?? 0,
           },
         }
-      })
+      }),
     )
 
     return NextResponse.json({
@@ -51,10 +51,10 @@ export async function GET() {
       count: wishlistItems.length,
     })
   } catch (error) {
-    console.error("Error fetching wishlist:", error)
+    console.error('Error fetching wishlist:', error)
     return NextResponse.json(
-      { error: "Failed to fetch wishlist" },
-      { status: 500 }
+      { error: 'Failed to fetch wishlist' },
+      { status: 500 },
     )
   }
 }
@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
 
     if (!productId) {
       return NextResponse.json(
-        { error: "Product ID is required" },
-        { status: 400 }
+        { error: 'Product ID is required' },
+        { status: 400 },
       )
     }
 
@@ -85,15 +85,15 @@ export async function POST(request: NextRequest) {
 
     if (!product) {
       return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
+        { error: 'Product not found' },
+        { status: 404 },
       )
     }
 
-    if (product.status !== "ACTIVE") {
+    if (product.status !== 'ACTIVE') {
       return NextResponse.json(
-        { error: "Product is not available" },
-        { status: 400 }
+        { error: 'Product is not available' },
+        { status: 400 },
       )
     }
 
@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
 
     if (existingItem) {
       return NextResponse.json(
-        { error: "Product already in wishlist" },
-        { status: 400 }
+        { error: 'Product already in wishlist' },
+        { status: 400 },
       )
     }
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       include: {
         product: {
           include: {
-            images: { take: 1, orderBy: { order: "asc" } },
+            images: { take: 1, orderBy: { order: 'asc' } },
             category: true,
           },
         },
@@ -132,10 +132,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(wishlistItem, { status: 201 })
   } catch (error) {
-    console.error("Error adding to wishlist:", error)
+    console.error('Error adding to wishlist:', error)
     return NextResponse.json(
-      { error: "Failed to add to wishlist" },
-      { status: 500 }
+      { error: 'Failed to add to wishlist' },
+      { status: 500 },
     )
   }
 }
@@ -145,18 +145,18 @@ export async function DELETE(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: 'Unauthorized' },
+        { status: 401 },
       )
     }
 
     const { searchParams } = new URL(request.url)
-    const productId = searchParams.get("productId")
+    const productId = searchParams.get('productId')
 
     if (!productId) {
       return NextResponse.json(
-        { error: "Product ID is required" },
-        { status: 400 }
+        { error: 'Product ID is required' },
+        { status: 400 },
       )
     }
 
@@ -172,8 +172,8 @@ export async function DELETE(request: NextRequest) {
 
     if (!wishlistItem) {
       return NextResponse.json(
-        { error: "Item not found in wishlist" },
-        { status: 404 }
+        { error: 'Item not found in wishlist' },
+        { status: 404 },
       )
     }
 
@@ -181,12 +181,12 @@ export async function DELETE(request: NextRequest) {
       where: { id: wishlistItem.id },
     })
 
-    return NextResponse.json({ message: "Item removed from wishlist" })
+    return NextResponse.json({ message: 'Item removed from wishlist' })
   } catch (error) {
-    console.error("Error removing from wishlist:", error)
+    console.error('Error removing from wishlist:', error)
     return NextResponse.json(
-      { error: "Failed to remove from wishlist" },
-      { status: 500 }
+      { error: 'Failed to remove from wishlist' },
+      { status: 500 },
     )
   }
 }

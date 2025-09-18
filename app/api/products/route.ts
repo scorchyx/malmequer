@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { validateRequestBody, validateQueryParams, createProductSchema, paginationSchema } from "@/lib/validation"
-import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
+import { NextRequest, NextResponse } from 'next/server'
+import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
+import { prisma } from '@/lib/prisma'
+import { validateRequestBody, validateQueryParams, createProductSchema, paginationSchema } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Invalid query parameters', details: validation.errors },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
       ...(category && { categoryId: category }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: "insensitive" as const } },
-          { description: { contains: search, mode: "insensitive" as const } },
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
     }
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
             select: { reviews: true },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -71,10 +71,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error("Error fetching products:", error)
+    console.error('Error fetching products:', error)
     return NextResponse.json(
-      { error: "Failed to fetch products" },
-      { status: 500 }
+      { error: 'Failed to fetch products' },
+      { status: 500 },
     )
   }
 }
@@ -132,10 +132,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(product, { status: 201 })
   } catch (error) {
-    console.error("Error creating product:", error)
+    console.error('Error creating product:', error)
     return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 }
+      { error: 'Failed to create product' },
+      { status: 500 },
     )
   }
 }

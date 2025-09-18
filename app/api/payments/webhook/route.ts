@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
-import { prisma } from "@/lib/prisma"
-import { NotificationService } from "@/lib/notification-service"
-import { headers } from "next/headers"
+import { headers } from 'next/headers'
+import { NextRequest, NextResponse } from 'next/server'
+import { NotificationService } from '@/lib/notification-service'
+import { prisma } from '@/lib/prisma'
+import { stripe } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
-    const signature = headers().get("stripe-signature")
+    const signature = headers().get('stripe-signature')
 
     if (!signature || !process.env.STRIPE_WEBHOOK_SECRET) {
       return NextResponse.json(
-        { error: "Missing signature or webhook secret" },
-        { status: 400 }
+        { error: 'Missing signature or webhook secret' },
+        { status: 400 },
       )
     }
 
@@ -21,23 +21,23 @@ export async function POST(request: NextRequest) {
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET
+        process.env.STRIPE_WEBHOOK_SECRET,
       )
     } catch (err) {
-      console.error("Webhook signature verification failed:", err)
+      console.error('Webhook signature verification failed:', err)
       return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 400 }
+        { error: 'Invalid signature' },
+        { status: 400 },
       )
     }
 
     switch (event.type) {
-      case "payment_intent.succeeded":
+      case 'payment_intent.succeeded':
         const paymentIntent = event.data.object
         await handleSuccessfulPayment(paymentIntent)
         break
 
-      case "payment_intent.payment_failed":
+      case 'payment_intent.payment_failed':
         const failedPayment = event.data.object
         await handleFailedPayment(failedPayment)
         break
@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("Webhook error:", error)
+    console.error('Webhook error:', error)
     return NextResponse.json(
-      { error: "Webhook handler failed" },
-      { status: 500 }
+      { error: 'Webhook handler failed' },
+      { status: 500 },
     )
   }
 }
@@ -61,7 +61,7 @@ async function handleSuccessfulPayment(paymentIntent: any) {
     const orderId = paymentIntent.metadata.orderId
 
     if (!orderId) {
-      console.error("No orderId in payment intent metadata")
+      console.error('No orderId in payment intent metadata')
       return
     }
 
@@ -69,8 +69,8 @@ async function handleSuccessfulPayment(paymentIntent: any) {
     await prisma.payment.update({
       where: { stripePaymentId: paymentIntent.id },
       data: {
-        status: "PAID",
-        paymentMethod: paymentIntent.payment_method_types?.[0] || "card",
+        status: 'PAID',
+        paymentMethod: paymentIntent.payment_method_types?.[0] ?? 'card',
       },
     })
 
@@ -78,8 +78,8 @@ async function handleSuccessfulPayment(paymentIntent: any) {
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: "PAID",
-        status: "CONFIRMED",
+        paymentStatus: 'PAID',
+        status: 'CONFIRMED',
       },
     })
 
@@ -88,9 +88,9 @@ async function handleSuccessfulPayment(paymentIntent: any) {
       where: { id: orderId },
       include: {
         items: {
-          include: { product: true }
+          include: { product: true },
         },
-        user: true
+        user: true,
       },
     })
 
@@ -108,7 +108,7 @@ async function handleSuccessfulPayment(paymentIntent: any) {
         // Log inventory change
         await prisma.inventoryLog.create({
           data: {
-            type: "SALE",
+            type: 'SALE',
             quantity: -item.quantity,
             reason: `Sale from order ${order.orderNumber}`,
             productId: item.productId,
@@ -121,24 +121,24 @@ async function handleSuccessfulPayment(paymentIntent: any) {
       const orderItems = order.items.map((item: any) => ({
         name: item.product.name,
         quantity: item.quantity,
-        price: `€${item.price}`
+        price: `€${item.price}`,
       }))
 
       NotificationService.sendOrderConfirmation(
         order.user.email,
         order.user.name,
         order.orderNumber,
-        `€${order.total}`,
+        `€${order.totalAmount}`,
         orderItems,
-        order.user.id
+        order.user.id,
       ).catch(error =>
-        console.error("Failed to send order confirmation email:", error)
+        console.error('Failed to send order confirmation email:', error),
       )
     }
 
     console.log(`Payment successful for order ${orderId}`)
   } catch (error) {
-    console.error("Error handling successful payment:", error)
+    console.error('Error handling successful payment:', error)
   }
 }
 
@@ -147,7 +147,7 @@ async function handleFailedPayment(paymentIntent: any) {
     const orderId = paymentIntent.metadata.orderId
 
     if (!orderId) {
-      console.error("No orderId in payment intent metadata")
+      console.error('No orderId in payment intent metadata')
       return
     }
 
@@ -155,7 +155,7 @@ async function handleFailedPayment(paymentIntent: any) {
     await prisma.payment.update({
       where: { stripePaymentId: paymentIntent.id },
       data: {
-        status: "FAILED",
+        status: 'FAILED',
       },
     })
 
@@ -163,12 +163,12 @@ async function handleFailedPayment(paymentIntent: any) {
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: "FAILED",
+        paymentStatus: 'FAILED',
       },
     })
 
     console.log(`Payment failed for order ${orderId}`)
   } catch (error) {
-    console.error("Error handling failed payment:", error)
+    console.error('Error handling failed payment:', error)
   }
 }

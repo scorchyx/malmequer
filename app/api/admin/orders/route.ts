@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { withAdminAuth, logAdminActivity } from "@/lib/admin-auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { withAdminAuth, logAdminActivity } from '@/lib/admin-auth'
+import { prisma } from '@/lib/prisma'
 
-async function getHandler(request: NextRequest, context: { user: any }) {
+async function getHandler(request: NextRequest, _context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") ?? "1")
-    const limit = parseInt(searchParams.get("limit") ?? "20")
-    const status = searchParams.get("status")
-    const paymentStatus = searchParams.get("paymentStatus")
-    const search = searchParams.get("search")
+    const page = parseInt(searchParams.get('page') ?? '1')
+    const limit = parseInt(searchParams.get('limit') ?? '20')
+    const status = searchParams.get('status')
+    const paymentStatus = searchParams.get('paymentStatus')
+    const search = searchParams.get('search')
 
     const skip = (page - 1) * limit
 
@@ -18,9 +18,9 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       ...(paymentStatus && { paymentStatus: paymentStatus as any }),
       ...(search && {
         OR: [
-          { orderNumber: { contains: search, mode: "insensitive" as const } },
-          { user: { email: { contains: search, mode: "insensitive" as const } } },
-          { user: { name: { contains: search, mode: "insensitive" as const } } },
+          { orderNumber: { contains: search, mode: 'insensitive' as const } },
+          { user: { email: { contains: search, mode: 'insensitive' as const } } },
+          { user: { name: { contains: search, mode: 'insensitive' as const } } },
         ],
       }),
     }
@@ -39,7 +39,7 @@ async function getHandler(request: NextRequest, context: { user: any }) {
           shippingAddress: true,
           billingAddress: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -56,10 +56,10 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       },
     })
   } catch (error) {
-    console.error("Error fetching orders:", error)
+    console.error('Error fetching orders:', error)
     return NextResponse.json(
-      { error: "Failed to fetch orders" },
-      { status: 500 }
+      { error: 'Failed to fetch orders' },
+      { status: 500 },
     )
   }
 }
@@ -70,8 +70,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!orderId) {
       return NextResponse.json(
-        { error: "Order ID is required" },
-        { status: 400 }
+        { error: 'Order ID is required' },
+        { status: 400 },
       )
     }
 
@@ -81,8 +81,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     if (!existingOrder) {
       return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
+        { error: 'Order not found' },
+        { status: 404 },
       )
     }
 
@@ -114,31 +114,31 @@ async function putHandler(request: NextRequest, context: { user: any }) {
       changes.push(`paymentStatus: ${existingOrder.paymentStatus} → ${paymentStatus}`)
     }
     if (notes !== undefined && notes !== existingOrder.notes) {
-      changes.push(`notes updated`)
+      changes.push('notes updated')
     }
 
     if (changes.length > 0) {
       await logAdminActivity(
         context.user.id,
-        "UPDATE_ORDER",
-        "Order",
+        'UPDATE_ORDER',
+        'Order',
         orderId,
-        `Updated order ${existingOrder.orderNumber}: ${changes.join(", ")}`,
+        `Updated order ${existingOrder.orderNumber}: ${changes.join(', ')}`,
         {
           status: existingOrder.status,
           paymentStatus: existingOrder.paymentStatus,
           notes: existingOrder.notes,
         },
-        updateData
+        updateData,
       )
     }
 
     return NextResponse.json(updatedOrder)
   } catch (error) {
-    console.error("Error updating order:", error)
+    console.error('Error updating order:', error)
     return NextResponse.json(
-      { error: "Failed to update order" },
-      { status: 500 }
+      { error: 'Failed to update order' },
+      { status: 500 },
     )
   }
 }

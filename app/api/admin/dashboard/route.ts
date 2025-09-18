@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { withAdminAuth } from "@/lib/admin-auth"
-import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
-import { alertManager } from "@/lib/alerts"
-import { log } from "@/lib/logger"
+import { NextRequest, NextResponse } from 'next/server'
+import { withAdminAuth } from '@/lib/admin-auth'
+import { alertManager } from '@/lib/alerts'
+import { cache, CacheTTL } from '@/lib/cache'
+import { log } from '@/lib/logger'
+import { prisma } from '@/lib/prisma'
 
 async function handler(request: NextRequest, context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
-    const period = searchParams.get("period") ?? "30" // days
+    const period = searchParams.get('period') ?? '30' // days
 
     // Try cache first
     const cacheKey = `admin:dashboard:${period}`
@@ -42,7 +42,7 @@ async function handler(request: NextRequest, context: { user: any }) {
       prisma.order.aggregate({
         where: {
           createdAt: { gte: startDate },
-          paymentStatus: "PAID",
+          paymentStatus: 'PAID',
         },
         _sum: { totalAmount: true },
       }),
@@ -50,7 +50,7 @@ async function handler(request: NextRequest, context: { user: any }) {
       // Total customers
       prisma.user.count({
         where: {
-          role: "USER",
+          role: 'USER',
           createdAt: { gte: startDate },
         },
       }),
@@ -61,7 +61,7 @@ async function handler(request: NextRequest, context: { user: any }) {
       // Recent orders
       prisma.order.findMany({
         take: 10,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           user: { select: { name: true, email: true } },
           items: {
@@ -74,16 +74,16 @@ async function handler(request: NextRequest, context: { user: any }) {
 
       // Top selling products
       prisma.orderItem.groupBy({
-        by: ["productId"],
+        by: ['productId'],
         where: {
           order: {
             createdAt: { gte: startDate },
-            paymentStatus: "PAID",
+            paymentStatus: 'PAID',
           },
         },
         _sum: { quantity: true },
         _count: { productId: true },
-        orderBy: { _sum: { quantity: "desc" } },
+        orderBy: { _sum: { quantity: 'desc' } },
         take: 5,
       }),
 
@@ -126,14 +126,14 @@ async function handler(request: NextRequest, context: { user: any }) {
     const memoryUsage = {
       used: Math.round(memUsage.heapUsed / 1024 / 1024),
       total: Math.round(memUsage.heapTotal / 1024 / 1024),
-      percentage: Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100)
+      percentage: Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100),
     }
 
     const dashboardData = {
       period: periodDays,
       stats: {
         totalOrders,
-        totalRevenue: totalRevenue._sum.totalAmount || 0,
+        totalRevenue: totalRevenue._sum.totalAmount ?? 0,
         totalCustomers,
         totalProducts,
       },
@@ -148,15 +148,15 @@ async function handler(request: NextRequest, context: { user: any }) {
           name: alert.name,
           severity: alert.severity,
           triggeredAt: alert.triggeredAt,
-          description: alert.description
-        }))
+          description: alert.description,
+        })),
       },
       system: {
         uptime: process.uptime(),
         memory: memoryUsage,
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV ?? 'development',
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     }
 
     // Cache for 2 minutes
@@ -165,18 +165,18 @@ async function handler(request: NextRequest, context: { user: any }) {
     log.info('Admin dashboard data collected', {
       adminUserId: context.user.id,
       period: periodDays,
-      activeAlerts: activeAlerts.length
+      activeAlerts: activeAlerts.length,
     })
 
     return NextResponse.json(dashboardData)
   } catch (error) {
     log.error('Failed to fetch dashboard data', {
       error: error instanceof Error ? error : String(error),
-      adminUserId: context.user?.id
+      adminUserId: context.user?.id,
     })
     return NextResponse.json(
-      { error: "Failed to fetch dashboard data" },
-      { status: 500 }
+      { error: 'Failed to fetch dashboard data' },
+      { status: 500 },
     )
   }
 }

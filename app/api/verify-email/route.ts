@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import { verifyEmailToken } from "@/lib/verification"
-import { sendEmail } from "@/lib/email"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from 'next/server'
+import { sendEmail } from '@/lib/email'
+import { prisma } from '@/lib/prisma'
+import { verifyEmailToken } from '@/lib/verification'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,8 +9,8 @@ export async function POST(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: "Verification token is required" },
-        { status: 400 }
+        { error: 'Verification token is required' },
+        { status: 400 },
       )
     }
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (result.success && result.email) {
       // Get user details for welcome email
       const user = await prisma.user.findUnique({
-        where: { email: result.email }
+        where: { email: result.email },
       })
 
       if (user) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
                 <h1 style="color: white; margin: 0;">Welcome to Malmequer! 🌼</h1>
               </div>
               <div style="background: #f9f9f9; padding: 30px; border-radius: 10px;">
-                <h2>Hello ${user.name || 'User'}!</h2>
+                <h2>Hello ${user.name ?? 'User'}!</h2>
                 <p>Your email has been verified successfully! Welcome to our ecommerce platform.</p>
                 <p>You can now enjoy all the features of your account, including shopping, wishlist, and order tracking.</p>
                 <div style="text-align: center; margin: 30px 0;">
@@ -52,28 +52,28 @@ export async function POST(request: NextRequest) {
 
         sendEmail({
           to: user.email,
-          subject: "Welcome to Malmequer! 🌼",
-          html: welcomeHtml
+          subject: 'Welcome to Malmequer! 🌼',
+          html: welcomeHtml,
         }).catch((error: any) =>
-          console.error("Failed to send welcome email:", error)
+          console.error('Failed to send welcome email:', error),
         )
       }
 
       return NextResponse.json({
         success: true,
-        message: result.message
+        message: result.message,
       })
     } else {
       return NextResponse.json(
         { error: result.message },
-        { status: 400 }
+        { status: 400 },
       )
     }
   } catch (error) {
-    console.error("Error verifying email:", error)
+    console.error('Error verifying email:', error)
     return NextResponse.json(
-      { error: "Failed to verify email" },
-      { status: 500 }
+      { error: 'Failed to verify email' },
+      { status: 500 },
     )
   }
 }
@@ -85,8 +85,8 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: "Verification token is required" },
-        { status: 400 }
+        { error: 'Verification token is required' },
+        { status: 400 },
       )
     }
 
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     if (result.success && result.email) {
       // Get user details for welcome email
       const user = await prisma.user.findUnique({
-        where: { email: result.email }
+        where: { email: result.email },
       })
 
       if (user) {
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
                 <h1 style="color: white; margin: 0;">Welcome to Malmequer! 🌼</h1>
               </div>
               <div style="background: #f9f9f9; padding: 30px; border-radius: 10px;">
-                <h2>Hello ${user.name || 'User'}!</h2>
+                <h2>Hello ${user.name ?? 'User'}!</h2>
                 <p>Your email has been verified successfully! Welcome to our ecommerce platform.</p>
                 <p>You can now enjoy all the features of your account, including shopping, wishlist, and order tracking.</p>
                 <div style="text-align: center; margin: 30px 0;">
@@ -128,10 +128,10 @@ export async function GET(request: NextRequest) {
 
         sendEmail({
           to: user.email,
-          subject: "Welcome to Malmequer! 🌼",
-          html: welcomeHtml
+          subject: 'Welcome to Malmequer! 🌼',
+          html: welcomeHtml,
         }).catch((error: any) =>
-          console.error("Failed to send welcome email:", error)
+          console.error('Failed to send welcome email:', error),
         )
       }
 
@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
       `
 
       return new Response(html, {
-        headers: { 'Content-Type': 'text/html' }
+        headers: { 'Content-Type': 'text/html' },
       })
     } else {
       // Return error page
@@ -255,11 +255,11 @@ export async function GET(request: NextRequest) {
 
       return new Response(html, {
         headers: { 'Content-Type': 'text/html' },
-        status: 400
+        status: 400,
       })
     }
   } catch (error) {
-    console.error("Error verifying email:", error)
+    console.error('Error verifying email:', error)
 
     const html = `
       <!DOCTYPE html>
@@ -278,7 +278,7 @@ export async function GET(request: NextRequest) {
 
     return new Response(html, {
       headers: { 'Content-Type': 'text/html' },
-      status: 500
+      status: 500,
     })
   }
 }
