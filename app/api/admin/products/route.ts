@@ -132,7 +132,7 @@ async function putHandler(request: NextRequest, context: { user: any }) {
     }
 
     // Log admin activity
-    const changes = []
+    const changes: string[] = []
     Object.keys(updateData).forEach((key) => {
       if (updateData[key] !== (existingProduct as any)[key]) {
         changes.push(`${key}: ${(existingProduct as any)[key]} → ${updateData[key]}`)

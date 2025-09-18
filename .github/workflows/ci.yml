@@ -61,13 +61,11 @@ jobs:
       - name: Generate Prisma client
         run: pnpm prisma generate
 
-      # Temporarily disabled while fixing Next.js 15 compatibility issues
-      # - name: Type check
-      #   run: pnpm exec tsc --noEmit --skipLibCheck
+      - name: Type check
+        run: pnpm exec tsc --noEmit --skipLibCheck
 
-      # Temporarily disabled - next lint is deprecated in Next.js 15
-      # - name: Lint check
-      #   run: pnpm exec next lint
+      - name: Lint check
+        run: pnpm run lint
 
   test:
     name: Run Tests

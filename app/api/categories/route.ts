@@ -33,7 +33,7 @@ export async function GET() {
 
     return NextResponse.json(categories)
   } catch (error) {
-    log.error('Failed to fetch categories', { error })
+    log.error('Failed to fetch categories', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: "Failed to fetch categories" },
       { status: 500 }

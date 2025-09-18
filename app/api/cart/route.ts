@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getCurrentUser } from "@/lib/auth"
 import { validateRequestBody, addToCartSchema } from "@/lib/validation"
+import { cache, CacheKeys, CacheTTL } from "@/lib/cache"
+import { log } from "@/lib/logger"
 
 export async function GET() {
   try {
