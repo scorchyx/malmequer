@@ -1,12 +1,8 @@
 import { sendEmail } from './email'
 import { prisma } from './prisma'
 import {
-  renderWelcomeEmail,
-  renderOrderConfirmationEmail,
-  renderOrderShippedEmail,
-  renderPasswordResetEmail,
-  renderStockAlertEmail,
-} from './email-templates'
+  renderSimpleWelcomeEmail,
+} from './email-templates-new'
 
 export enum NotificationType {
   WELCOME = 'WELCOME',
@@ -112,49 +108,31 @@ export class NotificationService {
 
       switch (data.type) {
         case NotificationType.WELCOME:
-          subject = 'Bem-vindo ao Malmequer! 🌼'
-          html = renderWelcomeEmail({
+          subject = 'Welcome to Malmequer! 🌼'
+          html = renderSimpleWelcomeEmail({
             userName: data.recipientName,
             verificationUrl: data.verificationUrl,
           })
           break
 
         case NotificationType.ORDER_CONFIRMATION:
-          subject = `Confirmação da tua encomenda #${data.orderNumber}`
-          html = renderOrderConfirmationEmail({
-            userName: data.recipientName,
-            orderNumber: data.orderNumber,
-            orderTotal: data.orderTotal,
-            orderItems: data.orderItems,
-          })
+          subject = `Order confirmation #${data.orderNumber}`
+          html = `<h1>Order Confirmed</h1><p>Hello ${data.recipientName}, your order #${data.orderNumber} for ${data.orderTotal} has been confirmed.</p>`
           break
 
         case NotificationType.ORDER_SHIPPED:
-          subject = `A tua encomenda #${data.orderNumber} foi enviada! 📦`
-          html = renderOrderShippedEmail({
-            userName: data.recipientName,
-            orderNumber: data.orderNumber,
-            orderTotal: data.orderTotal,
-            orderItems: data.orderItems,
-            trackingUrl: data.trackingUrl,
-          })
+          subject = `Your order #${data.orderNumber} has shipped! 📦`
+          html = `<h1>Order Shipped</h1><p>Hello ${data.recipientName}, your order #${data.orderNumber} has been shipped.</p>`
           break
 
         case NotificationType.PASSWORD_RESET:
-          subject = 'Redefinir a tua palavra-passe - Malmequer'
-          html = renderPasswordResetEmail({
-            userName: data.recipientName,
-            resetUrl: data.resetUrl,
-          })
+          subject = 'Reset your password - Malmequer'
+          html = `<h1>Password Reset</h1><p>Hello ${data.recipientName}, click the link to reset your password: <a href="${data.resetUrl}">Reset Password</a></p>`
           break
 
         case NotificationType.STOCK_ALERT:
-          subject = `${data.productName} está novamente disponível! 🎉`
-          html = renderStockAlertEmail({
-            userName: data.recipientName,
-            productName: data.productName,
-            productUrl: data.productUrl,
-          })
+          subject = `${data.productName} is back in stock! 🎉`
+          html = `<h1>Back in Stock</h1><p>Hello ${data.recipientName}, ${data.productName} is now available!</p>`
           break
 
         default:

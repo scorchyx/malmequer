@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -15,9 +15,10 @@ export async function GET(
       )
     }
 
+    const { id } = await params
     const address = await prisma.address.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       }
     })
@@ -41,7 +42,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -52,10 +53,11 @@ export async function PUT(
       )
     }
 
+    const { id } = await params
     // Check if address exists and belongs to user
     const existingAddress = await prisma.address.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       }
     })
@@ -90,7 +92,7 @@ export async function PUT(
           userId: user.id,
           type: type || existingAddress.type,
           isDefault: true,
-          id: { not: params.id }
+          id: { not: id }
         },
         data: {
           isDefault: false
@@ -109,7 +111,7 @@ export async function PUT(
 
     // Update the address
     const updatedAddress = await prisma.address.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(type && { type }),
         ...(firstName && { firstName }),
@@ -139,7 +141,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -150,10 +152,11 @@ export async function DELETE(
       )
     }
 
+    const { id } = await params
     // Check if address exists and belongs to user
     const address = await prisma.address.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       }
     })
@@ -169,8 +172,8 @@ export async function DELETE(
     const ordersUsingAddress = await prisma.order.findFirst({
       where: {
         OR: [
-          { shippingAddressId: params.id },
-          { billingAddressId: params.id }
+          { shippingAddressId: id },
+          { billingAddressId: id }
         ]
       }
     })
@@ -183,7 +186,7 @@ export async function DELETE(
     }
 
     await prisma.address.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: "Address deleted successfully" })

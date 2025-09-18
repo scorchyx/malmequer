@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth"
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -15,10 +15,11 @@ export async function PATCH(
       )
     }
 
+    const { id } = await params
     // Check if address exists and belongs to user
     const address = await prisma.address.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       }
     })
@@ -54,7 +55,7 @@ export async function PATCH(
 
       // Set this address as default
       return await tx.address.update({
-        where: { id: params.id },
+        where: { id },
         data: { isDefault: true }
       })
     })

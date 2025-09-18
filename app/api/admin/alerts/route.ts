@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    log.error('Failed to retrieve alerts', { error })
+    log.error('Failed to retrieve alerts', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Failed to retrieve alerts' },
       { status: 500 }
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    log.error('Failed to manage alert', { error })
+    log.error('Failed to manage alert', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Failed to manage alert' },
       { status: 500 }
