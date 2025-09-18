@@ -50,11 +50,25 @@ interface StockAlertNotification extends BaseNotification {
   productUrl: string
 }
 
+interface PromotionNotification extends BaseNotification {
+  type: NotificationType.PROMOTION
+  subject?: string
+  content?: string
+}
+
+interface AccountUpdateNotification extends BaseNotification {
+  type: NotificationType.ACCOUNT_UPDATE
+  updateType?: string
+  details?: string
+}
+
 type NotificationData =
   | WelcomeNotification
   | OrderNotification
   | PasswordResetNotification
   | StockAlertNotification
+  | PromotionNotification
+  | AccountUpdateNotification
 
 export class NotificationService {
   static async sendNotification(data: NotificationData): Promise<void> {
@@ -133,6 +147,16 @@ export class NotificationService {
         case NotificationType.STOCK_ALERT:
           subject = `${data.productName} is back in stock! 🎉`
           html = `<h1>Back in Stock</h1><p>Hello ${data.recipientName}, ${data.productName} is now available!</p>`
+          break
+
+        case NotificationType.PROMOTION:
+          subject = data.subject ?? 'Special offer from Malmequer! 🌸'
+          html = data.content ?? `<h1>Special Offer</h1><p>Hello ${data.recipientName}, check out our latest promotions!</p>`
+          break
+
+        case NotificationType.ACCOUNT_UPDATE:
+          subject = 'Account update - Malmequer'
+          html = `<h1>Account Update</h1><p>Hello ${data.recipientName}, your account has been updated. ${data.details ?? ''}</p>`
           break
 
         default:

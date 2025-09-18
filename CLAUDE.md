@@ -9,7 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm start` - Start production server
 - `pnpm test` - Run test suite with Jest
 - `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:coverage` - Run tests with coverage report
+- `pnpm test:coverage` - Run tests with coverage report (requires 70% coverage threshold)
+- `pnpm test -- __tests__/api/cart.test.ts` - Run specific test file
 - `pnpm lint` - Run ESLint checks
 - `pnpm type-check` - Run TypeScript type checking
 - `npx prisma generate` - Generate Prisma client after schema changes
@@ -61,6 +62,8 @@ This is a **Next.js 15 ecommerce application** using the App Router architecture
 - `/api/wishlist` - User wishlist management
 - `/api/notifications` - Email notification system and testing
 - `/api/user/notification-settings` - User notification preferences
+- `/api/docs` - OpenAPI specification endpoint
+- `/docs` - Interactive Swagger UI documentation
 
 ## Email Notification System
 
@@ -115,3 +118,30 @@ This is a **Next.js 15 ecommerce application** using the App Router architecture
 - **Path Aliases**: `@/*` maps to project root for clean imports
 - **Testing**: Run `pnpm test` before committing changes
 - **Security**: All API endpoints have input validation and rate limiting
+
+## API Documentation
+
+- **Swagger/OpenAPI**: Complete API documentation available at `/docs`
+- **Interactive Testing**: Use Swagger UI for testing endpoints directly
+- **Rate Limiting**: 30 requests/minute for general APIs, 10 requests/15min for auth
+
+## Environment Variables
+
+Required environment variables for development:
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/database
+NEXTAUTH_SECRET=your-secret-key
+NEXTAUTH_URL=http://localhost:3000
+RESEND_API_KEY=your-resend-key
+FROM_EMAIL=noreply@yourdomain.com
+REDIS_URL=redis://localhost:6379
+STRIPE_SECRET_KEY=sk_test_your-stripe-key
+```
+
+## Testing Architecture
+
+- **Framework**: Jest with Next.js integration
+- **Environment**: Node.js test environment with 30s timeout
+- **Coverage**: Minimum 70% threshold for branches, functions, lines, statements
+- **Test Location**: `__tests__/` directory with `.test.ts` or `.spec.ts` files
+- **Mocking**: Comprehensive mocks for Prisma, auth, cache, and external services

@@ -17,20 +17,18 @@ export async function GET() {
       where: { userId: user.id },
     })
 
-    if (!settings) {
-      // Create default settings if they don't exist
-      settings = await prisma.notificationSettings.create({
-        data: {
-          userId: user.id,
-          emailNotifications: true,
-          orderConfirmations: true,
-          orderUpdates: true,
-          stockAlerts: false,
-          promotionalEmails: false,
-          accountUpdates: true,
-        },
-      })
-    }
+    // Create default settings if they don't exist
+    settings ??= await prisma.notificationSettings.create({
+      data: {
+        userId: user.id,
+        emailNotifications: true,
+        orderConfirmations: true,
+        orderUpdates: true,
+        stockAlerts: false,
+        promotionalEmails: false,
+        accountUpdates: true,
+      },
+    })
 
     return NextResponse.json(settings)
   } catch (error) {

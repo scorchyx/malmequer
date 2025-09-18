@@ -7,7 +7,7 @@ import { stripe } from '@/lib/stripe'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
-    const signature = headers().get('stripe-signature')
+    const signature = (await headers()).get('stripe-signature')
 
     if (!signature || !process.env.STRIPE_WEBHOOK_SECRET) {
       return NextResponse.json(
@@ -76,7 +76,7 @@ async function handleSuccessfulPayment(paymentIntent: any) {
 
     // Update order status
     await prisma.order.update({
-      where: { id: orderId },
+      where: { id: orderId! },
       data: {
         paymentStatus: 'PAID',
         status: 'CONFIRMED',
@@ -85,7 +85,7 @@ async function handleSuccessfulPayment(paymentIntent: any) {
 
     // Update inventory for ordered items and send confirmation email
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: orderId! },
       include: {
         items: {
           include: { product: true },
@@ -126,7 +126,7 @@ async function handleSuccessfulPayment(paymentIntent: any) {
 
       NotificationService.sendOrderConfirmation(
         order.user.email,
-        order.user.name,
+        order.user.name ?? 'Customer',
         order.orderNumber,
         `€${order.totalAmount}`,
         orderItems,
@@ -161,7 +161,7 @@ async function handleFailedPayment(paymentIntent: any) {
 
     // Update order status
     await prisma.order.update({
-      where: { id: orderId },
+      where: { id: orderId! },
       data: {
         paymentStatus: 'FAILED',
       },

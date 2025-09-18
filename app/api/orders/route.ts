@@ -124,6 +124,23 @@ export async function POST(request: NextRequest) {
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
 
+    // Create addresses first
+    const createdShippingAddress = await prisma.address.create({
+      data: {
+        ...shippingAddress,
+        type: 'SHIPPING',
+        userId: user.id,
+      },
+    })
+
+    const createdBillingAddress = await prisma.address.create({
+      data: {
+        ...billingAddress,
+        type: 'BILLING',
+        userId: user.id,
+      },
+    })
+
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -135,18 +152,14 @@ export async function POST(request: NextRequest) {
         paymentMethod,
         shippingMethod,
         notes,
+        shippingAddressId: createdShippingAddress.id,
+        billingAddressId: createdBillingAddress.id,
         items: {
           create: items.map((item: any) => ({
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
           })),
-        },
-        shippingAddress: {
-          create: shippingAddress,
-        },
-        billingAddress: {
-          create: billingAddress,
         },
       },
       include: {
