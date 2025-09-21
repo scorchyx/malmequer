@@ -86,6 +86,8 @@ jobs:
           REDIS_URL: "redis://localhost:6379"
           NEXTAUTH_URL: "http://localhost:3000"
           FROM_EMAIL: "test@example.com"
+          STRIPE_SECRET_KEY: "sk_test_dummy_key_for_build"
+          STRIPE_PUBLISHABLE_KEY: "pk_test_dummy_key_for_build"
         run: |
           if [ -f Dockerfile ]; then
             docker build \
@@ -95,6 +97,8 @@ jobs:
               --build-arg REDIS_URL="$REDIS_URL" \
               --build-arg NEXTAUTH_URL="$NEXTAUTH_URL" \
               --build-arg FROM_EMAIL="$FROM_EMAIL" \
+              --build-arg STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY" \
+              --build-arg STRIPE_PUBLISHABLE_KEY="$STRIPE_PUBLISHABLE_KEY" \
               -t malmequer:latest .
           else
             echo "No Dockerfile found, skipping Docker security scan"

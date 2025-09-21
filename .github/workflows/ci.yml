@@ -124,6 +124,10 @@ jobs:
       REDIS_URL: redis://localhost:6379
       NEXTAUTH_SECRET: test-secret
       NEXTAUTH_URL: http://localhost:3000
+      RESEND_API_KEY: "dummy-key-for-testing"
+      FROM_EMAIL: "test@example.com"
+      STRIPE_SECRET_KEY: "sk_test_dummy_key_for_testing"
+      STRIPE_PUBLISHABLE_KEY: "pk_test_dummy_key_for_testing"
 
     steps:
       - name: Checkout code
