@@ -272,7 +272,7 @@ describe('Validation Helpers', () => {
       if (!result.success) {
         const responseData = await result.response.json()
         expect(responseData.error).toBe('Validation failed')
-        expect(responseData.details).toBeInstanceOf(Array)
+        expect(Array.isArray(responseData.details)).toBe(true)
         expect(responseData.details.length).toBeGreaterThan(0)
       }
     })

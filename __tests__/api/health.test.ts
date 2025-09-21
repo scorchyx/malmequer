@@ -7,11 +7,23 @@ jest.mock('@/lib/prisma', () => ({
   },
 }))
 
+const mockStore: Record<string, any> = {}
+
 jest.mock('@/lib/cache', () => ({
   cache: {
-    set: jest.fn().mockResolvedValue(true),
-    get: jest.fn().mockResolvedValue('test-value'),
-    del: jest.fn().mockResolvedValue(true),
+    set: jest.fn().mockImplementation(async (key, value) => {
+      // Store the value to return it later in get
+      mockStore[key] = value
+      return true
+    }),
+    get: jest.fn().mockImplementation(async (key) => {
+      // Return the stored value
+      return mockStore[key]
+    }),
+    del: jest.fn().mockImplementation(async (key) => {
+      delete mockStore[key]
+      return true
+    }),
   },
 }))
 
@@ -27,6 +39,8 @@ jest.mock('@/lib/logger', () => ({
 describe('/api/health', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Clear the mock store
+    Object.keys(mockStore).forEach(key => delete mockStore[key])
   })
 
   it('should return healthy status when all checks pass', async () => {
