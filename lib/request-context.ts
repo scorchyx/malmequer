@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
 import { log } from './logger'
 
 export interface RequestContext {
@@ -20,8 +19,8 @@ export interface RequestContext {
 }
 
 // Store request context using AsyncLocalStorage for Node.js
-const { AsyncLocalStorage } = require('async_hooks')
-const requestStorage = new AsyncLocalStorage<RequestContext>()
+import { AsyncLocalStorage } from 'async_hooks'
+const requestStorage = new AsyncLocalStorage<RequestContext | undefined>()
 
 /**
  * Generate a unique request ID
@@ -157,13 +156,9 @@ export function getCurrentRequestId(): string | undefined {
     return context.id
   }
 
-  // Fallback to headers
-  try {
-    const headersList = headers()
-    return headersList.get('x-request-id') || undefined
-  } catch {
-    return undefined
-  }
+  // In server components, we can't reliably access headers
+  // This should be called from API routes or middleware where context is available
+  return undefined
 }
 
 /**
@@ -223,7 +218,7 @@ export function logErrorWithContext(
   error: Error | unknown,
   additionalContext?: Record<string, unknown>
 ): void {
-  const context = getRequestContext()
+  const _context = getRequestContext()
 
   logWithContext('error', 'Request error occurred', {
     ...additionalContext,
@@ -241,7 +236,7 @@ export function logErrorWithContext(
  * Helper to create a child logger with request context
  */
 export function createContextualLogger() {
-  const context = getRequestContext()
+  const _context = getRequestContext()
 
   return {
     info: (message: string, extra?: Record<string, unknown>) =>

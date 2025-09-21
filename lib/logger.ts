@@ -13,17 +13,7 @@ export const LOG_LEVELS = {
 // Create logger instance
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
-  // Use simple formatting for development
-  ...(process.env.NODE_ENV === 'development' && {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        ignore: 'pid,hostname',
-        translateTime: 'yyyy-mm-dd HH:MM:ss.l',
-      },
-    }
-  }),
+  // Disable pino-pretty in development to avoid Turbopack compatibility issues
   formatters: {
     level: (label) => {
       return { level: label }

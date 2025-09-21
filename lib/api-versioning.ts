@@ -322,7 +322,7 @@ export function createVersioningMiddleware() {
       path: request.nextUrl.pathname,
       method: request.method,
       deprecated: config.deprecated,
-      userAgent: request.headers.get('user-agent'),
+      userAgent: request.headers.get('user-agent') ?? undefined,
       type: 'api_version_usage'
     })
 
