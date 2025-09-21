@@ -48,9 +48,6 @@ jobs:
       - name: Run security audit
         run: pnpm audit --audit-level high || echo "⚠️ Moderate vulnerabilities found but allowed"
 
-      - name: Check for vulnerable packages
-        run: pnpm audit --audit-level high || echo "⚠️ Moderate vulnerabilities found but allowed"
-
   lint-and-type-check:
     name: Lint and Type Check
     runs-on: ubuntu-latest
@@ -89,7 +86,7 @@ jobs:
         run: pnpm prisma generate
 
       - name: Type check
-        run: pnpm exec tsc --noEmit --skipLibCheck
+        run: pnpm run type-check
 
       - name: Lint check
         run: pnpm run lint
@@ -168,13 +165,35 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Build application for health checks
+        run: pnpm build
+
       - name: Run API health checks
         run: |
-          pnpm build
+          # Start the server in background
           pnpm start &
-          sleep 10
+          SERVER_PID=$!
+
+          # Wait for server to start with timeout
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/api/health >/dev/null 2>&1; then
+              echo "Server is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start within 30 seconds"
+              kill $SERVER_PID 2>/dev/null || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Run health checks
           curl -f http://localhost:3000/api/health || exit 1
           curl -f http://localhost:3000/api/ready || exit 1
+
+          # Clean up
+          kill $SERVER_PID 2>/dev/null || true
 
   build:
     name: Build Application
@@ -218,7 +237,7 @@ jobs:
         run: pnpm build
 
       - name: Cache build artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             .next/cache

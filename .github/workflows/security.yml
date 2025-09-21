@@ -62,7 +62,7 @@ jobs:
           fetch-depth: 0
 
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@v3.72.0
+        uses: trufflesecurity/trufflehog@v3.82.13
         continue-on-error: true
         with:
           path: ./
@@ -83,12 +83,18 @@ jobs:
           RESEND_API_KEY: "dummy-key-for-build"
           NEXTAUTH_SECRET: "dummy-secret-for-build"
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          REDIS_URL: "redis://localhost:6379"
+          NEXTAUTH_URL: "http://localhost:3000"
+          FROM_EMAIL: "test@example.com"
         run: |
           if [ -f Dockerfile ]; then
             docker build \
               --build-arg RESEND_API_KEY="$RESEND_API_KEY" \
               --build-arg NEXTAUTH_SECRET="$NEXTAUTH_SECRET" \
               --build-arg DATABASE_URL="$DATABASE_URL" \
+              --build-arg REDIS_URL="$REDIS_URL" \
+              --build-arg NEXTAUTH_URL="$NEXTAUTH_URL" \
+              --build-arg FROM_EMAIL="$FROM_EMAIL" \
               -t malmequer:latest .
           else
             echo "No Dockerfile found, skipping Docker security scan"
@@ -96,7 +102,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         if: hashFiles('Dockerfile') != ''
         continue-on-error: true
         with:
