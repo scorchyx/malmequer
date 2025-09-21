@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     // Temporarily ignore build errors while we fix remaining type issues
     ignoreBuildErrors: true,
   },
+  output: 'standalone',
 }
 
 export default nextConfig
