@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createVersionedResponse, getApiVersion } from '@/lib/api-versioning'
 import { getCurrentUser } from '@/lib/auth'
 import { getAllCircuitBreakerStats } from '@/lib/circuit-breaker'
-import { createVersionedResponse, getApiVersion } from '@/lib/api-versioning'
 import { logWithContext } from '@/lib/request-context'
 
 export async function GET(request: NextRequest) {
@@ -11,13 +11,13 @@ export async function GET(request: NextRequest) {
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
     logWithContext('info', 'Admin accessing circuit breaker stats', {
       adminId: user.id,
-      type: 'admin_circuit_breaker_access'
+      type: 'admin_circuit_breaker_access',
     })
 
     // Get circuit breaker statistics
@@ -29,31 +29,31 @@ export async function GET(request: NextRequest) {
     // Transform data based on API version
     const responseData = version === 'v1' ? {
       circuit_breakers: stats,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     } : {
       circuitBreakers: stats,
       summary: {
         total: Object.keys(stats).length,
         healthy: Object.values(stats).filter(s => s.state === 'CLOSED').length,
         degraded: Object.values(stats).filter(s => s.state === 'HALF_OPEN').length,
-        failed: Object.values(stats).filter(s => s.state === 'OPEN').length
+        failed: Object.values(stats).filter(s => s.state === 'OPEN').length,
       },
       metadata: {
         timestamp: new Date().toISOString(),
-        monitoringEnabled: true
-      }
+        monitoringEnabled: true,
+      },
     }
 
     return createVersionedResponse(responseData, version)
 
   } catch (error) {
     logWithContext('error', 'Error fetching circuit breaker stats', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     })
 
     return NextResponse.json(
       { error: 'Failed to fetch circuit breaker statistics' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (!action || !service) {
       return NextResponse.json(
         { error: 'Action and service are required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       adminId: user.id,
       action,
       service,
-      type: 'admin_circuit_breaker_action'
+      type: 'admin_circuit_breaker_action',
     })
 
     const version = getApiVersion(request)
@@ -94,17 +94,17 @@ export async function POST(request: NextRequest) {
       message: `Circuit breaker action '${action}' would be applied to service '${service}'`,
       action,
       service,
-      note: 'Circuit breaker control not yet implemented'
+      note: 'Circuit breaker control not yet implemented',
     }, version)
 
   } catch (error) {
     logWithContext('error', 'Error controlling circuit breaker', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     })
 
     return NextResponse.json(
       { error: 'Failed to control circuit breaker' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

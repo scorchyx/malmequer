@@ -26,7 +26,7 @@ const DEFAULT_CONFIG: RetryConfig = {
   baseDelay: 1000,     // 1 second
   maxDelay: 30000,     // 30 seconds
   backoffFactor: 2,
-  jitter: true
+  jitter: true,
 }
 
 export class RetryableError extends Error {
@@ -49,7 +49,7 @@ export class NonRetryableError extends Error {
 export async function withRetry<T>(
   fn: () => Promise<T>,
   config: Partial<RetryConfig> = {},
-  context?: string
+  context?: string,
 ): Promise<T> {
   const fullConfig = { ...DEFAULT_CONFIG, ...config }
   let lastError: unknown
@@ -63,7 +63,7 @@ export async function withRetry<T>(
           context,
           attempt,
           totalAttempts: fullConfig.maxAttempts,
-          type: 'retry_success'
+          type: 'retry_success',
         })
       }
 
@@ -88,7 +88,7 @@ export async function withRetry<T>(
           attempt,
           totalAttempts: fullConfig.maxAttempts,
           error: error instanceof Error ? error.message : String(error),
-          type: 'retry_exhausted'
+          type: 'retry_exhausted',
         })
         throw error
       }
@@ -102,7 +102,7 @@ export async function withRetry<T>(
         totalAttempts: fullConfig.maxAttempts,
         delay,
         error: error instanceof Error ? error.message : String(error),
-        type: 'retry_attempt'
+        type: 'retry_attempt',
       })
 
       // Wait before next attempt
@@ -151,7 +151,7 @@ export const RetryConditions = {
 
     const networkErrorCodes = [
       'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET',
-      'EPIPE', 'EHOSTUNREACH', 'ENETUNREACH'
+      'EPIPE', 'EHOSTUNREACH', 'ENETUNREACH',
     ]
 
     return networkErrorCodes.includes(errorCode) ||
@@ -178,14 +178,14 @@ export const RetryConditions = {
 
     const dbErrorCodes = [
       'CONNECTION_LOST', 'PROTOCOL_CONNECTION_LOST', 'ER_LOCK_WAIT_TIMEOUT',
-      'ER_LOCK_DEADLOCK', 'ECONNREFUSED'
+      'ER_LOCK_DEADLOCK', 'ECONNREFUSED',
     ]
 
     return dbErrorCodes.includes(errorCode) ||
            errorMessage.includes('connection') ||
            errorMessage.includes('timeout') ||
            errorMessage.includes('deadlock')
-  }
+  },
 }
 
 /**
@@ -198,7 +198,7 @@ export const RetryConfigs = {
     baseDelay: 500,
     maxDelay: 5000,
     backoffFactor: 2,
-    jitter: true
+    jitter: true,
   },
 
   // Standard retries for most operations
@@ -207,7 +207,7 @@ export const RetryConfigs = {
     baseDelay: 1000,
     maxDelay: 10000,
     backoffFactor: 2,
-    jitter: true
+    jitter: true,
   },
 
   // Aggressive retries for critical operations
@@ -216,7 +216,7 @@ export const RetryConfigs = {
     baseDelay: 2000,
     maxDelay: 30000,
     backoffFactor: 2,
-    jitter: true
+    jitter: true,
   },
 
   // Network-specific retries
@@ -226,7 +226,7 @@ export const RetryConfigs = {
     maxDelay: 15000,
     backoffFactor: 2,
     jitter: true,
-    retryCondition: RetryConditions.networkErrors
+    retryCondition: RetryConditions.networkErrors,
   },
 
   // Database-specific retries
@@ -236,6 +236,6 @@ export const RetryConfigs = {
     maxDelay: 5000,
     backoffFactor: 1.5,
     jitter: true,
-    retryCondition: RetryConditions.databaseErrors
-  }
+    retryCondition: RetryConditions.databaseErrors,
+  },
 }

@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 import { circuitBreakers } from './circuit-breaker'
-import { withRetry, RetryConfigs, RetryableError } from './retry'
 import { createContextualLogger } from './request-context'
+import { withRetry, RetryConfigs, RetryableError } from './retry'
 
 let stripeClient: Stripe | null = null
 
@@ -34,7 +34,7 @@ export const stripe = new Proxy({} as Stripe, {
           return await withRetry(async () => {
             logger.info('Stripe API call', {
               method: prop.toString(),
-              type: 'stripe_api_call_start'
+              type: 'stripe_api_call_start',
             })
 
             try {
@@ -66,7 +66,7 @@ export const stripe = new Proxy({} as Stripe, {
             method: prop.toString(),
             error: error instanceof Error ? error.message : String(error),
             duration,
-            type: 'stripe_api_call_error'
+            type: 'stripe_api_call_error',
           })
 
           throw error

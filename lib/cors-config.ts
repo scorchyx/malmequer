@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { log } from './logger'
 import { auditLogger, AuditEventType, AuditSeverity } from './audit-logger'
+import { log } from './logger'
 
 export interface CorsConfig {
   origin: string[] | string | boolean
@@ -29,24 +29,24 @@ export const CORS_CONFIGS: Record<string, CorsConfig> = {
       'X-API-Key',
       'X-API-Version',
       'X-Request-ID',
-      'X-Correlation-ID'
+      'X-Correlation-ID',
     ],
     exposedHeaders: [
       'X-Request-ID',
       'X-API-Version',
       'X-Rate-Limit-Remaining',
-      'X-Rate-Limit-Reset'
+      'X-Rate-Limit-Reset',
     ],
     credentials: true,
     maxAge: 86400, // 24 hours
-    preflightContinue: false
+    preflightContinue: false,
   },
 
   production: {
     origin: [
       'https://yourdomain.com',
       'https://www.yourdomain.com',
-      'https://admin.yourdomain.com'
+      'https://admin.yourdomain.com',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -56,18 +56,18 @@ export const CORS_CONFIGS: Record<string, CorsConfig> = {
       'X-API-Key',
       'X-API-Version',
       'X-Request-ID',
-      'X-Correlation-ID'
+      'X-Correlation-ID',
     ],
     exposedHeaders: [
       'X-Request-ID',
       'X-API-Version',
       'X-Rate-Limit-Remaining',
-      'X-Rate-Limit-Reset'
+      'X-Rate-Limit-Reset',
     ],
     credentials: true,
     maxAge: 86400,
-    preflightContinue: false
-  }
+    preflightContinue: false,
+  },
 }
 
 /**
@@ -77,7 +77,7 @@ export enum ApiKeyType {
   PUBLIC = 'PUBLIC',       // Read-only access to public data
   PRIVATE = 'PRIVATE',     // Full access for authenticated operations
   ADMIN = 'ADMIN',         // Administrative operations
-  WEBHOOK = 'WEBHOOK'      // Webhook endpoints only
+  WEBHOOK = 'WEBHOOK',      // Webhook endpoints only
 }
 
 export interface ApiKeyPermissions {
@@ -94,29 +94,29 @@ export const API_KEY_PERMISSIONS: Record<ApiKeyType, ApiKeyPermissions> = {
     write: false,
     admin: false,
     webhooks: false,
-    rateLimit: 100 // 100 requests per minute
+    rateLimit: 100, // 100 requests per minute
   },
   [ApiKeyType.PRIVATE]: {
     read: true,
     write: true,
     admin: false,
     webhooks: false,
-    rateLimit: 1000 // 1000 requests per minute
+    rateLimit: 1000, // 1000 requests per minute
   },
   [ApiKeyType.ADMIN]: {
     read: true,
     write: true,
     admin: true,
     webhooks: true,
-    rateLimit: 5000 // 5000 requests per minute
+    rateLimit: 5000, // 5000 requests per minute
   },
   [ApiKeyType.WEBHOOK]: {
     read: false,
     write: false,
     admin: false,
     webhooks: true,
-    rateLimit: 10000 // 10000 requests per minute for webhooks
-  }
+    rateLimit: 10000, // 10000 requests per minute for webhooks
+  },
 }
 
 /**
@@ -148,7 +148,7 @@ function isOriginAllowed(origin: string, allowedOrigins: string[] | string | boo
 export function applyCorsHeaders(
   request: NextRequest,
   response: NextResponse,
-  config?: Partial<CorsConfig>
+  config?: Partial<CorsConfig>,
 ): NextResponse {
   const env = process.env.NODE_ENV || 'development'
   const corsConfig = { ...CORS_CONFIGS[env], ...config }
@@ -232,7 +232,7 @@ export async function validateApiKey(apiKey: string): Promise<{
     return {
       valid: true,
       keyType: ApiKeyType.PUBLIC,
-      permissions: API_KEY_PERMISSIONS[ApiKeyType.PUBLIC]
+      permissions: API_KEY_PERMISSIONS[ApiKeyType.PUBLIC],
     }
   }
 
@@ -240,7 +240,7 @@ export async function validateApiKey(apiKey: string): Promise<{
     return {
       valid: true,
       keyType: ApiKeyType.PRIVATE,
-      permissions: API_KEY_PERMISSIONS[ApiKeyType.PRIVATE]
+      permissions: API_KEY_PERMISSIONS[ApiKeyType.PRIVATE],
     }
   }
 
@@ -248,7 +248,7 @@ export async function validateApiKey(apiKey: string): Promise<{
     return {
       valid: true,
       keyType: ApiKeyType.ADMIN,
-      permissions: API_KEY_PERMISSIONS[ApiKeyType.ADMIN]
+      permissions: API_KEY_PERMISSIONS[ApiKeyType.ADMIN],
     }
   }
 
@@ -256,7 +256,7 @@ export async function validateApiKey(apiKey: string): Promise<{
     return {
       valid: true,
       keyType: ApiKeyType.WEBHOOK,
-      permissions: API_KEY_PERMISSIONS[ApiKeyType.WEBHOOK]
+      permissions: API_KEY_PERMISSIONS[ApiKeyType.WEBHOOK],
     }
   }
 
@@ -280,11 +280,11 @@ export function createApiKeyMiddleware() {
       '/api/docs',
       '/api/auth/',
       '/api/register',
-      '/api/verify-email'
+      '/api/verify-email',
     ]
 
     const isPublicEndpoint = publicEndpoints.some(endpoint =>
-      request.nextUrl.pathname.startsWith(endpoint)
+      request.nextUrl.pathname.startsWith(endpoint),
     )
 
     if (isPublicEndpoint) {
@@ -311,15 +311,15 @@ export function createApiKeyMiddleware() {
         details: {
           reason: 'Missing API key',
           endpoint: request.nextUrl.pathname,
-          method: request.method
-        }
+          method: request.method,
+        },
       })
 
       return NextResponse.json({
         error: {
           code: 'MISSING_API_KEY',
-          message: 'API key is required. Provide it in X-API-Key header or as Bearer token.'
-        }
+          message: 'API key is required. Provide it in X-API-Key header or as Bearer token.',
+        },
       }, { status: 401 })
     }
 
@@ -334,15 +334,15 @@ export function createApiKeyMiddleware() {
           reason: 'Invalid API key',
           endpoint: request.nextUrl.pathname,
           method: request.method,
-          apiKeyPrefix: apiKey.substring(0, 8)
-        }
+          apiKeyPrefix: apiKey.substring(0, 8),
+        },
       })
 
       return NextResponse.json({
         error: {
           code: 'INVALID_API_KEY',
-          message: 'Invalid API key provided.'
-        }
+          message: 'Invalid API key provided.',
+        },
       }, { status: 401 })
     }
 
@@ -355,15 +355,15 @@ export function createApiKeyMiddleware() {
         details: {
           reason: 'Insufficient permissions for admin endpoint',
           endpoint: request.nextUrl.pathname,
-          keyType: validation.keyType
-        }
+          keyType: validation.keyType,
+        },
       })
 
       return NextResponse.json({
         error: {
           code: 'INSUFFICIENT_PERMISSIONS',
-          message: 'Admin API key required for this endpoint.'
-        }
+          message: 'Admin API key required for this endpoint.',
+        },
       }, { status: 403 })
     }
 
@@ -384,13 +384,13 @@ export function createApiKeyMiddleware() {
       keyType: validation.keyType,
       endpoint: request.nextUrl.pathname,
       method: request.method,
-      type: 'api_key_validation'
+      type: 'api_key_validation',
     })
 
     return NextResponse.next({
       request: {
-        headers
-      }
+        headers,
+      },
     })
   }
 }
@@ -413,6 +413,6 @@ export function getApiKeyInfo(request: NextRequest): {
     keyType,
     permissions: permissions ? JSON.parse(permissions) : undefined,
     userId: userId || undefined,
-    organizationId: organizationId || undefined
+    organizationId: organizationId || undefined,
   }
 }

@@ -41,7 +41,7 @@ export const VERSION_CONFIGS: Record<ApiVersion, ApiVersionConfig> = {
   v2: {
     version: 'v2',
     deprecated: false,
-  }
+  },
 }
 
 /**
@@ -89,7 +89,7 @@ export function isSupportedVersion(version: string): version is ApiVersion {
 export function createVersionedResponse<T>(
   data: T,
   version: ApiVersion,
-  status: number = 200
+  status: number = 200,
 ): NextResponse {
   const config = VERSION_CONFIGS[version]
   const requestId = getCurrentRequestId()
@@ -99,8 +99,8 @@ export function createVersionedResponse<T>(
     meta: {
       version,
       requestId,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   }
 
   // Add deprecation warning if needed
@@ -166,7 +166,7 @@ export const DataTransformers = {
           email: user.email,
           role: user.role,
           created_at: user.createdAt, // snake_case for v1
-          updated_at: user.updatedAt
+          updated_at: user.updatedAt,
         }
 
       case 'v2':
@@ -176,17 +176,17 @@ export const DataTransformers = {
           profile: {
             name: user.name,
             email: user.email,
-            emailVerified: user.emailVerified
+            emailVerified: user.emailVerified,
           },
           authorization: {
             role: user.role,
-            permissions: user.permissions || []
+            permissions: user.permissions || [],
           },
           timestamps: {
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
-            lastLoginAt: user.lastLoginAt
-          }
+            lastLoginAt: user.lastLoginAt,
+          },
         }
 
       default:
@@ -209,7 +209,7 @@ export const DataTransformers = {
           category_id: product.categoryId,
           images: product.images,
           created_at: product.createdAt,
-          updated_at: product.updatedAt
+          updated_at: product.updatedAt,
         }
 
       case 'v2':
@@ -220,26 +220,26 @@ export const DataTransformers = {
           pricing: {
             price: product.price,
             comparePrice: product.comparePrice,
-            currency: 'EUR'
+            currency: 'EUR',
           },
           inventory: {
             sku: product.sku,
             stock: product.inventory,
-            trackInventory: true
+            trackInventory: true,
           },
           category: {
             id: product.categoryId,
-            name: product.category?.name
+            name: product.category?.name,
           },
           media: {
             images: product.images || [],
-            primaryImage: product.images?.[0]
+            primaryImage: product.images?.[0],
           },
           metadata: {
             createdAt: product.createdAt,
             updatedAt: product.updatedAt,
-            status: product.status || 'ACTIVE'
-          }
+            status: product.status || 'ACTIVE',
+          },
         }
 
       default:
@@ -259,7 +259,7 @@ export const DataTransformers = {
           user_id: order.userId,
           items: order.items,
           created_at: order.createdAt,
-          updated_at: order.updatedAt
+          updated_at: order.updatedAt,
         }
 
       case 'v2':
@@ -268,44 +268,44 @@ export const DataTransformers = {
           orderNumber: order.orderNumber,
           status: {
             current: order.status,
-            history: order.statusHistory || []
+            history: order.statusHistory || [],
           },
           pricing: {
             subtotal: order.subtotalAmount,
             taxes: order.taxAmount,
             shipping: order.shippingAmount,
             total: order.totalAmount,
-            currency: 'EUR'
+            currency: 'EUR',
           },
           customer: {
             id: order.userId,
             name: order.user?.name,
-            email: order.user?.email
+            email: order.user?.email,
           },
           items: order.items?.map((item: any) => ({
             id: item.id,
             product: {
               id: item.productId,
               name: item.product?.name,
-              sku: item.product?.sku
+              sku: item.product?.sku,
             },
             quantity: item.quantity,
             pricing: {
               unitPrice: item.price,
-              totalPrice: item.price * item.quantity
-            }
+              totalPrice: item.price * item.quantity,
+            },
           })),
           timestamps: {
             createdAt: order.createdAt,
             updatedAt: order.updatedAt,
-            completedAt: order.completedAt
-          }
+            completedAt: order.completedAt,
+          },
         }
 
       default:
         return order
     }
-  }
+  },
 }
 
 /**
@@ -323,7 +323,7 @@ export function createVersioningMiddleware() {
       method: request.method,
       deprecated: config.deprecated,
       userAgent: request.headers.get('user-agent') ?? undefined,
-      type: 'api_version_usage'
+      type: 'api_version_usage',
     })
 
     // Add version to request headers for downstream handlers
@@ -332,8 +332,8 @@ export function createVersioningMiddleware() {
 
     return NextResponse.next({
       request: {
-        headers
-      }
+        headers,
+      },
     })
   }
 }
@@ -361,7 +361,7 @@ export function supportsFeature(version: ApiVersion, feature: string): boolean {
       'basic-crud',
       'authentication',
       'pagination',
-      'filtering'
+      'filtering',
     ],
     v2: [
       'basic-crud',
@@ -372,8 +372,8 @@ export function supportsFeature(version: ApiVersion, feature: string): boolean {
       'batch-operations',
       'webhooks',
       'rate-limiting-headers',
-      'etag-support'
-    ]
+      'etag-support',
+    ],
   }
 
   return featureMatrix[version]?.includes(feature) || false
@@ -388,11 +388,11 @@ export function createUnsupportedVersionResponse(requestedVersion: string): Next
       code: 'UNSUPPORTED_API_VERSION',
       message: `API version '${requestedVersion}' is not supported.`,
       supportedVersions: SUPPORTED_VERSIONS,
-      latestVersion: LATEST_VERSION
+      latestVersion: LATEST_VERSION,
     },
     meta: {
       timestamp: new Date().toISOString(),
-      requestId: getCurrentRequestId()
-    }
+      requestId: getCurrentRequestId(),
+    },
   }, { status: 400 })
 }

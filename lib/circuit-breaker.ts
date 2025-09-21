@@ -6,7 +6,7 @@
 export enum CircuitState {
   CLOSED = 'CLOSED',     // Normal operation
   OPEN = 'OPEN',         // Circuit is open, failing fast
-  HALF_OPEN = 'HALF_OPEN' // Testing if service is back
+  HALF_OPEN = 'HALF_OPEN', // Testing if service is back
 }
 
 interface CircuitBreakerConfig {
@@ -35,14 +35,14 @@ export class CircuitBreaker {
 
   constructor(
     private name: string,
-    config: Partial<CircuitBreakerConfig> = {}
+    config: Partial<CircuitBreakerConfig> = {},
   ) {
     this.config = {
       failureThreshold: 5,
       recoveryTimeout: 30000, // 30 seconds
       monitoringPeriod: 60000, // 1 minute
       expectedErrors: ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND'],
-      ...config
+      ...config,
     }
   }
 
@@ -52,7 +52,7 @@ export class CircuitBreaker {
         this.state = CircuitState.HALF_OPEN
       } else {
         throw new CircuitBreakerOpenError(
-          `Circuit breaker is OPEN for ${this.name}. Service is unavailable.`
+          `Circuit breaker is OPEN for ${this.name}. Service is unavailable.`,
         )
       }
     }
@@ -111,7 +111,7 @@ export class CircuitBreaker {
     const errorMessage = (error as any).message || ''
 
     return this.config.expectedErrors!.some(expectedError =>
-      errorCode === expectedError || errorMessage.includes(expectedError)
+      errorCode === expectedError || errorMessage.includes(expectedError),
     )
   }
 
@@ -122,7 +122,7 @@ export class CircuitBreaker {
       successfulRequests: this.totalRequests - this.failureCount,
       lastFailureTime: this.lastFailureTime,
       lastSuccessTime: this.lastSuccessTime,
-      state: this.state
+      state: this.state,
     }
   }
 
@@ -164,13 +164,13 @@ export const circuitBreakers = {
   database: new CircuitBreaker('database', {
     failureThreshold: 3,
     recoveryTimeout: 10000, // 10 seconds for database
-    expectedErrors: ['ECONNREFUSED', 'ETIMEDOUT', 'CONNECTION_LOST']
+    expectedErrors: ['ECONNREFUSED', 'ETIMEDOUT', 'CONNECTION_LOST'],
   }),
 
   redis: new CircuitBreaker('redis', {
     failureThreshold: 5,
     recoveryTimeout: 15000, // 15 seconds for cache
-  })
+  }),
 }
 
 // Helper function to get circuit breaker stats for monitoring

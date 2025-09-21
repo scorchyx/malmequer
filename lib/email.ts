@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import { circuitBreakers } from './circuit-breaker'
-import { withRetry, RetryConfigs, RetryableError } from './retry'
 import { createContextualLogger } from './request-context'
+import { withRetry, RetryConfigs, RetryableError } from './retry'
 
 let resendClient: Resend | null = null
 
@@ -35,7 +35,7 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions) {
         logger.info('Sending email', {
           to: Array.isArray(to) ? to.length + ' recipients' : to,
           subject,
-          type: 'email_send_start'
+          type: 'email_send_start',
         })
 
         const { data, error } = await resend.emails.send({
@@ -69,7 +69,7 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions) {
     logger.info('Email sent successfully', {
       emailId: result?.id,
       duration,
-      type: 'email_send_success'
+      type: 'email_send_success',
     })
 
     return result
@@ -82,7 +82,7 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions) {
       duration,
       to: Array.isArray(to) ? to.length + ' recipients' : to,
       subject,
-      type: 'email_send_error'
+      type: 'email_send_error',
     })
 
     throw error

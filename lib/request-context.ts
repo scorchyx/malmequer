@@ -51,7 +51,7 @@ export function extractRequestInfo(request: NextRequest): Partial<RequestContext
     url,
     userAgent,
     ip,
-    correlationId
+    correlationId,
   }
 }
 
@@ -60,7 +60,7 @@ export function extractRequestInfo(request: NextRequest): Partial<RequestContext
  */
 export function createRequestContext(
   requestId: string,
-  requestInfo: Partial<RequestContext>
+  requestInfo: Partial<RequestContext>,
 ): RequestContext {
   const context: RequestContext = {
     id: requestId,
@@ -69,7 +69,7 @@ export function createRequestContext(
     url: requestInfo.url || 'UNKNOWN',
     userAgent: requestInfo.userAgent,
     ip: requestInfo.ip,
-    correlationId: requestInfo.correlationId
+    correlationId: requestInfo.correlationId,
   }
 
   return context
@@ -87,7 +87,7 @@ export function getRequestContext(): RequestContext | undefined {
  */
 export function runWithRequestContext<T>(
   context: RequestContext,
-  fn: () => T
+  fn: () => T,
 ): T {
   return requestStorage.run(context, fn)
 }
@@ -107,7 +107,7 @@ export function updateRequestContext(updates: Partial<RequestContext>): void {
  */
 export function createRequestTrackingMiddleware() {
   return async function requestTrackingMiddleware(
-    request: NextRequest
+    request: NextRequest,
   ): Promise<NextResponse | undefined> {
     // Check if request ID already exists
     const existingRequestId = request.headers.get('x-request-id')
@@ -127,7 +127,7 @@ export function createRequestTrackingMiddleware() {
       userAgent: context.userAgent,
       ip: context.ip,
       correlationId: context.correlationId,
-      type: 'request_start'
+      type: 'request_start',
     })
 
     // Run the rest of the request in context
@@ -167,7 +167,7 @@ export function getCurrentRequestId(): string | undefined {
 export function logWithContext(
   level: 'info' | 'warn' | 'error' | 'debug',
   message: string,
-  additionalContext?: Record<string, unknown>
+  additionalContext?: Record<string, unknown>,
 ): void {
   const context = getRequestContext()
   const logContext = {
@@ -177,7 +177,7 @@ export function logWithContext(
     url: context?.url,
     userId: context?.userId,
     sessionId: context?.sessionId,
-    correlationId: context?.correlationId
+    correlationId: context?.correlationId,
   }
 
   log[level](message, logContext)
@@ -207,7 +207,7 @@ export function logRequestCompletion(statusCode: number): void {
   logWithContext('info', 'Request completed', {
     statusCode,
     duration,
-    type: 'request_complete'
+    type: 'request_complete',
   })
 }
 
@@ -216,7 +216,7 @@ export function logRequestCompletion(statusCode: number): void {
  */
 export function logErrorWithContext(
   error: Error | unknown,
-  additionalContext?: Record<string, unknown>
+  additionalContext?: Record<string, unknown>,
 ): void {
   const _context = getRequestContext()
 
@@ -225,10 +225,10 @@ export function logErrorWithContext(
     error: error instanceof Error ? {
       name: error.name,
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
     } : String(error),
     duration: getRequestDuration(),
-    type: 'request_error'
+    type: 'request_error',
   })
 }
 
@@ -255,7 +255,7 @@ export function createContextualLogger() {
         operation,
         duration,
         success,
-        type: 'api_call'
+        type: 'api_call',
       })
     },
 
@@ -265,8 +265,8 @@ export function createContextualLogger() {
         operation,
         duration,
         rowsAffected,
-        type: 'db_query'
+        type: 'db_query',
       })
-    }
+    },
   }
 }

@@ -4,8 +4,8 @@
  */
 
 import { log } from './logger'
-import { getCurrentRequestId, getRequestContext } from './request-context'
 import { prisma } from './prisma'
+import { getCurrentRequestId, getRequestContext } from './request-context'
 
 export enum AuditEventType {
   // User management
@@ -61,14 +61,14 @@ export enum AuditEventType {
   BACKUP_RESTORED = 'BACKUP_RESTORED',
   CONFIGURATION_CHANGED = 'CONFIGURATION_CHANGED',
   MAINTENANCE_MODE_ENABLED = 'MAINTENANCE_MODE_ENABLED',
-  MAINTENANCE_MODE_DISABLED = 'MAINTENANCE_MODE_DISABLED'
+  MAINTENANCE_MODE_DISABLED = 'MAINTENANCE_MODE_DISABLED',
 }
 
 export enum AuditSeverity {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
   HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL'
+  CRITICAL = 'CRITICAL',
 }
 
 export interface AuditEvent {
@@ -107,7 +107,7 @@ class AuditLogger {
       // Log to structured logger for immediate visibility
       log.info('Audit event', {
         ...enrichedEvent,
-        type: 'audit_event'
+        type: 'audit_event',
       })
 
       // Persist to database for long-term storage and compliance
@@ -118,7 +118,7 @@ class AuditLogger {
       log.error('Failed to log audit event', {
         event,
         error: error instanceof Error ? error.message : String(error),
-        type: 'audit_error'
+        type: 'audit_error',
       })
     }
   }
@@ -131,8 +131,8 @@ class AuditLogger {
       ...event,
       details: {
         ...event.details,
-        success: true
-      }
+        success: true,
+      },
     })
   }
 
@@ -148,9 +148,9 @@ class AuditLogger {
         success: false,
         error: error instanceof Error ? {
           name: error.name,
-          message: error.message
-        } : String(error)
-      }
+          message: error.message,
+        } : String(error),
+      },
     })
   }
 
@@ -166,7 +166,7 @@ class AuditLogger {
       requestId: event.requestId || requestId,
       ipAddress: event.ipAddress || context?.ip,
       userAgent: event.userAgent || context?.userAgent,
-      sessionId: event.sessionId || context?.sessionId
+      sessionId: event.sessionId || context?.sessionId,
     }
   }
 
@@ -174,33 +174,34 @@ class AuditLogger {
    * Persist audit event to database
    */
   private async persistAuditEvent(event: AuditEvent): Promise<void> {
-    // Note: This would require an AuditLog table in the database
-    // For now, we'll skip database persistence and rely on structured logging
-
-    // TODO: Add AuditLog model to Prisma schema:
-    /*
-    model AuditLog {
-      id          String        @id @default(cuid())
-      eventType   String
-      severity    String
-      actorId     String?
-      actorEmail  String?
-      actorRole   String?
-      targetId    String?
-      targetType  String?
-      details     Json?
-      ipAddress   String?
-      userAgent   String?
-      sessionId   String?
-      requestId   String?
-      timestamp   DateTime      @default(now())
-      metadata    Json?
-
-      @@index([eventType, timestamp])
-      @@index([actorId, timestamp])
-      @@index([targetId, targetType])
+    try {
+      await prisma.auditLog.create({
+        data: {
+          eventType: event.eventType,
+          severity: event.severity,
+          actorId: event.actorId,
+          actorEmail: event.actorEmail,
+          actorRole: event.actorRole,
+          targetId: event.targetId,
+          targetType: event.targetType,
+          resourceName: event.resourceName,
+          details: event.details as any,
+          ipAddress: event.ipAddress,
+          userAgent: event.userAgent,
+          sessionId: event.sessionId,
+          requestId: event.requestId,
+          metadata: event.metadata as any,
+          success: true,
+        },
+      })
+    } catch (error) {
+      log.error('Failed to persist audit event to database', {
+        event,
+        error: error instanceof Error ? error.message : String(error),
+        type: 'audit_persistence_error',
+      })
+      // Don't throw - we don't want audit logging failures to break the main operation
     }
-    */
   }
 
   /**
@@ -221,7 +222,7 @@ class AuditLogger {
   }
 
   /**
-   * Query audit logs (when database persistence is implemented)
+   * Query audit logs
    */
   async queryAuditLogs(filters: {
     eventType?: AuditEventType
@@ -233,8 +234,54 @@ class AuditLogger {
     limit?: number
     offset?: number
   }): Promise<AuditLogEntry[]> {
-    // TODO: Implement database querying when AuditLog model is added
-    return []
+    try {
+      const where: any = {}
+
+      if (filters.eventType) where.eventType = filters.eventType
+      if (filters.actorId) where.actorId = filters.actorId
+      if (filters.targetId) where.targetId = filters.targetId
+      if (filters.severity) where.severity = filters.severity
+
+      if (filters.startDate || filters.endDate) {
+        where.timestamp = {}
+        if (filters.startDate) where.timestamp.gte = filters.startDate
+        if (filters.endDate) where.timestamp.lte = filters.endDate
+      }
+
+      const logs = await prisma.auditLog.findMany({
+        where,
+        orderBy: { timestamp: 'desc' },
+        take: filters.limit || 100,
+        skip: filters.offset || 0,
+      })
+
+      return logs.map(log => ({
+        id: log.id,
+        eventType: log.eventType as AuditEventType,
+        severity: log.severity as AuditSeverity,
+        actorId: log.actorId || undefined,
+        actorEmail: log.actorEmail || undefined,
+        actorRole: log.actorRole || undefined,
+        targetId: log.targetId || undefined,
+        targetType: log.targetType || undefined,
+        resourceName: log.resourceName || undefined,
+        details: log.details as Record<string, unknown>,
+        ipAddress: log.ipAddress || undefined,
+        userAgent: log.userAgent || undefined,
+        sessionId: log.sessionId || undefined,
+        requestId: log.requestId || undefined,
+        metadata: log.metadata as Record<string, unknown>,
+        timestamp: log.timestamp,
+        success: log.success,
+        errorMessage: log.errorMessage || undefined,
+      }))
+    } catch (error) {
+      log.error('Failed to query audit logs', {
+        filters,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return []
+    }
   }
 }
 
@@ -254,7 +301,7 @@ export const AuditHelpers = {
       targetId: userId,
       targetType: 'User',
       resourceName: userEmail,
-      details: { userEmail }
+      details: { userEmail },
     }),
 
   userDeleted: (userId: string, userEmail: string, actorId: string) =>
@@ -265,7 +312,7 @@ export const AuditHelpers = {
       targetId: userId,
       targetType: 'User',
       resourceName: userEmail,
-      details: { userEmail }
+      details: { userEmail },
     }),
 
   roleChanged: (userId: string, oldRole: string, newRole: string, actorId: string) =>
@@ -275,7 +322,7 @@ export const AuditHelpers = {
       actorId,
       targetId: userId,
       targetType: 'User',
-      details: { oldRole, newRole }
+      details: { oldRole, newRole },
     }),
 
   // Authentication
@@ -286,7 +333,7 @@ export const AuditHelpers = {
       actorId: userId,
       actorEmail: userEmail,
       targetId: userId,
-      targetType: 'User'
+      targetType: 'User',
     }),
 
   loginFailed: (email: string, reason: string) =>
@@ -294,7 +341,7 @@ export const AuditHelpers = {
       eventType: AuditEventType.LOGIN_FAILED,
       severity: AuditSeverity.MEDIUM,
       actorEmail: email,
-      details: { email, reason }
+      details: { email, reason },
     }, reason),
 
   // Product operations
@@ -306,7 +353,7 @@ export const AuditHelpers = {
       targetId: productId,
       targetType: 'Product',
       resourceName: productName,
-      details: { productName }
+      details: { productName },
     }),
 
   productDeleted: (productId: string, productName: string, actorId: string) =>
@@ -317,7 +364,7 @@ export const AuditHelpers = {
       targetId: productId,
       targetType: 'Product',
       resourceName: productName,
-      details: { productName }
+      details: { productName },
     }),
 
   // Security events
@@ -328,7 +375,7 @@ export const AuditHelpers = {
       actorId,
       targetType: 'Resource',
       resourceName: resource,
-      details: { resource, timestamp: new Date() }
+      details: { resource, timestamp: new Date() },
     }),
 
   suspiciousActivity: (description: string, actorId?: string, details?: Record<string, unknown>) =>
@@ -336,7 +383,7 @@ export const AuditHelpers = {
       eventType: AuditEventType.SUSPICIOUS_ACTIVITY,
       severity: AuditSeverity.HIGH,
       actorId,
-      details: { description, ...details }
+      details: { description, ...details },
     }),
 
   // Payment events
@@ -347,7 +394,7 @@ export const AuditHelpers = {
       actorId,
       targetId: orderId,
       targetType: 'Order',
-      details: { amount, currency: 'EUR' }
+      details: { amount, currency: 'EUR' },
     }),
 
   refundIssued: (orderId: string, amount: number, reason: string, actorId: string) =>
@@ -357,6 +404,6 @@ export const AuditHelpers = {
       actorId,
       targetId: orderId,
       targetType: 'Order',
-      details: { amount, reason, currency: 'EUR' }
-    })
+      details: { amount, reason, currency: 'EUR' },
+    }),
 }

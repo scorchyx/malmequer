@@ -385,3 +385,29 @@ enum AddressType {
   SHIPPING
   BILLING
 }
+
+model AuditLog {
+  id           String        @id @default(cuid())
+  eventType    String
+  severity     String
+  actorId      String?
+  actorEmail   String?
+  actorRole    String?
+  targetId     String?
+  targetType   String?
+  resourceName String?
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  sessionId    String?
+  requestId    String?
+  success      Boolean       @default(true)
+  errorMessage String?
+  timestamp    DateTime      @default(now())
+  metadata     Json?
+
+  @@index([eventType, timestamp])
+  @@index([actorId, timestamp])
+  @@index([targetId, targetType])
+  @@index([severity, timestamp])
+}
