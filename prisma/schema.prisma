@@ -147,18 +147,21 @@ model ProductVariant {
 }
 
 model CartItem {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String
+  userId    String?
+  sessionId String?
   productId String
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
+  @@unique([sessionId, productId])
+  @@index([sessionId])
 }
 
 model Order {
@@ -177,12 +180,17 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  userId            String
+  // Guest support
+  userId            String?
+  sessionId         String?
+  guestEmail        String?
+  guestPhone        String?
+
   shippingAddressId String
   billingAddressId  String
   discountId        String?
 
-  user            User      @relation(fields: [userId], references: [id])
+  user            User?     @relation(fields: [userId], references: [id])
   shippingAddress Address   @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   billingAddress  Address   @relation("BillingAddress", fields: [billingAddressId], references: [id])
   discount        Discount? @relation(fields: [discountId], references: [id])
@@ -190,8 +198,10 @@ model Order {
   payments        Payment[]
 
   @@index([userId, status])
+  @@index([sessionId, status])
   @@index([status, createdAt])
   @@index([paymentStatus])
+  @@index([guestEmail])
   @@index([createdAt])
 }
 
@@ -225,13 +235,17 @@ model Address {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Guest support
+  userId    String?
+  sessionId String?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   shippingOrders Order[] @relation("ShippingAddress")
   billingOrders  Order[] @relation("BillingAddress")
 
   @@index([userId, type, isDefault])
+  @@index([sessionId, type])
 }
 
 model Review {
@@ -345,13 +359,16 @@ model WishlistItem {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  userId    String
+  userId    String?
+  sessionId String?
   productId String
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
+  @@unique([sessionId, productId])
+  @@index([sessionId])
 }
 
 enum DiscountType {
@@ -386,6 +403,21 @@ enum AddressType {
   BILLING
 }
 
+model PaymentMethodConfig {
+  id               String              @id @default(cuid())
+  method           String              @unique // multibanco, mbway, visa, mastercard, applepay, googlepay
+  name             String              // Display name
+  icon             String              // Emoji or icon identifier
+  enabled          Boolean             @default(true)
+  processingMode   PaymentProcessingMode @default(AUTO)
+  description      String?
+  displayOrder     Int                 @default(0)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([enabled, displayOrder])
+}
+
 model AuditLog {
   id           String        @id @default(cuid())
   eventType    String
@@ -410,4 +442,9 @@ model AuditLog {
   @@index([actorId, timestamp])
   @@index([targetId, targetType])
   @@index([severity, timestamp])
+}
+
+enum PaymentProcessingMode {
+  MANUAL    // Requires admin approval
+  AUTO      // Automatic processing via Stripe
 }

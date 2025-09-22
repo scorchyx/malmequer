@@ -4,6 +4,7 @@ import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
 import { log } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
 import { validateQueryParams, paginationSchema } from '@/lib/validation'
+import { getGuestSessionId, setGuestSessionCookie } from '@/lib/guest-session'
 
 export async function GET(request: NextRequest) {
   let user
@@ -95,12 +96,6 @@ export async function POST(request: NextRequest) {
   let user
   try {
     user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 },
-      )
-    }
 
     const body = await request.json()
     const {
@@ -110,6 +105,9 @@ export async function POST(request: NextRequest) {
       paymentMethod,
       shippingMethod,
       notes,
+      // Guest-specific fields
+      guestEmail,
+      guestPhone,
     } = body
 
     // Calculate totals
@@ -117,34 +115,61 @@ export async function POST(request: NextRequest) {
       (sum: number, item: any) => sum + item.quantity * item.price,
       0,
     )
-    const taxAmount = subtotalAmount * 0.1 // 10% tax
-    const shippingAmount = 10 // Fixed shipping
+    const taxAmount = subtotalAmount * 0.23 // 23% IVA Portugal
+    const shippingAmount = subtotalAmount > 50 ? 0 : 5.99 // Free shipping over €50
     const totalAmount = subtotalAmount + taxAmount + shippingAmount
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
 
-    // Create addresses first
-    const createdShippingAddress = await prisma.address.create({
-      data: {
-        ...shippingAddress,
-        type: 'SHIPPING',
-        userId: user.id,
-      },
-    })
+    let createdShippingAddress, createdBillingAddress
 
-    const createdBillingAddress = await prisma.address.create({
-      data: {
-        ...billingAddress,
-        type: 'BILLING',
-        userId: user.id,
-      },
-    })
+    if (user) {
+      // Authenticated user - create addresses linked to user
+      createdShippingAddress = await prisma.address.create({
+        data: {
+          ...shippingAddress,
+          type: 'SHIPPING',
+          userId: user.id,
+        },
+      })
+
+      createdBillingAddress = await prisma.address.create({
+        data: {
+          ...billingAddress,
+          type: 'BILLING',
+          userId: user.id,
+        },
+      })
+    } else {
+      // Guest user - create addresses linked to session
+      const sessionId = getGuestSessionId(request)
+
+      createdShippingAddress = await prisma.address.create({
+        data: {
+          ...shippingAddress,
+          type: 'SHIPPING',
+          sessionId,
+        },
+      })
+
+      createdBillingAddress = await prisma.address.create({
+        data: {
+          ...billingAddress,
+          type: 'BILLING',
+          sessionId,
+        },
+      })
+    }
 
     const order = await prisma.order.create({
       data: {
         orderNumber,
-        userId: user.id,
+        ...(user ? { userId: user.id } : {
+          sessionId: getGuestSessionId(request),
+          guestEmail,
+          guestPhone
+        }),
         subtotalAmount,
         taxAmount,
         shippingAmount,
@@ -174,23 +199,49 @@ export async function POST(request: NextRequest) {
     })
 
     // Clear cart after order creation
-    await prisma.cartItem.deleteMany({
-      where: { userId: user.id },
-    })
+    if (user) {
+      await prisma.cartItem.deleteMany({
+        where: { userId: user.id },
+      })
 
-    // Invalidate user orders cache
-    await cache.invalidatePattern(`orders:user:${user.id}:*`)
-    await cache.del(CacheKeys.userCart(user.id))
+      // Invalidate user orders cache
+      await cache.invalidatePattern(`orders:user:${user.id}:*`)
+      await cache.del(CacheKeys.userCart(user.id))
 
-    log.businessEvent('Order created successfully', {
-      event: 'order_creation',
-      userId: user.id,
-      entityType: 'order',
-      entityId: order.id,
-      details: { orderNumber, totalAmount },
-    })
+      log.businessEvent('Order created successfully', {
+        event: 'order_creation',
+        userId: user.id,
+        entityType: 'order',
+        entityId: order.id,
+        details: { orderNumber, totalAmount },
+      })
+    } else {
+      // Guest user - clear cart by session
+      const sessionId = getGuestSessionId(request)
+      await prisma.cartItem.deleteMany({
+        where: { sessionId },
+      })
 
-    return NextResponse.json(order, { status: 201 })
+      // Invalidate guest cart cache
+      await cache.del(`guest_cart:${sessionId}`)
+
+      log.businessEvent('Guest order created successfully', {
+        event: 'guest_order_creation',
+        sessionId,
+        entityType: 'order',
+        entityId: order.id,
+        details: { orderNumber, totalAmount, guestEmail },
+      })
+    }
+
+    const response = NextResponse.json(order, { status: 201 })
+
+    // Set guest session cookie if needed
+    if (!user && !request.cookies.get('guest_session_id')?.value) {
+      setGuestSessionCookie(response, getGuestSessionId(request))
+    }
+
+    return response
   } catch (error) {
     log.error('Failed to create order', {
       error: error instanceof Error ? error : String(error),

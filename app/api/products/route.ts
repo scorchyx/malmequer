@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         include: {
           category: true,
           images: true,
+          variants: true,
           _count: {
             select: { reviews: true },
           },
