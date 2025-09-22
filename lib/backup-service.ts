@@ -47,8 +47,12 @@ class BackupService {
     this.backupDir = process.env.BACKUP_DIR ?? './backups'
     this.databaseUrl = process.env.DATABASE_URL ?? ''
 
-    if (!this.databaseUrl) {
-      throw new Error('DATABASE_URL environment variable is required')
+    // Only log warning when actually trying to use the service, not during module import/build
+    if (!this.databaseUrl && process.env.NODE_ENV !== 'development' && !process.env.NEXT_PHASE) {
+      // Allow missing DATABASE_URL during build phase or development
+      if (typeof window === 'undefined' && !process.env.SKIP_ENV_VALIDATION) {
+        log.warn('DATABASE_URL environment variable is missing. Backup service will not function properly.')
+      }
     }
   }
 
@@ -56,6 +60,10 @@ class BackupService {
    * Create a database backup
    */
   async createBackup(options: BackupOptions = {}): Promise<BackupResult> {
+    if (!this.databaseUrl) {
+      throw new Error('DATABASE_URL environment variable is required for backup operations')
+    }
+
     const startTime = Date.now()
     const backupId = this.generateBackupId()
     const filename = `backup_${backupId}.sql${options.compressionLevel ? '.gz' : ''}`
@@ -181,6 +189,10 @@ class BackupService {
     duration: number
     error?: string
   }> {
+    if (!this.databaseUrl) {
+      throw new Error('DATABASE_URL environment variable is required for restore operations')
+    }
+
     const startTime = Date.now()
     const filepath = join(this.backupDir, backupFilename)
 
