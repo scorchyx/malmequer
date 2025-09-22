@@ -11,7 +11,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed-products": "tsx prisma/seed-products.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -70,6 +72,7 @@
     "supertest": "^7.1.4",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.2",
+    "tsx": "^4.20.5",
     "typescript": "^5",
     "typescript-eslint": "^8.44.0"
   },

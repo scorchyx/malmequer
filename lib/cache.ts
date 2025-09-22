@@ -2,12 +2,17 @@ import { createClient, RedisClientType } from 'redis'
 
 let redis: RedisClientType | null = null
 
-export async function getRedisClient(): Promise<RedisClientType> {
+export async function getRedisClient(): Promise<RedisClientType | null> {
+  // If Redis URL is not configured, return null (cache disabled)
+  if (!process.env.REDIS_URL) {
+    return null
+  }
+
   if (!redis) {
     redis = createClient({
-      url: process.env.REDIS_URL ?? 'redis://localhost:6379',
+      url: process.env.REDIS_URL,
       socket: {
-        connectTimeout: 5000,
+        connectTimeout: 1000, // Reduced timeout
       },
     })
 
@@ -27,7 +32,13 @@ export async function getRedisClient(): Promise<RedisClientType> {
       // Redis Client Disconnected
     })
 
-    await redis.connect()
+    try {
+      await redis.connect()
+    } catch {
+      // Redis connection failed, set to null to disable caching
+      redis = null
+      return null
+    }
   }
 
   return redis
@@ -46,14 +57,17 @@ export class CacheService {
     return CacheService.instance
   }
 
-  async getClient(): Promise<RedisClientType> {
-    this.redis ??= await getRedisClient()
+  async getClient(): Promise<RedisClientType | null> {
+    if (this.redis === null) {
+      this.redis = await getRedisClient()
+    }
     return this.redis
   }
 
   async get<T>(key: string): Promise<T | null> {
     try {
       const client = await this.getClient()
+      if (!client) return null // Cache disabled
       const value = await client.get(key)
       return value ? JSON.parse(value) : null
     } catch {
@@ -65,6 +79,7 @@ export class CacheService {
   async set(key: string, value: unknown, ttlSeconds: number = 300): Promise<boolean> {
     try {
       const client = await this.getClient()
+      if (!client) return false // Cache disabled
       await client.setEx(key, ttlSeconds, JSON.stringify(value))
       return true
     } catch {
@@ -76,6 +91,7 @@ export class CacheService {
   async del(key: string): Promise<boolean> {
     try {
       const client = await this.getClient()
+      if (!client) return false // Cache disabled
       await client.del(key)
       return true
     } catch {
@@ -87,6 +103,7 @@ export class CacheService {
   async invalidatePattern(pattern: string): Promise<boolean> {
     try {
       const client = await this.getClient()
+      if (!client) return false // Cache disabled
       const keys = await client.keys(pattern)
       if (keys.length > 0) {
         await client.del(keys)
@@ -101,6 +118,7 @@ export class CacheService {
   async exists(key: string): Promise<boolean> {
     try {
       const client = await this.getClient()
+      if (!client) return false // Cache disabled
       const result = await client.exists(key)
       return result === 1
     } catch {
@@ -112,6 +130,7 @@ export class CacheService {
   async increment(key: string, ttlSeconds: number = 300): Promise<number> {
     try {
       const client = await this.getClient()
+      if (!client) return 0 // Cache disabled
       const value = await client.incr(key)
       if (value === 1) {
         await client.expire(key, ttlSeconds)
