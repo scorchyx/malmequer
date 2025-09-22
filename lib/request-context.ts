@@ -3,6 +3,7 @@
  * Provides request tracing across the entire request lifecycle
  */
 
+import { AsyncLocalStorage } from 'async_hooks'
 import { NextRequest, NextResponse } from 'next/server'
 import { log } from './logger'
 
@@ -19,7 +20,6 @@ export interface RequestContext {
 }
 
 // Store request context using AsyncLocalStorage for Node.js
-import { AsyncLocalStorage } from 'async_hooks'
 const requestStorage = new AsyncLocalStorage<RequestContext | undefined>()
 
 /**
@@ -37,13 +37,13 @@ export function generateRequestId(): string {
 export function extractRequestInfo(request: NextRequest): Partial<RequestContext> {
   const url = request.url
   const method = request.method
-  const userAgent = request.headers.get('user-agent') || undefined
-  const correlationId = request.headers.get('x-correlation-id') || undefined
+  const userAgent = request.headers.get('user-agent') ?? undefined
+  const correlationId = request.headers.get('x-correlation-id') ?? undefined
 
   // Try to get IP from various headers
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
-            request.headers.get('x-real-ip') ||
-            request.headers.get('cf-connecting-ip') ||
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ??
+            request.headers.get('x-real-ip') ??
+            request.headers.get('cf-connecting-ip') ??
             undefined
 
   return {
@@ -65,8 +65,8 @@ export function createRequestContext(
   const context: RequestContext = {
     id: requestId,
     startTime: Date.now(),
-    method: requestInfo.method || 'UNKNOWN',
-    url: requestInfo.url || 'UNKNOWN',
+    method: requestInfo.method ?? 'UNKNOWN',
+    url: requestInfo.url ?? 'UNKNOWN',
     userAgent: requestInfo.userAgent,
     ip: requestInfo.ip,
     correlationId: requestInfo.correlationId,
@@ -111,7 +111,7 @@ export function createRequestTrackingMiddleware() {
   ): Promise<NextResponse | undefined> {
     // Check if request ID already exists
     const existingRequestId = request.headers.get('x-request-id')
-    const requestId = existingRequestId || generateRequestId()
+    const requestId = existingRequestId ?? generateRequestId()
 
     // Extract request information
     const requestInfo = extractRequestInfo(request)

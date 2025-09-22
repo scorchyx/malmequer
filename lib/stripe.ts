@@ -26,7 +26,7 @@ export const stripe = new Proxy({} as Stripe, {
     const value = client[prop as keyof Stripe]
 
     if (typeof value === 'function') {
-      return async function(...args: any[]) {
+      return async function(...args: unknown[]) {
         const logger = createContextualLogger()
         const startTime = Date.now()
 
@@ -44,15 +44,21 @@ export const stripe = new Proxy({} as Stripe, {
               logger.apiCall('stripe', prop.toString(), duration, true)
 
               return result
-            } catch (error: any) {
+            } catch (error: unknown) {
               // Determine if error is retryable
-              const isRetryable = error.type === 'StripeConnectionError' ||
-                                error.type === 'StripeAPIError' && error.code === 'rate_limit' ||
-                                error.message?.includes('timeout') ||
-                                error.message?.includes('connection')
+              const errorType = error && typeof error === 'object' && 'type' in error ? (error as { type: string }).type : undefined
+              const errorCode = error && typeof error === 'object' && 'code' in error ? (error as { code: string }).code : undefined
+              const errorMessage = error instanceof Error ? error.message : String(error)
+
+              const isConnectionError = errorType === 'StripeConnectionError'
+              const isRateLimitError = errorType === 'StripeAPIError' && errorCode === 'rate_limit'
+              const hasTimeoutMessage = errorMessage.includes('timeout')
+              const hasConnectionMessage = errorMessage.includes('connection')
+
+              const isRetryable = [isConnectionError, isRateLimitError, hasTimeoutMessage, hasConnectionMessage].some(Boolean)
 
               if (isRetryable) {
-                throw new RetryableError(`Stripe API error: ${error.message}`, error)
+                throw new RetryableError(`Stripe API error: ${errorMessage}`, error)
               } else {
                 throw error
               }

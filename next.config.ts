@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   output: 'standalone',
+  // Enable build caching
+  turbopack: {
+    // Enable Turbopack caching
+  },
+  // Configure caching directory
+  distDir: '.next',
 }
 
 export default nextConfig

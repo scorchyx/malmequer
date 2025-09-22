@@ -6,7 +6,7 @@
  */
 
 import { exec } from 'child_process'
-import { writeFile, readFile, unlink, stat } from 'fs/promises'
+import { unlink, stat } from 'fs/promises'
 import { join } from 'path'
 import { promisify } from 'util'
 import { auditLogger, AuditEventType, AuditSeverity } from './audit-logger'
@@ -44,8 +44,8 @@ class BackupService {
   private databaseUrl: string
 
   constructor() {
-    this.backupDir = process.env.BACKUP_DIR || './backups'
-    this.databaseUrl = process.env.DATABASE_URL || ''
+    this.backupDir = process.env.BACKUP_DIR ?? './backups'
+    this.databaseUrl = process.env.DATABASE_URL ?? ''
 
     if (!this.databaseUrl) {
       throw new Error('DATABASE_URL environment variable is required')
@@ -96,7 +96,7 @@ class BackupService {
       })
 
       // Execute backup command
-      const { stdout, stderr } = await execAsync(command, {
+      const { stderr } = await execAsync(command, {
         timeout: 30 * 60 * 1000, // 30 minutes timeout
         env: {
           ...process.env,
@@ -136,7 +136,7 @@ class BackupService {
       })
 
       // Clean up old backups
-      await this.cleanupOldBackups(options.retentionDays || 30)
+      await this.cleanupOldBackups(options.retentionDays ?? 30)
 
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error)
@@ -165,7 +165,7 @@ class BackupService {
       // Clean up failed backup file if it exists
       try {
         await unlink(filepath)
-      } catch (cleanupError) {
+      } catch {
         // Ignore cleanup errors
       }
     }
@@ -208,7 +208,7 @@ class BackupService {
       const command = this.buildRestoreCommand(filepath, options)
 
       // Execute restore command
-      const { stdout, stderr } = await execAsync(command, {
+      const { stderr } = await execAsync(command, {
         timeout: 60 * 60 * 1000, // 60 minutes timeout
         env: {
           ...process.env,
@@ -331,8 +331,8 @@ class BackupService {
 
     log.info('Automatic backup scheduling configured', {
       interval: options.interval,
-      time: options.time || '02:00',
-      retentionDays: options.retentionDays || 30,
+      time: options.time ?? '02:00',
+      retentionDays: options.retentionDays ?? 30,
     })
 
     // TODO: Implement actual scheduling with node-cron or similar
@@ -360,7 +360,7 @@ class BackupService {
       const { mkdir } = await import('fs/promises')
       await mkdir(this.backupDir, { recursive: true })
     } catch (error) {
-      if ((error as any).code !== 'EEXIST') {
+      if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code !== 'EEXIST') {
         throw error
       }
     }

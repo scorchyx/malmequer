@@ -20,7 +20,7 @@ const createBackupSchema = z.object({
   retentionDays: z.number().min(1).max(365).default(30),
 })
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions)
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: result.error || 'Backup creation failed',
+          error: result.error ?? 'Backup creation failed',
           duration: result.duration,
         },
         { status: 500 },

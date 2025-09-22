@@ -80,7 +80,7 @@ class IntegrityValidator {
       }
 
       // Check 1: Order items total calculation
-      const calculatedTotal = order.items.reduce((sum: number, item: any) => {
+      const calculatedTotal = order.items.reduce((sum: number, item) => {
         return sum + (Number(item.price) * item.quantity)
       }, 0)
 

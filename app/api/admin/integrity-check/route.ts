@@ -17,7 +17,7 @@ const specificCheckSchema = z.object({
   entityId: z.string(),
 })
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions)

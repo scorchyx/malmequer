@@ -292,12 +292,12 @@ export function createApiKeyMiddleware() {
     }
 
     // Check for API key
-    const apiKey = request.headers.get('x-api-key') ||
+    const apiKey = request.headers.get('x-api-key') ??
                   request.headers.get('authorization')?.replace('Bearer ', '')
 
     if (!apiKey) {
       // Check if this is a session-based request (has auth cookie)
-      const authCookie = request.cookies.get('next-auth.session-token') ||
+      const authCookie = request.cookies.get('next-auth.session-token') ??
                         request.cookies.get('__Secure-next-auth.session-token')
 
       if (authCookie) {
@@ -412,7 +412,7 @@ export function getApiKeyInfo(request: NextRequest): {
   return {
     keyType,
     permissions: permissions ? JSON.parse(permissions) : undefined,
-    userId: userId || undefined,
-    organizationId: organizationId || undefined,
+    userId: userId ?? undefined,
+    organizationId: organizationId ?? undefined,
   }
 }

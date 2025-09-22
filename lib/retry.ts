@@ -146,15 +146,16 @@ export const RetryConditions = {
   networkErrors: (error: unknown): boolean => {
     if (!error || typeof error !== 'object') return false
 
-    const errorCode = (error as any).code
-    const errorMessage = (error as any).message || ''
+    const errorCode = 'code' in error ? (error as { code: string }).code : undefined
+    const errorMessage = error instanceof Error ? error.message : String(error)
 
     const networkErrorCodes = [
       'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET',
       'EPIPE', 'EHOSTUNREACH', 'ENETUNREACH',
     ]
 
-    return networkErrorCodes.includes(errorCode) ||
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    return (errorCode && networkErrorCodes.includes(errorCode)) ||
            errorMessage.includes('timeout') ||
            errorMessage.includes('connection')
   },
@@ -163,25 +164,27 @@ export const RetryConditions = {
   httpErrors: (error: unknown): boolean => {
     if (!error || typeof error !== 'object') return false
 
-    const status = (error as any).status || (error as any).statusCode
+    const status = ('status' in error ? (error as { status: number }).status : undefined) ??
+                   ('statusCode' in error ? (error as { statusCode: number }).statusCode : undefined)
 
     // Retry on server errors (5xx) and some client errors
-    return status >= 500 || status === 429 || status === 408
+    return status !== undefined && (status >= 500 || status === 429 || status === 408)
   },
 
   // Database errors that might be transient
   databaseErrors: (error: unknown): boolean => {
     if (!error || typeof error !== 'object') return false
 
-    const errorCode = (error as any).code
-    const errorMessage = (error as any).message || ''
+    const errorCode = 'code' in error ? (error as { code: string }).code : undefined
+    const errorMessage = error instanceof Error ? error.message : String(error)
 
     const dbErrorCodes = [
       'CONNECTION_LOST', 'PROTOCOL_CONNECTION_LOST', 'ER_LOCK_WAIT_TIMEOUT',
       'ER_LOCK_DEADLOCK', 'ECONNREFUSED',
     ]
 
-    return dbErrorCodes.includes(errorCode) ||
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    return (errorCode && dbErrorCodes.includes(errorCode)) ||
            errorMessage.includes('connection') ||
            errorMessage.includes('timeout') ||
            errorMessage.includes('deadlock')

@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
             action: 'PRE_RESTORE_BACKUP_FAILED',
             error: preRestoreBackup.error,
           },
-        }, new Error(preRestoreBackup.error || 'Pre-restore backup failed'))
+        }, new Error(preRestoreBackup.error ?? 'Pre-restore backup failed'))
 
         return NextResponse.json(
           {
@@ -157,12 +157,12 @@ export async function POST(request: NextRequest) {
           error: result.error,
           duration: result.duration,
         },
-      }, new Error(result.error || 'Database restore failed'))
+      }, new Error(result.error ?? 'Database restore failed'))
 
       return NextResponse.json(
         {
           success: false,
-          error: result.error || 'Database restore failed',
+          error: result.error ?? 'Database restore failed',
           duration: result.duration,
           recommendations: [
             'Check database connectivity',

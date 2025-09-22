@@ -107,8 +107,8 @@ export class CircuitBreaker {
   private isExpectedError(error: unknown): boolean {
     if (!error || typeof error !== 'object') return false
 
-    const errorCode = (error as any).code
-    const errorMessage = (error as any).message || ''
+    const errorCode = 'code' in error ? (error as { code: string }).code : undefined
+    const errorMessage = error instanceof Error ? error.message : String(error)
 
     return this.config.expectedErrors!.some(expectedError =>
       errorCode === expectedError || errorMessage.includes(expectedError),

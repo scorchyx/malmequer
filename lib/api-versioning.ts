@@ -13,7 +13,61 @@ export const SUPPORTED_VERSIONS: ApiVersion[] = ['v1', 'v2']
 export const DEFAULT_VERSION: ApiVersion = 'v1'
 export const LATEST_VERSION: ApiVersion = 'v2'
 
-export interface VersionedResponse<T = any> {
+// Type definitions for data transformers
+interface UserData {
+  id: string
+  name: string | null
+  email: string
+  emailVerified?: Date | null
+  role: string
+  permissions?: string[]
+  createdAt: Date
+  updatedAt: Date
+  lastLoginAt?: Date | null
+}
+
+interface ProductData {
+  id: string
+  name: string
+  description: string | null
+  price: number
+  comparePrice?: number | null
+  sku: string
+  inventory: number
+  categoryId: string
+  category?: { name: string }
+  images?: string[]
+  createdAt: Date
+  updatedAt: Date
+  status?: string
+}
+
+interface OrderItemData {
+  id: string
+  productId: string
+  product?: { name: string; sku: string }
+  quantity: number
+  price: number
+}
+
+interface OrderData {
+  id: string
+  orderNumber: string
+  status: string
+  statusHistory?: Record<string, unknown>[]
+  totalAmount: number
+  subtotalAmount?: number
+  taxAmount?: number
+  shippingAmount?: number
+  userId: string
+  user?: { name: string; email: string }
+  items?: OrderItemData[]
+  createdAt: Date
+  updatedAt: Date
+  completedAt?: Date | null
+}
+
+export interface VersionedResponse<T = unknown> {
   data: T
   meta: {
     version: ApiVersion
@@ -156,7 +210,7 @@ function createDeprecationWarning(config: ApiVersionConfig): string {
  */
 export const DataTransformers = {
   // Transform user data based on version
-  transformUser: (user: any, version: ApiVersion) => {
+  transformUser: (user: UserData, version: ApiVersion) => {
     switch (version) {
       case 'v1':
         // V1 format - legacy structure
@@ -180,7 +234,7 @@ export const DataTransformers = {
           },
           authorization: {
             role: user.role,
-            permissions: user.permissions || [],
+            permissions: user.permissions ?? [],
           },
           timestamps: {
             createdAt: user.createdAt,
@@ -195,7 +249,7 @@ export const DataTransformers = {
   },
 
   // Transform product data based on version
-  transformProduct: (product: any, version: ApiVersion) => {
+  transformProduct: (product: ProductData, version: ApiVersion) => {
     switch (version) {
       case 'v1':
         return {
@@ -232,13 +286,13 @@ export const DataTransformers = {
             name: product.category?.name,
           },
           media: {
-            images: product.images || [],
+            images: product.images ?? [],
             primaryImage: product.images?.[0],
           },
           metadata: {
             createdAt: product.createdAt,
             updatedAt: product.updatedAt,
-            status: product.status || 'ACTIVE',
+            status: product.status ?? 'ACTIVE',
           },
         }
 
@@ -248,7 +302,7 @@ export const DataTransformers = {
   },
 
   // Transform order data based on version
-  transformOrder: (order: any, version: ApiVersion) => {
+  transformOrder: (order: OrderData, version: ApiVersion) => {
     switch (version) {
       case 'v1':
         return {
@@ -268,7 +322,7 @@ export const DataTransformers = {
           orderNumber: order.orderNumber,
           status: {
             current: order.status,
-            history: order.statusHistory || [],
+            history: order.statusHistory ?? [],
           },
           pricing: {
             subtotal: order.subtotalAmount,
@@ -282,7 +336,7 @@ export const DataTransformers = {
             name: order.user?.name,
             email: order.user?.email,
           },
-          items: order.items?.map((item: any) => ({
+          items: order.items?.map((item: OrderItemData) => ({
             id: item.id,
             product: {
               id: item.productId,

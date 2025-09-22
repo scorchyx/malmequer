@@ -10,7 +10,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { auditLogger, AuditEventType, AuditSeverity } from '@/lib/audit-logger'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)

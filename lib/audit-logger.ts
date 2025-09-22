@@ -163,10 +163,10 @@ class AuditLogger {
 
     return {
       ...event,
-      requestId: event.requestId || requestId,
-      ipAddress: event.ipAddress || context?.ip,
-      userAgent: event.userAgent || context?.userAgent,
-      sessionId: event.sessionId || context?.sessionId,
+      requestId: event.requestId ?? requestId,
+      ipAddress: event.ipAddress ?? context?.ip,
+      userAgent: event.userAgent ?? context?.userAgent,
+      sessionId: event.sessionId ?? context?.sessionId,
     }
   }
 
@@ -185,12 +185,12 @@ class AuditLogger {
           targetId: event.targetId,
           targetType: event.targetType,
           resourceName: event.resourceName,
-          details: event.details as any,
+          details: event.details ? JSON.parse(JSON.stringify(event.details)) : null,
           ipAddress: event.ipAddress,
           userAgent: event.userAgent,
           sessionId: event.sessionId,
           requestId: event.requestId,
-          metadata: event.metadata as any,
+          metadata: event.metadata ? JSON.parse(JSON.stringify(event.metadata)) : null,
           success: true,
         },
       })
@@ -235,7 +235,7 @@ class AuditLogger {
     offset?: number
   }): Promise<AuditLogEntry[]> {
     try {
-      const where: any = {}
+      const where: Record<string, unknown> = {}
 
       if (filters.eventType) where.eventType = filters.eventType
       if (filters.actorId) where.actorId = filters.actorId
@@ -244,36 +244,36 @@ class AuditLogger {
 
       if (filters.startDate || filters.endDate) {
         where.timestamp = {}
-        if (filters.startDate) where.timestamp.gte = filters.startDate
-        if (filters.endDate) where.timestamp.lte = filters.endDate
+        if (filters.startDate) (where.timestamp as Record<string, unknown>).gte = filters.startDate
+        if (filters.endDate) (where.timestamp as Record<string, unknown>).lte = filters.endDate
       }
 
       const logs = await prisma.auditLog.findMany({
         where,
         orderBy: { timestamp: 'desc' },
-        take: filters.limit || 100,
-        skip: filters.offset || 0,
+        take: filters.limit ?? 100,
+        skip: filters.offset ?? 0,
       })
 
       return logs.map(log => ({
         id: log.id,
         eventType: log.eventType as AuditEventType,
         severity: log.severity as AuditSeverity,
-        actorId: log.actorId || undefined,
-        actorEmail: log.actorEmail || undefined,
-        actorRole: log.actorRole || undefined,
-        targetId: log.targetId || undefined,
-        targetType: log.targetType || undefined,
-        resourceName: log.resourceName || undefined,
+        actorId: log.actorId ?? undefined,
+        actorEmail: log.actorEmail ?? undefined,
+        actorRole: log.actorRole ?? undefined,
+        targetId: log.targetId ?? undefined,
+        targetType: log.targetType ?? undefined,
+        resourceName: log.resourceName ?? undefined,
         details: log.details as Record<string, unknown>,
-        ipAddress: log.ipAddress || undefined,
-        userAgent: log.userAgent || undefined,
-        sessionId: log.sessionId || undefined,
-        requestId: log.requestId || undefined,
+        ipAddress: log.ipAddress ?? undefined,
+        userAgent: log.userAgent ?? undefined,
+        sessionId: log.sessionId ?? undefined,
+        requestId: log.requestId ?? undefined,
         metadata: log.metadata as Record<string, unknown>,
         timestamp: log.timestamp,
         success: log.success,
-        errorMessage: log.errorMessage || undefined,
+        errorMessage: log.errorMessage ?? undefined,
       }))
     } catch (error) {
       log.error('Failed to query audit logs', {
