@@ -125,7 +125,7 @@ export class NotificationService {
                 break
             }
           }
-        } catch (preferencesError) {
+        } catch (_preferencesError) {
           // If preferences check fails, continue with sending the notification
           // This ensures important notifications are still sent even if DB has issues
         }

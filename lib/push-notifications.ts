@@ -14,7 +14,7 @@ export class PushNotificationService {
       id: crypto.randomUUID(),
       type: 'order_update',
       title: `Order ${orderNumber} Updated`,
-      message: message || `Your order status has been updated to: ${status}`,
+      message: message ?? `Your order status has been updated to: ${status}`,
       data: {
         orderId,
         orderNumber,
@@ -84,7 +84,7 @@ export class PushNotificationService {
   static sendAdminAlert(
     title: string,
     message: string,
-    data?: any,
+    data?: Record<string, unknown>,
     alertType: 'info' | 'warning' | 'error' = 'info',
   ) {
     const notification: Notification = {
@@ -107,7 +107,7 @@ export class PushNotificationService {
   static sendSystemMessage(
     title: string,
     message: string,
-    data?: any,
+    data?: Record<string, unknown>,
   ) {
     const notification: Notification = {
       id: crypto.randomUUID(),

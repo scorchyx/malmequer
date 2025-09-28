@@ -300,16 +300,16 @@ class IntegrityValidator {
         orderBy: { createdAt: 'asc' },
       })
 
-      let calculatedStock = 0
+      let _calculatedStock = 0
       for (const log of inventoryLogs) {
         switch (log.type) {
           case 'PURCHASE':
           case 'RETURN':
           case 'ADJUSTMENT':
-            calculatedStock += log.quantity
+            _calculatedStock += log.quantity
             break
           case 'SALE':
-            calculatedStock -= log.quantity
+            _calculatedStock -= log.quantity
             break
         }
       }
