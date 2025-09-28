@@ -102,7 +102,6 @@ async function getRelatedProducts(params: RecommendationParams) {
     where: { id: params.productId },
     select: {
       categoryId: true,
-      tags: true,
       price: true,
     },
   })
@@ -121,10 +120,7 @@ async function getRelatedProducts(params: RecommendationParams) {
       status: 'ACTIVE',
       inventory: { gt: 0 },
       id: { not: params.productId },
-      OR: [
-        { categoryId: baseProduct.categoryId },
-        { tags: { hasSome: baseProduct.tags || [] } },
-      ],
+      categoryId: baseProduct.categoryId,
       price: {
         gte: priceRange.min,
         lte: priceRange.max,
@@ -282,7 +278,6 @@ async function getPersonalizedRecommendations(params: RecommendationParams) {
           product: {
             select: {
               categoryId: true,
-              tags: true,
             },
           },
         },
@@ -294,9 +289,8 @@ async function getPersonalizedRecommendations(params: RecommendationParams) {
     return await getPopularProducts(params)
   }
 
-  // Extract categories and tags from user's purchases
+  // Extract categories from user's purchases
   const purchasedCategories = new Set<string>()
-  const purchasedTags = new Set<string>()
   const purchasedProductIds = new Set<string>()
 
   userOrders.forEach(order => {
@@ -305,22 +299,16 @@ async function getPersonalizedRecommendations(params: RecommendationParams) {
       if (item.product.categoryId) {
         purchasedCategories.add(item.product.categoryId)
       }
-      if (item.product.tags) {
-        item.product.tags.forEach((tag: string) => purchasedTags.add(tag))
-      }
     })
   })
 
-  // Find products in similar categories or with similar tags
+  // Find products in similar categories
   return await prisma.product.findMany({
     where: {
       status: 'ACTIVE',
       inventory: { gt: 0 },
       id: { notIn: Array.from(purchasedProductIds) }, // Exclude already purchased
-      OR: [
-        { categoryId: { in: Array.from(purchasedCategories) } },
-        { tags: { hasSome: Array.from(purchasedTags) } },
-      ],
+      categoryId: { in: Array.from(purchasedCategories) },
     },
     select: {
       id: true,
@@ -462,7 +450,7 @@ async function getSimilarUsersRecommendations(params: RecommendationParams) {
       order: { select: { userId: true } },
       productId: true,
     },
-    distinct: ['productId', 'order'],
+    distinct: ['productId', 'orderId'],
   })
 
   // Get products purchased by similar users that current user hasn't bought

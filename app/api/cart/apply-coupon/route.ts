@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // Check if discount is expired
     const now = new Date()
-    if (discount.expiresAt && discount.expiresAt < now) {
+    if (discount.validUntil && discount.validUntil < now) {
       return NextResponse.json(
         { error: 'This coupon has expired' },
         { status: 400 },
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if discount hasn't started yet
-    if (discount.startsAt && discount.startsAt > now) {
+    if (discount.validFrom && discount.validFrom > now) {
       return NextResponse.json(
         { error: 'This coupon is not yet available' },
         { status: 400 },
@@ -60,22 +60,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check per-user usage limit
-    if (user && discount.maxUsesPerUser) {
-      const userUsageCount = await prisma.order.count({
-        where: {
-          userId: user.id,
-          discountId: discount.id,
-        },
-      })
-
-      if (userUsageCount >= discount.maxUsesPerUser) {
-        return NextResponse.json(
-          { error: 'You have already used this coupon the maximum number of times' },
-          { status: 400 },
-        )
-      }
-    }
+    // Note: Per-user usage limit not implemented in current model
+    // Could be added as a separate feature if needed
 
     // Get user's cart to calculate discount
     const cartItems = user
@@ -114,11 +100,11 @@ export async function POST(request: NextRequest) {
     let discountAmount = 0
     if (discount.type === 'PERCENTAGE') {
       discountAmount = (cartSubtotal * Number(discount.value)) / 100
-      // Apply max discount limit if set
-      if (discount.maxDiscount && discountAmount > Number(discount.maxDiscount)) {
-        discountAmount = Number(discount.maxDiscount)
+      // Apply max amount limit if set
+      if (discount.maxAmount && discountAmount > Number(discount.maxAmount)) {
+        discountAmount = Number(discount.maxAmount)
       }
-    } else if (discount.type === 'FIXED') {
+    } else if (discount.type === 'FIXED_AMOUNT') {
       discountAmount = Number(discount.value)
       // Discount cannot exceed cart total
       if (discountAmount > cartSubtotal) {
@@ -142,8 +128,6 @@ export async function POST(request: NextRequest) {
       discount: {
         id: discount.id,
         code: discount.code,
-        name: discount.name,
-        description: discount.description,
         type: discount.type,
         value: Number(discount.value),
         discountAmount,

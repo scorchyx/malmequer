@@ -84,45 +84,50 @@ export class NotificationService {
     try {
       // Check user's notification preferences if userId is provided
       if (data.userId) {
-        const settings = await prisma.notificationSettings.findUnique({
-          where: { userId: data.userId },
-        })
+        try {
+          const settings = await prisma.notificationSettings.findUnique({
+            where: { userId: data.userId },
+          })
 
-        // If settings exist, check if the specific notification type is enabled
-        if (settings) {
-          if (!settings.emailNotifications) {
-            // Email notifications disabled
-            return
-          }
+          // If settings exist, check if the specific notification type is enabled
+          if (settings) {
+            if (!settings.emailNotifications) {
+              // Email notifications disabled
+              return
+            }
 
-          // Check specific notification type preferences
-          switch (data.type) {
-            case NotificationType.ORDER_CONFIRMATION:
-            case NotificationType.ORDER_SHIPPED:
-              if (!settings.orderConfirmations && !settings.orderUpdates) {
-                // Order notifications disabled
-                return
-              }
-              break
-            case NotificationType.STOCK_ALERT:
-              if (!settings.stockAlerts) {
-                // Stock alerts disabled
-                return
-              }
-              break
-            case NotificationType.PROMOTION:
-              if (!settings.promotionalEmails) {
-                // Promotional emails disabled
-                return
-              }
-              break
-            case NotificationType.ACCOUNT_UPDATE:
-              if (!settings.accountUpdates) {
-                // Account updates disabled
-                return
-              }
-              break
+            // Check specific notification type preferences
+            switch (data.type) {
+              case NotificationType.ORDER_CONFIRMATION:
+              case NotificationType.ORDER_SHIPPED:
+                if (!settings.orderConfirmations && !settings.orderUpdates) {
+                  // Order notifications disabled
+                  return
+                }
+                break
+              case NotificationType.STOCK_ALERT:
+                if (!settings.stockAlerts) {
+                  // Stock alerts disabled
+                  return
+                }
+                break
+              case NotificationType.PROMOTION:
+                if (!settings.promotionalEmails) {
+                  // Promotional emails disabled
+                  return
+                }
+                break
+              case NotificationType.ACCOUNT_UPDATE:
+                if (!settings.accountUpdates) {
+                  // Account updates disabled
+                  return
+                }
+                break
+            }
           }
+        } catch (preferencesError) {
+          // If preferences check fails, continue with sending the notification
+          // This ensures important notifications are still sent even if DB has issues
         }
       }
 

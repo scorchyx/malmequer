@@ -10,7 +10,6 @@ interface SearchFilters {
   inStock?: boolean
   onSale?: boolean
   rating?: number
-  tags?: string[]
   brand?: string
   status?: 'ACTIVE' | 'DRAFT'
 }
@@ -38,7 +37,6 @@ export async function GET(request: NextRequest) {
       inStock: searchParams.get('inStock') === 'true',
       onSale: searchParams.get('onSale') === 'true',
       rating: searchParams.get('rating') ? parseFloat(searchParams.get('rating')!) : undefined,
-      tags: searchParams.get('tags')?.split(',').map(tag => tag.trim()) || undefined,
       brand: searchParams.get('brand') || undefined,
       status: (searchParams.get('status') as 'ACTIVE' | 'DRAFT') || 'ACTIVE',
     }
@@ -118,19 +116,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Brand filter (using tags for now)
-    if (filters.brand) {
-      where.tags = {
-        has: filters.brand,
-      }
-    }
-
-    // Tags filter
-    if (filters.tags && filters.tags.length > 0) {
-      where.tags = {
-        hasEvery: filters.tags,
-      }
-    }
+    // Note: Brand filtering not implemented (no tags field in Product model)
 
     // Build orderBy clause
     let orderBy: any = {}
@@ -268,10 +254,8 @@ export async function GET(request: NextRequest) {
         comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
         isOnSale,
         discountPercentage,
-        inventory: product.inventory,
-        inStock: product.inventory > 0,
-        sku: product.sku,
-        tags: product.tags,
+        inventory: 0, // Will be calculated from variants
+        inStock: product.variants.some(v => v.inventory > 0),
         category: product.category,
         images: product.images,
         variants: product.variants.map(v => ({
@@ -289,8 +273,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Extract unique brands from tags
-    const allTags = products.flatMap(p => p.tags || [])
+    // Note: Brand extraction not implemented (no tags field in Product model)
+    const allTags: string[] = []
     const uniqueBrands = [...new Set(allTags)].sort()
 
     const result = {

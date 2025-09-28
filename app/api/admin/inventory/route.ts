@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAdminAuth, logAdminActivity } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
+import { InventoryLogType } from '@prisma/client'
 
 // Get inventory overview and low stock alerts
 async function getHandler(request: NextRequest, context: { user: any }) {
@@ -293,7 +294,7 @@ async function postHandler(request: NextRequest, context: { user: any }) {
 
         // Prepare inventory log
         inventoryLogs.push({
-          type: quantityChange > 0 ? 'RESTOCK' : 'ADJUSTMENT',
+          type: InventoryLogType.ADJUSTMENT,
           quantity: Math.abs(quantityChange),
           reason: individualReason || reason || `Bulk update: ${currentInventory} → ${newInventory}`,
           productId,
@@ -329,9 +330,9 @@ async function postHandler(request: NextRequest, context: { user: any }) {
       context.user.id,
       'BULK_UPDATE_INVENTORY',
       'Product',
-      null,
+      undefined,
       `Bulk updated inventory for ${successCount}/${updates.length} products`,
-      null,
+      undefined,
       { reason, updateCount: successCount, totalAttempted: updates.length },
     )
 

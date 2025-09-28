@@ -97,8 +97,6 @@ model Product {
   description String?
   price       Decimal  @db.Decimal(10, 2)
   comparePrice Decimal? @db.Decimal(10, 2)
-  sku         String?  @unique
-  inventory   Int      @default(0)
   weight      Decimal? @db.Decimal(8, 2)
   status      ProductStatus @default(DRAFT)
   featured    Boolean  @default(false)

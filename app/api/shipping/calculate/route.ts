@@ -135,18 +135,20 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         weight: true,
-        length: true,
-        width: true,
-        height: true,
         name: true,
       },
     })
 
     // Enrich items with product data
-    const enrichedItems = items.map((item: CartItem) => ({
-      ...item,
-      product: products.find(p => p.id === item.productId),
-    }))
+    const enrichedItems = items.map((item: CartItem) => {
+      const product = products.find(p => p.id === item.productId)
+      return {
+        ...item,
+        product: product ? {
+          weight: product.weight ? Number(product.weight) : undefined,
+        } : undefined,
+      }
+    })
 
     // Calculate shipping zone
     const zone = getShippingZone(address as ShippingAddress)
@@ -259,7 +261,7 @@ export async function GET() {
       id: key,
       name: zone.name,
       countries: zone.countries,
-      regions: zone.regions || [],
+      regions: ('regions' in zone) ? zone.regions : [],
       rates: Object.entries(SHIPPING_RATES[key as keyof typeof SHIPPING_RATES]).map(([rateKey, rate]) => ({
         id: rateKey,
         name: rate.name,
