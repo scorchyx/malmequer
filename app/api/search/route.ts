@@ -78,9 +78,13 @@ export async function GET(request: NextRequest) {
           },
         },
         {
-          sku: {
-            contains: query,
-            mode: 'insensitive',
+          variants: {
+            some: {
+              sku: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
           },
         },
       ]
@@ -104,8 +108,12 @@ export async function GET(request: NextRequest) {
 
     // Stock filter
     if (filters.inStock) {
-      where.inventory = {
-        gt: 0,
+      where.variants = {
+        some: {
+          inventory: {
+            gt: 0,
+          },
+        },
       }
     }
 
@@ -365,9 +373,13 @@ export async function POST(request: NextRequest) {
               },
             },
             {
-              sku: {
-                contains: query,
-                mode: 'insensitive',
+              variants: {
+                some: {
+                  sku: {
+                    contains: query,
+                    mode: 'insensitive',
+                  },
+                },
               },
             },
           ],

@@ -112,7 +112,6 @@ async function generateSalesReport(startDate: Date, endDate: Date) {
             product: {
               select: {
                 name: true,
-                sku: true,
                 category: {
                   select: { name: true },
                 },
@@ -164,7 +163,6 @@ async function generateSalesReport(startDate: Date, endDate: Date) {
     paymentMethod: order.paymentMethod,
     items: order.items.map(item => ({
       productName: item.product.name,
-      productSku: item.product.sku,
       category: item.product.category.name,
       quantity: item.quantity,
       unitPrice: Number(item.price),
@@ -191,6 +189,7 @@ async function generateInventoryReport() {
       category: {
         select: { name: true },
       },
+      variants: true,
       _count: {
         select: {
           orderItems: {
@@ -206,26 +205,29 @@ async function generateInventoryReport() {
     orderBy: { name: 'asc' },
   })
 
-  const inventoryData = products.map(product => ({
-    id: product.id,
-    name: product.name,
-    sku: product.sku,
-    category: product.category.name,
-    status: product.status,
-    currentStock: product.inventory,
-    price: Number(product.price),
-    comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
-    totalSold: product._count.orderItems,
-    stockValue: product.inventory * Number(product.price),
-    createdAt: product.createdAt,
-    updatedAt: product.updatedAt,
-  }))
+  const inventoryData = products.map(product => {
+    const totalInventory = product.variants.reduce((sum: number, variant: any) => sum + variant.inventory, 0)
+    return {
+      id: product.id,
+      name: product.name,
+      category: product.category.name,
+      status: product.status,
+      currentStock: totalInventory,
+      price: Number(product.price),
+      comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
+      totalSold: product._count.orderItems,
+      stockValue: totalInventory * Number(product.price),
+      variantCount: product.variants.length,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+    }
+  })
 
   const summary = {
     totalProducts: products.length,
     activeProducts: products.filter(p => p.status === 'ACTIVE').length,
-    lowStockProducts: products.filter(p => p.inventory < 10).length,
-    outOfStockProducts: products.filter(p => p.inventory === 0).length,
+    lowStockProducts: inventoryData.filter(p => p.currentStock < 10).length,
+    outOfStockProducts: inventoryData.filter(p => p.currentStock === 0).length,
     totalStockValue: inventoryData.reduce((sum, item) => sum + item.stockValue, 0),
   }
 
@@ -460,7 +462,7 @@ function convertInventoryDataToCSV(data: any[]): string {
   const rows = data.map(product =>
     [
       product.name,
-      product.sku ??'',
+      'N/A', // SKU now at variant level
       product.category,
       product.status,
       product.currentStock,

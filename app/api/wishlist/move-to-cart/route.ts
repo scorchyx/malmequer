@@ -30,7 +30,11 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        product: true,
+        product: {
+          include: {
+            variants: true,
+          },
+        },
       },
     })
 
@@ -49,7 +53,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (wishlistItem.product.inventory < quantity) {
+    // Check inventory across all variants
+    const totalInventory = wishlistItem.product.variants.reduce((sum, variant) => sum + variant.inventory, 0)
+    if (totalInventory < quantity) {
       return NextResponse.json(
         { error: 'Insufficient inventory' },
         { status: 400 },

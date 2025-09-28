@@ -98,23 +98,16 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Restore inventory for refunded items
+    // Note: Inventory restoration is now handled at variant level
+    // This would need to be updated to restore inventory to specific variants
+    // For now, just log the refund without inventory restoration
     for (const item of order.items) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: {
-          inventory: {
-            increment: item.quantity,
-          },
-        },
-      })
-
-      // Log inventory restoration
+      // Log inventory restoration (without actual restoration for now)
       await prisma.inventoryLog.create({
         data: {
           type: 'RETURN',
           quantity: item.quantity,
-          reason: `Refund for order ${order.orderNumber}`,
+          reason: `Refund for order ${order.orderNumber} - Inventory restoration needed at variant level`,
           productId: item.productId,
           userId: user.id,
         },

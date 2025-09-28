@@ -109,8 +109,6 @@ export async function POST(request: NextRequest) {
         description,
         price,
         comparePrice,
-        sku,
-        inventory,
         weight,
         categoryId,
         images: {

@@ -60,7 +60,7 @@ async function seedVariants() {
             name: 'Tamanho',
             value: size,
             inventory: Math.floor(Math.random() * 20) + 5, // 5-24 units
-            sku: `${product.sku}-${size}`,
+            sku: `${product.slug}-${size}`,
           },
         })
       }
@@ -75,7 +75,7 @@ async function seedVariants() {
             name: 'Cor',
             value: color.value,
             inventory: Math.floor(Math.random() * 15) + 10, // 10-24 units
-            sku: `${product.sku}-${color.value}`,
+            sku: `${product.slug}-${color.value}`,
           },
         })
       }

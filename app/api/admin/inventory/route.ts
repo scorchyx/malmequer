@@ -20,20 +20,20 @@ async function getHandler(request: NextRequest, context: { user: any }) {
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
+        { variants: { some: { sku: { contains: search, mode: 'insensitive' } } } },
       ]
     }
 
-    // Apply stock filters
+    // Apply stock filters (now based on variants)
     switch (filter) {
       case 'low-stock':
-        where.inventory = { gt: 0, lte: 10 } // Low stock threshold
+        where.variants = { some: { inventory: { gt: 0, lte: 10 } } }
         break
       case 'out-of-stock':
-        where.inventory = { lte: 0 }
+        where.variants = { every: { inventory: { lte: 0 } } }
         break
       case 'overstocked':
-        where.inventory = { gte: 100 } // Overstocked threshold
+        where.variants = { some: { inventory: { gte: 100 } } }
         break
       case 'all':
       default:

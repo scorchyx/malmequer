@@ -20,7 +20,6 @@ async function getHandler(request: NextRequest, _context: { user: any }) {
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
           { description: { contains: search, mode: 'insensitive' as const } },
-          { sku: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
     }
@@ -31,6 +30,7 @@ async function getHandler(request: NextRequest, _context: { user: any }) {
         include: {
           category: true,
           images: { take: 1, orderBy: { order: 'asc' } },
+          variants: true,
           _count: {
             select: {
               reviews: true,
@@ -71,8 +71,6 @@ async function putHandler(request: NextRequest, context: { user: any }) {
       description,
       price,
       comparePrice,
-      sku,
-      inventory,
       status,
       featured,
       categoryId,
@@ -101,8 +99,6 @@ async function putHandler(request: NextRequest, context: { user: any }) {
     if (description !== undefined) updateData.description = description
     if (price !== undefined) updateData.price = price
     if (comparePrice !== undefined) updateData.comparePrice = comparePrice
-    if (sku !== undefined) updateData.sku = sku
-    if (inventory !== undefined) updateData.inventory = inventory
     if (status !== undefined) updateData.status = status
     if (featured !== undefined) updateData.featured = featured
     if (categoryId !== undefined) updateData.categoryId = categoryId
@@ -117,19 +113,7 @@ async function putHandler(request: NextRequest, context: { user: any }) {
       },
     })
 
-    // Log inventory changes
-    if (inventory !== undefined && inventory !== existingProduct.inventory) {
-      const quantityDiff = inventory - existingProduct.inventory
-      await prisma.inventoryLog.create({
-        data: {
-          type: 'ADJUSTMENT',
-          quantity: quantityDiff,
-          reason: `Admin adjustment: ${existingProduct.inventory} → ${inventory}`,
-          productId,
-          userId: context.user.id,
-        },
-      })
-    }
+    // Note: Inventory is now managed at variant level, not product level
 
     // Log admin activity
     const changes: string[] = []

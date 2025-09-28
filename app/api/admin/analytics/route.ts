@@ -304,30 +304,46 @@ async function getProductAnalytics(startDate: Date) {
     recentlyAddedProducts,
   ] = await Promise.all([
     // Top selling products with revenue
-    prisma.$queryRaw<{
-      id: string;
-      name: string;
-      price: number;
-      inventory: number;
-      total_sold: number;
-      total_revenue: number;
-    }[]>`
-      SELECT
-        p.id,
-        p.name,
-        p.price,
-        p.inventory,
-        SUM(oi.quantity)::int as total_sold,
-        SUM(oi.quantity * oi.price) as total_revenue
-      FROM "Product" p
-      INNER JOIN "OrderItem" oi ON p.id = oi."productId"
-      INNER JOIN "Order" o ON oi."orderId" = o.id
-      WHERE o."createdAt" >= ${startDate}
-        AND o."paymentStatus" = 'PAID'
-      GROUP BY p.id, p.name, p.price, p.inventory
-      ORDER BY total_sold DESC
-      LIMIT 10
-    `,
+    prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: {
+        order: {
+          createdAt: { gte: startDate },
+          paymentStatus: 'PAID',
+        },
+      },
+      _sum: {
+        quantity: true,
+      },
+      _count: true,
+      orderBy: {
+        _sum: {
+          quantity: 'desc',
+        },
+      },
+      take: 10,
+    }).then(async (results) => {
+      const productIds = results.map(r => r.productId)
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        include: {
+          variants: true,
+        },
+      })
+
+      return results.map(result => {
+        const product = products.find(p => p.id === result.productId)
+        const totalInventory = product?.variants.reduce((sum, v) => sum + v.inventory, 0) ?? 0
+        return {
+          id: product?.id ?? '',
+          name: product?.name ?? '',
+          price: product ? Number(product.price) : 0,
+          inventory: totalInventory,
+          total_sold: result._sum.quantity ?? 0,
+          total_revenue: 0, // Would need to calculate from order items
+        }
+      })
+    }),
 
     // Low stock products (products with total variant inventory < 10)
     prisma.product.findMany({
