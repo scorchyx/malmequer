@@ -32,8 +32,10 @@ export function sendNotification(notification: Notification) {
       // Check if notification should be sent to this connection
       const shouldSend =
         // Admin notifications go to admin users
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         (notification.isAdminOnly && connection.isAdmin) ||
         // User-specific notifications
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         (notification.userId && notification.userId === connection.userId) ||
         // Public notifications (no userId specified and not admin-only)
         (!notification.userId && !notification.isAdminOnly)

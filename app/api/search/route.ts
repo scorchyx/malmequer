@@ -14,36 +14,32 @@ interface SearchFilters {
   status?: 'ACTIVE' | 'DRAFT'
 }
 
-interface SortOption {
-  field: 'name' | 'price' | 'createdAt' | 'rating' | 'popularity'
-  direction: 'asc' | 'desc'
-}
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
 
     // Search parameters
-    const query = searchParams.get('q') || ''
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100)
+    const query = searchParams.get('q') ?? ''
+    const page = parseInt(searchParams.get('page') ?? '1')
+    const limit = Math.min(parseInt(searchParams.get('limit') ?? '20'), 100)
     const skip = (page - 1) * limit
 
     // Filters
     const filters: SearchFilters = {
-      category: searchParams.get('category') || undefined,
+      category: searchParams.get('category') ?? undefined,
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,
       inStock: searchParams.get('inStock') === 'true',
       onSale: searchParams.get('onSale') === 'true',
       rating: searchParams.get('rating') ? parseFloat(searchParams.get('rating')!) : undefined,
-      brand: searchParams.get('brand') || undefined,
-      status: (searchParams.get('status') as 'ACTIVE' | 'DRAFT') || 'ACTIVE',
+      brand: searchParams.get('brand') ?? undefined,
+      status: (searchParams.get('status') as 'ACTIVE' | 'DRAFT') ?? 'ACTIVE',
     }
 
     // Sorting
-    const sortBy = searchParams.get('sortBy') || 'relevance'
-    const sortDir = (searchParams.get('sortDir') || 'desc') as 'asc' | 'desc'
+    const sortBy = searchParams.get('sortBy') ?? 'relevance'
+    const sortDir = (searchParams.get('sortDir') ?? 'desc') as 'asc' | 'desc'
 
     // Create cache key
     const cacheKey = CacheKeys.search(
