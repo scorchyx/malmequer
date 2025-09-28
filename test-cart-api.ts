@@ -8,7 +8,7 @@ async function testCartAPI() {
 
     // Get the test user
     const user = await prisma.user.findFirst({
-      where: { email: 'rubenj.m.araujo@gmail.com' }
+      where: { email: 'rubenj.m.araujo@gmail.com' },
     })
 
     if (!user) {
@@ -24,19 +24,19 @@ async function testCartAPI() {
         status: 'ACTIVE',
         category: {
           name: {
-            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos']
-          }
-        }
+            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos'],
+          },
+        },
       },
       include: {
         category: true,
         variants: true,
-        images: { take: 1 }
+        images: { take: 1 },
       },
-      take: 3
+      take: 3,
     })
 
-    console.log(`\n🛍️  Available Products:`)
+    console.log('\n🛍️  Available Products:')
     products.forEach((product, index) => {
       const sizes = product.variants.filter(v => v.name === 'Tamanho')
       const colors = product.variants.filter(v => v.name === 'Cor')
@@ -49,7 +49,7 @@ async function testCartAPI() {
 
     // Clear existing cart
     await prisma.cartItem.deleteMany({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
     console.log('🧹 Cleared existing cart\n')
 
@@ -57,63 +57,63 @@ async function testCartAPI() {
     console.log('📡 Simulating API calls:\n')
 
     // Add first product
-    console.log(`➕ POST /api/cart`)
+    console.log('➕ POST /api/cart')
     console.log(`   Body: { "productId": "${products[0].id}", "quantity": 2 }`)
-    console.log(`   Note: User would select "Tamanho: M" and "Cor: preto" in UI`)
+    console.log('   Note: User would select "Tamanho: M" and "Cor: preto" in UI')
 
     const cartItem1 = await prisma.cartItem.create({
       data: {
         userId: user.id,
         productId: products[0].id,
-        quantity: 2
+        quantity: 2,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Response: Added ${cartItem1.product.name} x${cartItem1.quantity}`)
 
     // Add second product
-    console.log(`\n➕ POST /api/cart`)
+    console.log('\n➕ POST /api/cart')
     console.log(`   Body: { "productId": "${products[1].id}", "quantity": 1 }`)
-    console.log(`   Note: User would select "Tamanho: G" and "Cor: branco" in UI`)
+    console.log('   Note: User would select "Tamanho: G" and "Cor: branco" in UI')
 
     const cartItem2 = await prisma.cartItem.create({
       data: {
         userId: user.id,
         productId: products[1].id,
-        quantity: 1
+        quantity: 1,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Response: Added ${cartItem2.product.name} x${cartItem2.quantity}`)
 
     // Update quantity of first product
-    console.log(`\n➕ POST /api/cart (updating existing item)`)
+    console.log('\n➕ POST /api/cart (updating existing item)')
     console.log(`   Body: { "productId": "${products[0].id}", "quantity": 1 }`)
-    console.log(`   Note: This would add 1 more to existing quantity`)
+    console.log('   Note: This would add 1 more to existing quantity')
 
     const existingItem = await prisma.cartItem.findUnique({
       where: {
         userId_productId: {
           userId: user.id,
-          productId: products[0].id
-        }
-      }
+          productId: products[0].id,
+        },
+      },
     })
 
     if (existingItem) {
@@ -122,15 +122,15 @@ async function testCartAPI() {
         data: { quantity: existingItem.quantity + 1 },
         include: {
           product: {
-            include: { category: true }
-          }
-        }
+            include: { category: true },
+          },
+        },
       })
       console.log(`   ✅ Response: Updated ${updatedItem.product.name} to x${updatedItem.quantity}`)
     }
 
     // Get cart contents (simulating GET /api/cart)
-    console.log(`\n📋 GET /api/cart`)
+    console.log('\n📋 GET /api/cart')
 
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: user.id },
@@ -139,16 +139,16 @@ async function testCartAPI() {
           include: {
             category: true,
             variants: true,
-            images: { take: 1 }
-          }
-        }
+            images: { take: 1 },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     const total = cartItems.reduce(
       (sum, item) => sum + item.quantity * Number(item.product.price),
-      0
+      0,
     )
 
     const count = cartItems.reduce((sum, item) => sum + item.quantity, 0)
@@ -166,31 +166,31 @@ async function testCartAPI() {
           images: item.product.images,
           // Note: In a variant-aware system, we'd also include:
           // selectedVariants: { size: "M", color: "preto" }
-        }
+        },
       })),
       total,
-      count
+      count,
     }
 
-    console.log(`   ✅ Response:`)
+    console.log('   ✅ Response:')
     console.log(`      Items: ${cartResponse.items.length}`)
     console.log(`      Total quantity: ${cartResponse.count}`)
     console.log(`      Total price: €${cartResponse.total.toFixed(2)}`)
 
-    console.log(`\n🛒 Cart Contents:`)
+    console.log('\n🛒 Cart Contents:')
     cartResponse.items.forEach((item, index) => {
       console.log(`   ${index + 1}. ${item.product.name}`)
       console.log(`      Category: ${item.product.category.name}`)
       console.log(`      Quantity: ${item.quantity}`)
       console.log(`      Price: €${item.product.price} each`)
       console.log(`      Subtotal: €${(Number(item.product.price) * item.quantity).toFixed(2)}`)
-      console.log(`      🎯 In real UI: Would show selected size/color`)
+      console.log('      🎯 In real UI: Would show selected size/color')
       console.log('')
     })
 
     // Demonstrate variant selection concept
-    console.log(`💡 Enhanced Cart with Variant Selection (Concept):`)
-    console.log(`   If cart supported variants, each item would include:`)
+    console.log('💡 Enhanced Cart with Variant Selection (Concept):')
+    console.log('   If cart supported variants, each item would include:')
     cartResponse.items.forEach((item, index) => {
       const sizes = cartItems[index].product.variants.filter(v => v.name === 'Tamanho')
       const colors = cartItems[index].product.variants.filter(v => v.name === 'Cor')
@@ -219,4 +219,4 @@ async function testCartAPI() {
   }
 }
 
-testCartAPI()
+void testCartAPI()

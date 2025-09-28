@@ -135,6 +135,7 @@ export class Logger {
   businessEvent(message: string, context: {
     event: string
     userId?: string
+    sessionId?: string
     entityType?: string
     entityId?: string
     details?: unknown

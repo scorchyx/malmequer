@@ -9,8 +9,8 @@ async function testWishlist() {
     // Get a test user (one we created earlier)
     const user = await prisma.user.findFirst({
       where: {
-        email: 'rubenj.m.araujo@gmail.com'
-      }
+        email: 'rubenj.m.araujo@gmail.com',
+      },
     })
 
     if (!user) {
@@ -23,7 +23,7 @@ async function testWishlist() {
     // Get a product to add to wishlist
     const product = await prisma.product.findFirst({
       where: { status: 'ACTIVE' },
-      include: { category: true }
+      include: { category: true },
     })
 
     if (!product) {
@@ -38,9 +38,9 @@ async function testWishlist() {
       where: { userId: user.id },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
     console.log(`\n📋 Current wishlist items: ${currentWishlist.length}`)
@@ -55,9 +55,9 @@ async function testWishlist() {
       where: {
         userId_productId: {
           userId: user.id,
-          productId: product.id
-        }
-      }
+          productId: product.id,
+        },
+      },
     })
 
     if (existingItem) {
@@ -66,13 +66,13 @@ async function testWishlist() {
       const newWishlistItem = await prisma.wishlistItem.create({
         data: {
           userId: user.id,
-          productId: product.id
+          productId: product.id,
         },
         include: {
           product: {
-            include: { category: true }
-          }
-        }
+            include: { category: true },
+          },
+        },
       })
       console.log(`✅ Added to wishlist: ${newWishlistItem.product.name}`)
     }
@@ -82,9 +82,9 @@ async function testWishlist() {
       where: { userId: user.id },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
     console.log(`\n📋 Updated wishlist items: ${updatedWishlist.length}`)
@@ -98,7 +98,7 @@ async function testWishlist() {
       console.log(`\n➖ Removing "${itemToRemove.product.name}" from wishlist...`)
 
       await prisma.wishlistItem.delete({
-        where: { id: itemToRemove.id }
+        where: { id: itemToRemove.id },
       })
 
       console.log(`✅ Removed from wishlist: ${itemToRemove.product.name}`)
@@ -109,9 +109,9 @@ async function testWishlist() {
       where: { userId: user.id },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
     console.log(`\n📋 Final wishlist items: ${finalWishlist.length}`)
@@ -128,4 +128,4 @@ async function testWishlist() {
   }
 }
 
-testWishlist()
+void testWishlist()

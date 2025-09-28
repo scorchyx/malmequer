@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
+import { getGuestSessionId, setGuestSessionCookie } from '@/lib/guest-session'
 import { log } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
 import { validateRequestBody, addToCartSchema } from '@/lib/validation'
-import { getGuestSessionId, setGuestSessionCookie } from '@/lib/guest-session'
 
 export async function GET(request: NextRequest) {
   try {

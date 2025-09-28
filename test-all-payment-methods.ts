@@ -10,8 +10,8 @@ async function testAllPaymentMethods() {
     const admin = await prisma.user.findFirst({
       where: {
         email: 'rubenj.m.araujo@gmail.com',
-        role: 'ADMIN'
-      }
+        role: 'ADMIN',
+      },
     })
 
     if (!admin) {
@@ -25,32 +25,30 @@ async function testAllPaymentMethods() {
     await prisma.order.deleteMany({
       where: {
         orderNumber: {
-          startsWith: 'PAYMENT-TEST-'
-        }
-      }
+          startsWith: 'PAYMENT-TEST-',
+        },
+      },
     })
 
     // Create test user address
     let testAddress = await prisma.address.findFirst({
-      where: { userId: admin.id }
+      where: { userId: admin.id },
     })
 
-    if (!testAddress) {
-      testAddress = await prisma.address.create({
-        data: {
-          userId: admin.id,
-          type: 'SHIPPING',
-          firstName: 'Test',
-          lastName: 'Address',
-          addressLine1: 'Test Street 123',
-          city: 'Test City',
-          state: 'Test State',
-          postalCode: '1234-567',
-          country: 'Portugal',
-          isDefault: true
-        }
-      })
-    }
+    testAddress ??= await prisma.address.create({
+      data: {
+        userId: admin.id,
+        type: 'SHIPPING',
+        firstName: 'Test',
+        lastName: 'Address',
+        addressLine1: 'Test Street 123',
+        city: 'Test City',
+        state: 'Test State',
+        postalCode: '1234-567',
+        country: 'Portugal',
+        isDefault: true,
+      },
+    })
 
     // Step 2: Define all payment methods
     console.log('📋 PASSO 1: Métodos de pagamento disponíveis no eCommerce\n')
@@ -62,7 +60,7 @@ async function testAllPaymentMethods() {
         icon: '🏧',
         type: 'portuguese',
         manualAcceptance: true,
-        description: 'Referência Multibanco - Pagamento em ATM ou homebanking'
+        description: 'Referência Multibanco - Pagamento em ATM ou homebanking',
       },
       {
         method: 'mbway',
@@ -70,7 +68,7 @@ async function testAllPaymentMethods() {
         icon: '📱',
         type: 'portuguese',
         manualAcceptance: true,
-        description: 'Pagamento através da app MB Way'
+        description: 'Pagamento através da app MB Way',
       },
       {
         method: 'visa',
@@ -78,7 +76,7 @@ async function testAllPaymentMethods() {
         icon: '💳',
         type: 'card',
         manualAcceptance: false,
-        description: 'Cartão de crédito/débito VISA - Processamento automático'
+        description: 'Cartão de crédito/débito VISA - Processamento automático',
       },
       {
         method: 'mastercard',
@@ -86,7 +84,7 @@ async function testAllPaymentMethods() {
         icon: '💳',
         type: 'card',
         manualAcceptance: false,
-        description: 'Cartão de crédito/débito MasterCard - Processamento automático'
+        description: 'Cartão de crédito/débito MasterCard - Processamento automático',
       },
       {
         method: 'applepay',
@@ -94,7 +92,7 @@ async function testAllPaymentMethods() {
         icon: '🍎',
         type: 'digital_wallet',
         manualAcceptance: false,
-        description: 'Pagamento através do Apple Pay - Processamento automático'
+        description: 'Pagamento através do Apple Pay - Processamento automático',
       },
       {
         method: 'googlepay',
@@ -102,8 +100,8 @@ async function testAllPaymentMethods() {
         icon: '🔴',
         type: 'digital_wallet',
         manualAcceptance: false,
-        description: 'Pagamento através do Google Pay - Processamento automático'
-      }
+        description: 'Pagamento através do Google Pay - Processamento automático',
+      },
     ]
 
     console.log('💼 Métodos de pagamento suportados:')
@@ -142,11 +140,11 @@ async function testAllPaymentMethods() {
           paymentStatus: 'PENDING',
           notes: `Teste ${method.name} - ${method.description}`,
           shippingAddressId: testAddress.id,
-          billingAddressId: testAddress.id
+          billingAddressId: testAddress.id,
         },
         include: {
-          user: { select: { name: true, email: true } }
-        }
+          user: { select: { name: true, email: true } },
+        },
       })
 
       testOrders.push({ order, method })
@@ -154,7 +152,7 @@ async function testAllPaymentMethods() {
     }
 
     // Step 4: Show payment processing scenarios
-    console.log(`\n💼 PASSO 3: Cenários de processamento de pagamentos\n`)
+    console.log('\n💼 PASSO 3: Cenários de processamento de pagamentos\n')
 
     console.log('🇵🇹 MÉTODOS PORTUGUESES (Aceitação Manual):')
     const portugueseMethods = testOrders.filter(({ method }) => method.type === 'portuguese')
@@ -162,20 +160,20 @@ async function testAllPaymentMethods() {
     for (const { order, method } of portugueseMethods) {
       console.log(`\n${method.icon} ${method.name} - ${order.orderNumber}`)
       console.log(`   💰 Valor: €${Number(order.totalAmount).toFixed(2)}`)
-      console.log(`   📋 Fluxo:`)
-      console.log(`   1. 📧 Cliente recebe email com instruções de pagamento`)
-      console.log(`   2. 💳 Cliente efectua pagamento (ATM/App)`)
-      console.log(`   3. 👨‍💼 Admin confirma recebimento manualmente`)
-      console.log(`   4. ✅ Pedido confirmado automaticamente`)
+      console.log('   📋 Fluxo:')
+      console.log('   1. 📧 Cliente recebe email com instruções de pagamento')
+      console.log('   2. 💳 Cliente efectua pagamento (ATM/App)')
+      console.log('   3. 👨‍💼 Admin confirma recebimento manualmente')
+      console.log('   4. ✅ Pedido confirmado automaticamente')
 
-      console.log(`\n   🔄 PUT /api/admin/orders`)
-      console.log(`   Headers: Authorization: Bearer <admin-token>`)
-      console.log(`   Body: {`)
+      console.log('\n   🔄 PUT /api/admin/orders')
+      console.log('   Headers: Authorization: Bearer <admin-token>')
+      console.log('   Body: {')
       console.log(`     "orderId": "${order.id}",`)
-      console.log(`     "paymentStatus": "PAID",`)
-      console.log(`     "status": "CONFIRMED",`)
+      console.log('     "paymentStatus": "PAID",')
+      console.log('     "status": "CONFIRMED",')
       console.log(`     "notes": "✅ ${method.name} confirmado - Pagamento verificado pelo admin"`)
-      console.log(`   }`)
+      console.log('   }')
 
       // Simulate manual acceptance
       await prisma.order.update({
@@ -183,8 +181,8 @@ async function testAllPaymentMethods() {
         data: {
           paymentStatus: 'PAID',
           status: 'CONFIRMED',
-          notes: `✅ ${method.name} confirmado - Pagamento verificado pelo admin ${admin.name}`
-        }
+          notes: `✅ ${method.name} confirmado - Pagamento verificado pelo admin ${admin.name}`,
+        },
       })
 
       console.log(`   ✅ Pagamento ${method.name} aceite manualmente`)
@@ -196,14 +194,14 @@ async function testAllPaymentMethods() {
     for (const { order, method } of cardMethods) {
       console.log(`\n${method.icon} ${method.name} - ${order.orderNumber}`)
       console.log(`   💰 Valor: €${Number(order.totalAmount).toFixed(2)}`)
-      console.log(`   📋 Fluxo:`)
-      console.log(`   1. 💳 Cliente insere dados do cartão no checkout`)
-      console.log(`   2. 🔒 Stripe processa pagamento em tempo real`)
-      console.log(`   3. ⚡ Confirmação imediata (sucesso/falha)`)
-      console.log(`   4. ✅ Pedido confirmado automaticamente se aprovado`)
+      console.log('   📋 Fluxo:')
+      console.log('   1. 💳 Cliente insere dados do cartão no checkout')
+      console.log('   2. 🔒 Stripe processa pagamento em tempo real')
+      console.log('   3. ⚡ Confirmação imediata (sucesso/falha)')
+      console.log('   4. ✅ Pedido confirmado automaticamente se aprovado')
 
-      console.log(`\n   🚫 Aceitação manual NÃO permitida`)
-      console.log(`   📝 Erro esperado: "Manual payment acceptance is only supported for Multibanco and MB Way payments"`)
+      console.log('\n   🚫 Aceitação manual NÃO permitida')
+      console.log('   📝 Erro esperado: "Manual payment acceptance is only supported for Multibanco and MB Way payments"')
 
       // Simulate automatic processing
       await prisma.order.update({
@@ -211,8 +209,8 @@ async function testAllPaymentMethods() {
         data: {
           paymentStatus: 'PAID',
           status: 'CONFIRMED',
-          notes: `✅ ${method.name} processado automaticamente via Stripe`
-        }
+          notes: `✅ ${method.name} processado automaticamente via Stripe`,
+        },
       })
 
       console.log(`   ✅ Pagamento ${method.name} processado automaticamente`)
@@ -224,14 +222,14 @@ async function testAllPaymentMethods() {
     for (const { order, method } of walletMethods) {
       console.log(`\n${method.icon} ${method.name} - ${order.orderNumber}`)
       console.log(`   💰 Valor: €${Number(order.totalAmount).toFixed(2)}`)
-      console.log(`   📋 Fluxo:`)
+      console.log('   📋 Fluxo:')
       console.log(`   1. 📱 Cliente seleciona ${method.name} no checkout`)
-      console.log(`   2. 🔐 Autenticação biométrica/PIN`)
-      console.log(`   3. ⚡ Stripe processa pagamento em tempo real`)
-      console.log(`   4. ✅ Confirmação imediata e segura`)
+      console.log('   2. 🔐 Autenticação biométrica/PIN')
+      console.log('   3. ⚡ Stripe processa pagamento em tempo real')
+      console.log('   4. ✅ Confirmação imediata e segura')
 
-      console.log(`\n   🚫 Aceitação manual NÃO permitida`)
-      console.log(`   📝 Erro esperado: "Manual payment acceptance is only supported for Multibanco and MB Way payments"`)
+      console.log('\n   🚫 Aceitação manual NÃO permitida')
+      console.log('   📝 Erro esperado: "Manual payment acceptance is only supported for Multibanco and MB Way payments"')
 
       // Simulate automatic processing
       await prisma.order.update({
@@ -239,42 +237,42 @@ async function testAllPaymentMethods() {
         data: {
           paymentStatus: 'PAID',
           status: 'CONFIRMED',
-          notes: `✅ ${method.name} processado automaticamente via Stripe`
-        }
+          notes: `✅ ${method.name} processado automaticamente via Stripe`,
+        },
       })
 
       console.log(`   ✅ Pagamento ${method.name} processado automaticamente`)
     }
 
     // Step 5: Test manual acceptance restrictions
-    console.log(`\n\n❌ PASSO 4: Testar restrições de aceitação manual\n`)
+    console.log('\n\n❌ PASSO 4: Testar restrições de aceitação manual\n')
 
     const nonManualMethods = testOrders.filter(({ method }) => !method.manualAcceptance)
-    console.log(`🔒 Tentativa de confirmar manualmente métodos não-portugueses:`)
+    console.log('🔒 Tentativa de confirmar manualmente métodos não-portugueses:')
 
     for (const { order, method } of nonManualMethods.slice(0, 2)) {
       console.log(`\n${method.icon} ${method.name} - ${order.orderNumber}`)
-      console.log(`   💳 PUT /api/admin/orders (tentativa manual)`)
+      console.log('   💳 PUT /api/admin/orders (tentativa manual)')
       console.log(`   Body: { "orderId": "${order.id}", "paymentStatus": "PAID" }`)
-      console.log(`   ❌ Resposta: 400 Bad Request`)
-      console.log(`   📝 Erro: "Manual payment acceptance is only supported for Multibanco and MB Way payments"`)
+      console.log('   ❌ Resposta: 400 Bad Request')
+      console.log('   📝 Erro: "Manual payment acceptance is only supported for Multibanco and MB Way payments"')
     }
 
     // Step 6: Final statistics
-    console.log(`\n📊 PASSO 5: Estatísticas finais por método de pagamento\n`)
+    console.log('\n📊 PASSO 5: Estatísticas finais por método de pagamento\n')
 
     const paymentStats = await prisma.order.groupBy({
       by: ['paymentMethod', 'paymentStatus'],
       where: {
         orderNumber: {
-          startsWith: 'PAYMENT-TEST-'
-        }
+          startsWith: 'PAYMENT-TEST-',
+        },
       },
       _count: { _all: true },
-      _sum: { totalAmount: true }
+      _sum: { totalAmount: true },
     })
 
-    console.log(`📊 Resumo dos pagamentos processados:`)
+    console.log('📊 Resumo dos pagamentos processados:')
     paymentMethods.forEach(method => {
       const stats = paymentStats.filter(s => s.paymentMethod === method.method)
       const totalOrders = stats.reduce((sum, s) => sum + s._count._all, 0)
@@ -306,4 +304,4 @@ async function testAllPaymentMethods() {
   }
 }
 
-testAllPaymentMethods()
+void testAllPaymentMethods()

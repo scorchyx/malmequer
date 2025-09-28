@@ -10,8 +10,8 @@ async function testManualPaymentAcceptance() {
     const admin = await prisma.user.findFirst({
       where: {
         email: 'rubenj.m.araujo@gmail.com',
-        role: 'ADMIN'
-      }
+        role: 'ADMIN',
+      },
     })
 
     if (!admin) {
@@ -28,32 +28,30 @@ async function testManualPaymentAcceptance() {
     await prisma.order.deleteMany({
       where: {
         orderNumber: {
-          startsWith: 'MANUAL-TEST-'
-        }
-      }
+          startsWith: 'MANUAL-TEST-',
+        },
+      },
     })
 
     // Create test user address first
     let testAddress = await prisma.address.findFirst({
-      where: { userId: admin.id }
+      where: { userId: admin.id },
     })
 
-    if (!testAddress) {
-      testAddress = await prisma.address.create({
-        data: {
-          userId: admin.id,
-          type: 'SHIPPING',
-          firstName: 'Test',
-          lastName: 'Address',
-          addressLine1: 'Test Street 123',
-          city: 'Test City',
-          state: 'Test State',
-          postalCode: '1234-567',
-          country: 'Portugal',
-          isDefault: true
-        }
-      })
-    }
+    testAddress ??= await prisma.address.create({
+      data: {
+        userId: admin.id,
+        type: 'SHIPPING',
+        firstName: 'Test',
+        lastName: 'Address',
+        addressLine1: 'Test Street 123',
+        city: 'Test City',
+        state: 'Test State',
+        postalCode: '1234-567',
+        country: 'Portugal',
+        isDefault: true,
+      },
+    })
 
     // Create test orders with PENDING payment status
     const testOrders = []
@@ -62,26 +60,26 @@ async function testManualPaymentAcceptance() {
         orderNumber: 'MANUAL-TEST-001',
         scenario: 'Transferência bancária recebida',
         amount: 150.00,
-        method: 'bank_transfer'
+        method: 'bank_transfer',
       },
       {
         orderNumber: 'MANUAL-TEST-002',
         scenario: 'MB Way confirmado',
         amount: 89.90,
-        method: 'mbway'
+        method: 'mbway',
       },
       {
         orderNumber: 'MANUAL-TEST-003',
         scenario: 'Pagamento na entrega',
         amount: 250.50,
-        method: 'cash_on_delivery'
+        method: 'cash_on_delivery',
       },
       {
         orderNumber: 'MANUAL-TEST-004',
         scenario: 'Cheque compensado',
         amount: 75.00,
-        method: 'check'
-      }
+        method: 'check',
+      },
     ]
 
     for (const scenario of paymentScenarios) {
@@ -104,11 +102,11 @@ async function testManualPaymentAcceptance() {
           paymentStatus: 'PENDING',
           notes: `Cenário: ${scenario.scenario}`,
           shippingAddressId: testAddress.id,
-          billingAddressId: testAddress.id
+          billingAddressId: testAddress.id,
         },
         include: {
-          user: { select: { name: true, email: true } }
-        }
+          user: { select: { name: true, email: true } },
+        },
       })
 
       testOrders.push({ order, scenario })
@@ -116,9 +114,9 @@ async function testManualPaymentAcceptance() {
     }
 
     // Step 2: Show pending payments dashboard
-    console.log(`\n📊 PASSO 2: Dashboard de pagamentos pendentes\n`)
+    console.log('\n📊 PASSO 2: Dashboard de pagamentos pendentes\n')
 
-    console.log(`📋 GET /api/admin/orders?paymentStatus=PENDING`)
+    console.log('📋 GET /api/admin/orders?paymentStatus=PENDING')
 
     const pendingPayments = await prisma.order.findMany({
       where: { paymentStatus: 'PENDING' },
@@ -126,11 +124,11 @@ async function testManualPaymentAcceptance() {
         user: { select: { name: true, email: true } },
         items: {
           include: {
-            product: { select: { name: true } }
-          }
-        }
+            product: { select: { name: true } },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     console.log(`   ✅ ${pendingPayments.length} pagamentos pendentes encontrados\n`)
@@ -150,7 +148,7 @@ async function testManualPaymentAcceptance() {
     })
 
     // Step 3: Manual payment acceptance scenarios
-    console.log(`💼 PASSO 3: Cenários de aceitação manual de pagamento\n`)
+    console.log('💼 PASSO 3: Cenários de aceitação manual de pagamento\n')
 
     for (const { order, scenario } of testOrders.slice(0, 3)) {
       console.log(`🎯 Cenário: ${scenario.scenario}`)
@@ -158,14 +156,14 @@ async function testManualPaymentAcceptance() {
       console.log(`💰 Valor: €${Number(order.totalAmount).toFixed(2)}`)
       console.log(`💳 Método: ${order.paymentMethod}`)
 
-      console.log(`\n💳 PUT /api/admin/orders`)
-      console.log(`   Headers: Authorization: Bearer <admin-token>`)
-      console.log(`   Body: {`)
+      console.log('\n💳 PUT /api/admin/orders')
+      console.log('   Headers: Authorization: Bearer <admin-token>')
+      console.log('   Body: {')
       console.log(`     "orderId": "${order.id}",`)
-      console.log(`     "paymentStatus": "PAID",`)
-      console.log(`     "status": "CONFIRMED",`)
+      console.log('     "paymentStatus": "PAID",')
+      console.log('     "status": "CONFIRMED",')
       console.log(`     "notes": "✅ ${scenario.scenario} - Pagamento confirmado manualmente pelo admin ${admin.name}"`)
-      console.log(`   }`)
+      console.log('   }')
 
       // Update payment status
       const updatedOrder = await prisma.order.update({
@@ -173,23 +171,23 @@ async function testManualPaymentAcceptance() {
         data: {
           paymentStatus: 'PAID',
           status: 'CONFIRMED',
-          notes: `✅ ${scenario.scenario} - Pagamento confirmado manualmente pelo admin ${admin.name}`
+          notes: `✅ ${scenario.scenario} - Pagamento confirmado manualmente pelo admin ${admin.name}`,
         },
         include: {
-          user: { select: { name: true, email: true } }
-        }
+          user: { select: { name: true, email: true } },
+        },
       })
 
-      console.log(`   ✅ Pagamento aceite: PENDING → PAID`)
-      console.log(`   ✅ Status atualizado: PENDING → CONFIRMED`)
-      console.log(`   📝 Notas: Pagamento confirmado manualmente`)
-      console.log(`   📊 Log de atividade admin registado`)
+      console.log('   ✅ Pagamento aceite: PENDING → PAID')
+      console.log('   ✅ Status atualizado: PENDING → CONFIRMED')
+      console.log('   📝 Notas: Pagamento confirmado manualmente')
+      console.log('   📊 Log de atividade admin registado')
       console.log(`   📧 Email de confirmação seria enviado para ${updatedOrder.user?.email || updatedOrder.guestEmail}\n`)
 
       // Simulate admin activity log
-      console.log(`   📋 Log detalhado:`)
+      console.log('   📋 Log detalhado:')
       console.log(`      👑 Admin: ${admin.name} (${admin.email})`)
-      console.log(`      🔄 Ação: MANUAL_PAYMENT_ACCEPTANCE`)
+      console.log('      🔄 Ação: MANUAL_PAYMENT_ACCEPTANCE')
       console.log(`      📦 Pedido: ${updatedOrder.orderNumber}`)
       console.log(`      💳 Método: ${updatedOrder.paymentMethod}`)
       console.log(`      💰 Valor: €${Number(updatedOrder.totalAmount).toFixed(2)}`)
@@ -200,57 +198,57 @@ async function testManualPaymentAcceptance() {
     }
 
     // Step 4: Handle payment rejections
-    console.log(`❌ PASSO 4: Rejeitar pagamento (cenário de falha)\n`)
+    console.log('❌ PASSO 4: Rejeitar pagamento (cenário de falha)\n')
 
     const lastOrder = testOrders[3]
-    console.log(`🎯 Cenário: Cheque devolvido`)
+    console.log('🎯 Cenário: Cheque devolvido')
     console.log(`📦 Pedido: ${lastOrder.order.orderNumber}`)
 
-    console.log(`\n❌ PUT /api/admin/orders`)
-    console.log(`   Body: {`)
+    console.log('\n❌ PUT /api/admin/orders')
+    console.log('   Body: {')
     console.log(`     "orderId": "${lastOrder.order.id}",`)
-    console.log(`     "paymentStatus": "FAILED",`)
-    console.log(`     "status": "CANCELLED",`)
-    console.log(`     "notes": "❌ Cheque devolvido - pagamento rejeitado pelo banco"`)
-    console.log(`   }`)
+    console.log('     "paymentStatus": "FAILED",')
+    console.log('     "status": "CANCELLED",')
+    console.log('     "notes": "❌ Cheque devolvido - pagamento rejeitado pelo banco"')
+    console.log('   }')
 
-    const rejectedOrder = await prisma.order.update({
+    const _rejectedOrder = await prisma.order.update({
       where: { id: lastOrder.order.id },
       data: {
         paymentStatus: 'FAILED',
         status: 'CANCELLED',
-        notes: '❌ Cheque devolvido - pagamento rejeitado pelo banco'
-      }
+        notes: '❌ Cheque devolvido - pagamento rejeitado pelo banco',
+      },
     })
 
-    console.log(`   ❌ Pagamento rejeitado: PENDING → FAILED`)
-    console.log(`   ❌ Pedido cancelado: PENDING → CANCELLED`)
-    console.log(`   📧 Email de cancelamento seria enviado`)
+    console.log('   ❌ Pagamento rejeitado: PENDING → FAILED')
+    console.log('   ❌ Pedido cancelado: PENDING → CANCELLED')
+    console.log('   📧 Email de cancelamento seria enviado')
 
     // Step 5: Payment status dashboard
-    console.log(`\n📊 PASSO 5: Dashboard final de pagamentos\n`)
+    console.log('\n📊 PASSO 5: Dashboard final de pagamentos\n')
 
     const paymentStatistics = await prisma.order.groupBy({
       by: ['paymentStatus'],
       where: {
         orderNumber: {
-          startsWith: 'MANUAL-TEST-'
-        }
+          startsWith: 'MANUAL-TEST-',
+        },
       },
       _count: { _all: true },
-      _sum: { totalAmount: true }
+      _sum: { totalAmount: true },
     })
 
-    console.log(`📊 Resumo dos pagamentos processados:`)
+    console.log('📊 Resumo dos pagamentos processados:')
     paymentStatistics.forEach(stat => {
       const totalValue = stat._sum.totalAmount ? Number(stat._sum.totalAmount) : 0
       const emoji = stat.paymentStatus === 'PAID' ? '✅' :
-                   stat.paymentStatus === 'FAILED' ? '❌' : '⏳'
+        stat.paymentStatus === 'FAILED' ? '❌' : '⏳'
       console.log(`   ${emoji} ${stat.paymentStatus}: ${stat._count._all} pedidos - €${totalValue.toFixed(2)}`)
     })
 
     // Step 6: Show different payment methods admin can handle
-    console.log(`\n💳 PASSO 6: Métodos de pagamento suportados para aceitação manual\n`)
+    console.log('\n💳 PASSO 6: Métodos de pagamento suportados para aceitação manual\n')
 
     const paymentMethods = [
       { method: 'bank_transfer', name: 'Transferência Bancária', icon: '🏦' },
@@ -260,26 +258,26 @@ async function testManualPaymentAcceptance() {
       { method: 'wire_transfer', name: 'Transferência Internacional', icon: '🌍' },
       { method: 'money_order', name: 'Vale Postal', icon: '📮' },
       { method: 'crypto', name: 'Criptomoeda', icon: '₿' },
-      { method: 'paypal_friends', name: 'PayPal (Amigos)', icon: '💙' }
+      { method: 'paypal_friends', name: 'PayPal (Amigos)', icon: '💙' },
     ]
 
-    console.log(`💼 Métodos de pagamento que o admin pode confirmar manualmente:`)
+    console.log('💼 Métodos de pagamento que o admin pode confirmar manualmente:')
     paymentMethods.forEach(method => {
       console.log(`   ${method.icon} ${method.name} (${method.method})`)
     })
 
-    console.log(`\n📋 Processo de confirmação manual:`)
-    console.log(`   1. 👁️  Admin visualiza pagamento pendente`)
-    console.log(`   2. 🔍 Verifica comprovativo de pagamento`)
-    console.log(`   3. ✅ Confirma recebimento do valor`)
-    console.log(`   4. 💳 Atualiza status: PENDING → PAID`)
-    console.log(`   5. 📋 Atualiza pedido: PENDING → CONFIRMED`)
-    console.log(`   6. 📝 Adiciona notas com detalhes`)
-    console.log(`   7. 📧 Sistema envia email de confirmação`)
-    console.log(`   8. 📊 Log de auditoria registado`)
+    console.log('\n📋 Processo de confirmação manual:')
+    console.log('   1. 👁️  Admin visualiza pagamento pendente')
+    console.log('   2. 🔍 Verifica comprovativo de pagamento')
+    console.log('   3. ✅ Confirma recebimento do valor')
+    console.log('   4. 💳 Atualiza status: PENDING → PAID')
+    console.log('   5. 📋 Atualiza pedido: PENDING → CONFIRMED')
+    console.log('   6. 📝 Adiciona notas com detalhes')
+    console.log('   7. 📧 Sistema envia email de confirmação')
+    console.log('   8. 📊 Log de auditoria registado')
 
     // Step 7: Bulk payment processing
-    console.log(`\n📦 PASSO 7: Processamento em lote de pagamentos\n`)
+    console.log('\n📦 PASSO 7: Processamento em lote de pagamentos\n')
 
     // Create a few more pending orders for bulk processing
     const bulkOrders = []
@@ -298,26 +296,26 @@ async function testManualPaymentAcceptance() {
           paymentStatus: 'PENDING',
           notes: `Transferência bancária em lote ${i}`,
           shippingAddressId: testAddress.id,
-          billingAddressId: testAddress.id
-        }
+          billingAddressId: testAddress.id,
+        },
       })
       bulkOrders.push(order)
     }
 
-    console.log(`🔄 Operação em lote: Confirmar múltiplas transferências bancárias`)
+    console.log('🔄 Operação em lote: Confirmar múltiplas transferências bancárias')
     console.log(`   📦 Pedidos: ${bulkOrders.map(o => o.orderNumber).join(', ')}`)
 
     const bulkUpdate = await prisma.order.updateMany({
       where: {
         orderNumber: {
-          startsWith: 'BULK-PAY-'
+          startsWith: 'BULK-PAY-',
         },
-        paymentStatus: 'PENDING'
+        paymentStatus: 'PENDING',
       },
       data: {
         paymentStatus: 'PAID',
-        status: 'CONFIRMED'
-      }
+        status: 'CONFIRMED',
+      },
     })
 
     console.log(`   ✅ ${bulkUpdate.count} pagamentos confirmados em lote`)
@@ -345,4 +343,4 @@ async function testManualPaymentAcceptance() {
   }
 }
 
-testManualPaymentAcceptance()
+void testManualPaymentAcceptance()

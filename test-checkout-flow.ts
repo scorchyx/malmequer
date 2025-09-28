@@ -8,7 +8,7 @@ async function testCheckoutFlow() {
 
     // Get the test user
     const user = await prisma.user.findFirst({
-      where: { email: 'rubenj.m.araujo@gmail.com' }
+      where: { email: 'rubenj.m.araujo@gmail.com' },
     })
 
     if (!user) {
@@ -20,15 +20,15 @@ async function testCheckoutFlow() {
 
     // Step 1: Clear existing cart and orders for clean test
     await prisma.cartItem.deleteMany({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
 
     await prisma.order.deleteMany({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
 
     await prisma.address.deleteMany({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
 
     console.log('🧹 Dados de teste limpos\n')
@@ -41,18 +41,18 @@ async function testCheckoutFlow() {
         status: 'ACTIVE',
         category: {
           name: {
-            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos']
-          }
-        }
+            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos'],
+          },
+        },
       },
       include: {
         category: true,
-        variants: true
+        variants: true,
       },
-      take: 3
+      take: 3,
     })
 
-    console.log(`📦 Produtos disponíveis:`)
+    console.log('📦 Produtos disponíveis:')
     products.forEach((product, index) => {
       console.log(`   ${index + 1}. ${product.name} - €${product.price}`)
     })
@@ -62,18 +62,18 @@ async function testCheckoutFlow() {
       const product = products[i]
       const quantity = i + 1 // 1, 2, 3
 
-      console.log(`\n➕ POST /api/cart`)
+      console.log('\n➕ POST /api/cart')
       console.log(`   Body: { "productId": "${product.id}", "quantity": ${quantity} }`)
 
       const cartItem = await prisma.cartItem.create({
         data: {
           userId: user.id,
           productId: product.id,
-          quantity
+          quantity,
         },
         include: {
-          product: true
-        }
+          product: true,
+        },
       })
 
       console.log(`   ✅ Adicionado: ${cartItem.product.name} x${cartItem.quantity}`)
@@ -84,17 +84,17 @@ async function testCheckoutFlow() {
       where: { userId: user.id },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
     const cartTotal = cartItems.reduce(
       (sum, item) => sum + item.quantity * Number(item.product.price),
-      0
+      0,
     )
 
-    console.log(`\n🛒 Carrinho atual:`)
+    console.log('\n🛒 Carrinho atual:')
     cartItems.forEach((item, index) => {
       const subtotal = Number(item.product.price) * item.quantity
       console.log(`   ${index + 1}. ${item.product.name} x${item.quantity} = €${subtotal.toFixed(2)}`)
@@ -102,9 +102,9 @@ async function testCheckoutFlow() {
     console.log(`   💰 Total: €${cartTotal.toFixed(2)}`)
 
     // Step 3: Create shipping and billing addresses
-    console.log(`\n🏠 PASSO 2: Criar endereços de entrega e cobrança\n`)
+    console.log('\n🏠 PASSO 2: Criar endereços de entrega e cobrança\n')
 
-    console.log(`➕ POST /api/addresses (endereço de entrega)`)
+    console.log('➕ POST /api/addresses (endereço de entrega)')
     const shippingAddress = await prisma.address.create({
       data: {
         userId: user.id,
@@ -118,13 +118,13 @@ async function testCheckoutFlow() {
         postalCode: '1200-100',
         country: 'Portugal',
         phone: '+351 912 345 678',
-        isDefault: true
-      }
+        isDefault: true,
+      },
     })
 
     console.log(`   ✅ Endereço de entrega criado: ${shippingAddress.addressLine1}, ${shippingAddress.city}`)
 
-    console.log(`\n➕ POST /api/addresses (endereço de cobrança)`)
+    console.log('\n➕ POST /api/addresses (endereço de cobrança)')
     const billingAddress = await prisma.address.create({
       data: {
         userId: user.id,
@@ -139,14 +139,14 @@ async function testCheckoutFlow() {
         country: 'Portugal',
         phone: '+351 912 345 678',
         vatNumber: 'PT123456789',
-        isDefault: true
-      }
+        isDefault: true,
+      },
     })
 
     console.log(`   ✅ Endereço de cobrança criado: ${billingAddress.addressLine1}, ${billingAddress.city}`)
 
     // Step 4: Create order
-    console.log(`\n📋 PASSO 3: Criar pedido\n`)
+    console.log('\n📋 PASSO 3: Criar pedido\n')
 
     const orderNumber = `ORD-${Date.now()}`
     const subtotalAmount = cartTotal
@@ -154,14 +154,14 @@ async function testCheckoutFlow() {
     const shippingAmount = cartTotal > 50 ? 0 : 5.99 // Envio grátis acima €50
     const totalAmount = subtotalAmount + taxAmount + shippingAmount
 
-    console.log(`➕ POST /api/orders`)
-    console.log(`   Body: {`)
+    console.log('➕ POST /api/orders')
+    console.log('   Body: {')
     console.log(`     "items": [${cartItems.length} products from cart],`)
     console.log(`     "shippingAddress": "${shippingAddress.id}",`)
     console.log(`     "billingAddress": "${billingAddress.id}",`)
-    console.log(`     "paymentMethod": "stripe",`)
-    console.log(`     "shippingMethod": "standard"`)
-    console.log(`   }`)
+    console.log('     "paymentMethod": "stripe",')
+    console.log('     "shippingMethod": "standard"')
+    console.log('   }')
 
     const order = await prisma.order.create({
       data: {
@@ -181,21 +181,21 @@ async function testCheckoutFlow() {
           create: cartItems.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.product.price
-          }))
-        }
+            price: item.product.price,
+          })),
+        },
       },
       include: {
         items: {
           include: {
             product: {
-              include: { category: true }
-            }
-          }
+              include: { category: true },
+            },
+          },
         },
         shippingAddress: true,
-        billingAddress: true
-      }
+        billingAddress: true,
+      },
     })
 
     console.log(`   ✅ Pedido criado: ${order.orderNumber}`)
@@ -204,8 +204,8 @@ async function testCheckoutFlow() {
     console.log(`   💰 Total: €${Number(order.totalAmount).toFixed(2)}`)
 
     // Show order breakdown
-    console.log(`\n📊 Detalhes do Pedido:`)
-    console.log(`   🛍️  Items:`)
+    console.log('\n📊 Detalhes do Pedido:')
+    console.log('   🛍️  Items:')
     order.items.forEach((item, index) => {
       const itemTotal = Number(item.price) * item.quantity
       console.log(`     ${index + 1}. ${item.product.name} x${item.quantity} = €${itemTotal.toFixed(2)}`)
@@ -215,7 +215,7 @@ async function testCheckoutFlow() {
     console.log(`   🚛 Envio: €${Number(order.shippingAmount).toFixed(2)}`)
     console.log(`   💳 TOTAL: €${Number(order.totalAmount).toFixed(2)}`)
 
-    console.log(`\n🏠 Endereços:`)
+    console.log('\n🏠 Endereços:')
     console.log(`   📦 Entrega: ${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`)
     console.log(`      ${order.shippingAddress.addressLine1}`)
     console.log(`      ${order.shippingAddress.postalCode} ${order.shippingAddress.city}`)
@@ -227,47 +227,47 @@ async function testCheckoutFlow() {
     }
 
     // Step 5: Simulate payment process
-    console.log(`\n💳 PASSO 4: Processar pagamento\n`)
+    console.log('\n💳 PASSO 4: Processar pagamento\n')
 
-    console.log(`➕ POST /api/payments/create-intent`)
+    console.log('➕ POST /api/payments/create-intent')
     console.log(`   Body: { "orderId": "${order.id}" }`)
     console.log(`   💡 Simulação: Stripe criaria PaymentIntent com valor €${Number(order.totalAmount).toFixed(2)}`)
 
     // Simulate successful payment
-    console.log(`\n🎯 Simulando pagamento bem-sucedido...`)
+    console.log('\n🎯 Simulando pagamento bem-sucedido...')
 
     const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: {
         status: 'CONFIRMED',
-        paymentStatus: 'PAID'
+        paymentStatus: 'PAID',
       },
       include: {
         items: {
           include: {
-            product: true
-          }
-        }
-      }
+            product: true,
+          },
+        },
+      },
     })
 
-    console.log(`   ✅ Pagamento processado com sucesso!`)
+    console.log('   ✅ Pagamento processado com sucesso!')
     console.log(`   📋 Status do pedido: ${updatedOrder.status}`)
     console.log(`   💳 Status do pagamento: ${updatedOrder.paymentStatus}`)
 
     // Step 6: Clear cart after successful order
-    console.log(`\n🧹 PASSO 5: Limpar carrinho após pedido\n`)
+    console.log('\n🧹 PASSO 5: Limpar carrinho após pedido\n')
 
     await prisma.cartItem.deleteMany({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
 
-    console.log(`   ✅ Carrinho limpo após checkout bem-sucedido`)
+    console.log('   ✅ Carrinho limpo após checkout bem-sucedido')
 
     // Step 7: Show order history
-    console.log(`\n📚 PASSO 6: Histórico de pedidos\n`)
+    console.log('\n📚 PASSO 6: Histórico de pedidos\n')
 
-    console.log(`📋 GET /api/orders`)
+    console.log('📋 GET /api/orders')
 
     const orderHistory = await prisma.order.findMany({
       where: { userId: user.id },
@@ -275,12 +275,12 @@ async function testCheckoutFlow() {
         items: {
           include: {
             product: {
-              include: { category: true }
-            }
-          }
-        }
+              include: { category: true },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     console.log(`   ✅ Resposta: ${orderHistory.length} pedidos encontrados`)
@@ -295,7 +295,7 @@ async function testCheckoutFlow() {
     })
 
     // Step 8: Simulate order status updates
-    console.log(`\n📦 PASSO 7: Simular atualizações de status\n`)
+    console.log('\n📦 PASSO 7: Simular atualizações de status\n')
 
     const statusUpdates = ['PROCESSING', 'SHIPPED', 'DELIVERED']
 
@@ -304,7 +304,7 @@ async function testCheckoutFlow() {
 
       await prisma.order.update({
         where: { id: order.id },
-        data: { status: status as any }
+        data: { status: status as 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED' },
       })
 
       console.log(`   ✅ Status atualizado: ${status}`)
@@ -314,7 +314,7 @@ async function testCheckoutFlow() {
     }
 
     const finalOrder = await prisma.order.findUnique({
-      where: { id: order.id }
+      where: { id: order.id },
     })
 
     console.log(`\n📋 Status final do pedido: ${finalOrder?.status}`)
@@ -341,4 +341,4 @@ async function testCheckoutFlow() {
   }
 }
 
-testCheckoutFlow()
+void testCheckoutFlow()

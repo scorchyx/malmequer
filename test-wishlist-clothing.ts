@@ -8,7 +8,7 @@ async function testClothingWishlist() {
 
     // Get the test user
     const user = await prisma.user.findFirst({
-      where: { email: 'rubenj.m.araujo@gmail.com' }
+      where: { email: 'rubenj.m.araujo@gmail.com' },
     })
 
     if (!user) {
@@ -24,12 +24,12 @@ async function testClothingWishlist() {
         status: 'ACTIVE',
         category: {
           name: {
-            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos']
-          }
-        }
+            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos'],
+          },
+        },
       },
       include: { category: true },
-      take: 4
+      take: 4,
     })
 
     console.log(`\n🛍️  Found ${clothingProducts.length} clothing products:`)
@@ -39,7 +39,7 @@ async function testClothingWishlist() {
 
     // Clear existing wishlist
     await prisma.wishlistItem.deleteMany({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
     console.log('\n🧹 Cleared existing wishlist')
 
@@ -51,8 +51,8 @@ async function testClothingWishlist() {
       await prisma.wishlistItem.create({
         data: {
           userId: user.id,
-          productId: product.id
-        }
+          productId: product.id,
+        },
       })
 
       console.log(`   ✅ Added: ${product.name}`)
@@ -65,11 +65,11 @@ async function testClothingWishlist() {
         product: {
           include: {
             category: true,
-            images: { take: 1, orderBy: { order: 'asc' } }
-          }
-        }
+            images: { take: 1, orderBy: { order: 'asc' } },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     console.log(`\n💝 Current Wishlist (${wishlist.length} items):`)
@@ -91,7 +91,7 @@ async function testClothingWishlist() {
       console.log(`➖ Removing "${itemToRemove.product.name}" from wishlist...`)
 
       await prisma.wishlistItem.delete({
-        where: { id: itemToRemove.id }
+        where: { id: itemToRemove.id },
       })
 
       console.log('   ✅ Removed successfully')
@@ -102,9 +102,9 @@ async function testClothingWishlist() {
       where: { userId: user.id },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
     console.log(`\n💝 Final Wishlist (${finalWishlist.length} items):`)
@@ -123,11 +123,11 @@ async function testClothingWishlist() {
         await prisma.wishlistItem.create({
           data: {
             userId: user.id,
-            productId: existingProduct.id
-          }
+            productId: existingProduct.id,
+          },
         })
         console.log('❌ ERROR: Duplicate was allowed (should not happen)')
-      } catch (error) {
+      } catch (_error) {
         console.log(`✅ Duplicate prevented correctly: ${existingProduct.name}`)
       }
     }
@@ -139,4 +139,4 @@ async function testClothingWishlist() {
   }
 }
 
-testClothingWishlist()
+void testClothingWishlist()

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
+import { getGuestSessionId, setGuestSessionCookie } from '@/lib/guest-session'
 import { log } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
 import { validateQueryParams, paginationSchema } from '@/lib/validation'
-import { getGuestSessionId, setGuestSessionCookie } from '@/lib/guest-session'
 
 export async function GET(request: NextRequest) {
   let user
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
         ...(user ? { userId: user.id } : {
           sessionId: getGuestSessionId(request),
           guestEmail,
-          guestPhone
+          guestPhone,
         }),
         subtotalAmount,
         taxAmount,

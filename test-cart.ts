@@ -8,7 +8,7 @@ async function testCartWithVariants() {
 
     // Get the test user
     const user = await prisma.user.findFirst({
-      where: { email: 'rubenj.m.araujo@gmail.com' }
+      where: { email: 'rubenj.m.araujo@gmail.com' },
     })
 
     if (!user) {
@@ -24,15 +24,15 @@ async function testCartWithVariants() {
         status: 'ACTIVE',
         category: {
           name: {
-            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos']
-          }
-        }
+            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos'],
+          },
+        },
       },
       include: {
         category: true,
         variants: true,
-        images: { take: 1 }
-      }
+        images: { take: 1 },
+      },
     })
 
     if (!product) {
@@ -53,7 +53,7 @@ async function testCartWithVariants() {
 
     // Clear existing cart
     await prisma.cartItem.deleteMany({
-      where: { userId: user.id }
+      where: { userId: user.id },
     })
     console.log('\n🧹 Cleared existing cart')
 
@@ -64,16 +64,16 @@ async function testCartWithVariants() {
       data: {
         userId: user.id,
         productId: product.id,
-        quantity: 2
+        quantity: 2,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Added: ${cartItem1.product.name} x${cartItem1.quantity}`)
@@ -85,9 +85,9 @@ async function testCartWithVariants() {
       where: {
         userId_productId: {
           userId: user.id,
-          productId: product.id
-        }
-      }
+          productId: product.id,
+        },
+      },
     })
 
     if (existingItem) {
@@ -96,9 +96,9 @@ async function testCartWithVariants() {
         data: { quantity: existingItem.quantity + 1 },
         include: {
           product: {
-            include: { category: true }
-          }
-        }
+            include: { category: true },
+          },
+        },
       })
       console.log(`   ✅ Updated quantity: ${updatedItem.product.name} x${updatedItem.quantity}`)
     }
@@ -111,10 +111,10 @@ async function testCartWithVariants() {
           include: {
             category: true,
             variants: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`\n🛒 Current Cart (${currentCart.length} items):`)
@@ -147,14 +147,14 @@ async function testCartWithVariants() {
       where: {
         status: 'ACTIVE',
         category: {
-          name: 'Vestidos'
+          name: 'Vestidos',
         },
-        id: { not: product.id }
+        id: { not: product.id },
       },
       include: {
         category: true,
-        variants: true
-      }
+        variants: true,
+      },
     })
 
     if (anotherProduct) {
@@ -164,8 +164,8 @@ async function testCartWithVariants() {
         data: {
           userId: user.id,
           productId: anotherProduct.id,
-          quantity: 1
-        }
+          quantity: 1,
+        },
       })
 
       console.log(`   ✅ Added: ${anotherProduct.name} x1`)
@@ -176,12 +176,12 @@ async function testCartWithVariants() {
       where: { userId: user.id },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
-    console.log(`\n🎯 Final Cart Summary:`)
+    console.log('\n🎯 Final Cart Summary:')
     let finalTotal = 0
     let finalItems = 0
 
@@ -205,4 +205,4 @@ async function testCartWithVariants() {
   }
 }
 
-testCartWithVariants()
+void testCartWithVariants()

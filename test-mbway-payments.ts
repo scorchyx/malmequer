@@ -10,8 +10,8 @@ async function testMBWayPayments() {
     const admin = await prisma.user.findFirst({
       where: {
         email: 'rubenj.m.araujo@gmail.com',
-        role: 'ADMIN'
-      }
+        role: 'ADMIN',
+      },
     })
 
     if (!admin) {
@@ -25,32 +25,30 @@ async function testMBWayPayments() {
     await prisma.order.deleteMany({
       where: {
         orderNumber: {
-          startsWith: 'MBWAY-TEST-'
-        }
-      }
+          startsWith: 'MBWAY-TEST-',
+        },
+      },
     })
 
     // Create test user address first
     let testAddress = await prisma.address.findFirst({
-      where: { userId: admin.id }
+      where: { userId: admin.id },
     })
 
-    if (!testAddress) {
-      testAddress = await prisma.address.create({
-        data: {
-          userId: admin.id,
-          type: 'SHIPPING',
-          firstName: 'Test',
-          lastName: 'Address',
-          addressLine1: 'Test Street 123',
-          city: 'Test City',
-          state: 'Test State',
-          postalCode: '1234-567',
-          country: 'Portugal',
-          isDefault: true
-        }
-      })
-    }
+    testAddress ??= await prisma.address.create({
+      data: {
+        userId: admin.id,
+        type: 'SHIPPING',
+        firstName: 'Test',
+        lastName: 'Address',
+        addressLine1: 'Test Street 123',
+        city: 'Test City',
+        state: 'Test State',
+        postalCode: '1234-567',
+        country: 'Portugal',
+        isDefault: true,
+      },
+    })
 
     // Step 2: Create MB Way test orders
     console.log('📋 PASSO 1: Criar pedidos MB Way pendentes\n')
@@ -60,18 +58,18 @@ async function testMBWayPayments() {
       {
         orderNumber: 'MBWAY-TEST-001',
         scenario: 'MB Way €50.00 confirmado',
-        amount: 50.00
+        amount: 50.00,
       },
       {
         orderNumber: 'MBWAY-TEST-002',
         scenario: 'MB Way €125.50 confirmado',
-        amount: 125.50
+        amount: 125.50,
       },
       {
         orderNumber: 'MBWAY-TEST-003',
         scenario: 'MB Way €89.90 confirmado',
-        amount: 89.90
-      }
+        amount: 89.90,
+      },
     ]
 
     for (const scenario of orderScenarios) {
@@ -94,11 +92,11 @@ async function testMBWayPayments() {
           paymentStatus: 'PENDING',
           notes: `Cenário: ${scenario.scenario}`,
           shippingAddressId: testAddress.id,
-          billingAddressId: testAddress.id
+          billingAddressId: testAddress.id,
         },
         include: {
-          user: { select: { name: true, email: true } }
-        }
+          user: { select: { name: true, email: true } },
+        },
       })
 
       mbwayOrders.push({ order, scenario })
@@ -106,17 +104,17 @@ async function testMBWayPayments() {
     }
 
     // Step 3: Show MB Way pending payments dashboard
-    console.log(`\n📊 PASSO 2: Dashboard de pagamentos MB Way pendentes\n`)
+    console.log('\n📊 PASSO 2: Dashboard de pagamentos MB Way pendentes\n')
 
     const pendingMBWay = await prisma.order.findMany({
       where: {
         paymentStatus: 'PENDING',
-        paymentMethod: 'mbway'
+        paymentMethod: 'mbway',
       },
       include: {
-        user: { select: { name: true, email: true } }
+        user: { select: { name: true, email: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     console.log(`📱 ${pendingMBWay.length} pagamentos MB Way pendentes encontrados\n`)
@@ -129,29 +127,29 @@ async function testMBWayPayments() {
       console.log(`   ${index + 1}. 📱 ${order.orderNumber}`)
       console.log(`      👤 Cliente: ${customer}`)
       console.log(`      💰 Valor: €${Number(order.totalAmount).toFixed(2)}`)
-      console.log(`      💳 Método: MB Way`)
+      console.log('      💳 Método: MB Way')
       console.log(`      📅 Data: ${order.createdAt.toLocaleDateString('pt-PT')}`)
       console.log(`      📝 Observações: ${order.notes}`)
       console.log(`      ⏰ Pendente há: ${Math.floor((Date.now() - order.createdAt.getTime()) / (1000 * 60))} minutos\n`)
     })
 
     // Step 4: Manual MB Way payment acceptance
-    console.log(`💼 PASSO 3: Confirmar pagamentos MB Way manualmente\n`)
+    console.log('💼 PASSO 3: Confirmar pagamentos MB Way manualmente\n')
 
     for (const { order, scenario } of mbwayOrders) {
       console.log(`🎯 Cenário: ${scenario.scenario}`)
       console.log(`📦 Pedido: ${order.orderNumber}`)
       console.log(`💰 Valor: €${Number(order.totalAmount).toFixed(2)}`)
-      console.log(`📱 Método: MB Way`)
+      console.log('📱 Método: MB Way')
 
-      console.log(`\n💳 PUT /api/admin/orders`)
-      console.log(`   Headers: Authorization: Bearer <admin-token>`)
-      console.log(`   Body: {`)
+      console.log('\n💳 PUT /api/admin/orders')
+      console.log('   Headers: Authorization: Bearer <admin-token>')
+      console.log('   Body: {')
       console.log(`     "orderId": "${order.id}",`)
-      console.log(`     "paymentStatus": "PAID",`)
-      console.log(`     "status": "CONFIRMED",`)
+      console.log('     "paymentStatus": "PAID",')
+      console.log('     "status": "CONFIRMED",')
       console.log(`     "notes": "✅ ${scenario.scenario} - Pagamento MB Way confirmado pelo admin ${admin.name}"`)
-      console.log(`   }`)
+      console.log('   }')
 
       // Update payment status
       const updatedOrder = await prisma.order.update({
@@ -159,24 +157,24 @@ async function testMBWayPayments() {
         data: {
           paymentStatus: 'PAID',
           status: 'CONFIRMED',
-          notes: `✅ ${scenario.scenario} - Pagamento MB Way confirmado pelo admin ${admin.name}`
+          notes: `✅ ${scenario.scenario} - Pagamento MB Way confirmado pelo admin ${admin.name}`,
         },
         include: {
-          user: { select: { name: true, email: true } }
-        }
+          user: { select: { name: true, email: true } },
+        },
       })
 
-      console.log(`   ✅ Pagamento MB Way aceite: PENDING → PAID`)
-      console.log(`   ✅ Status atualizado: PENDING → CONFIRMED`)
-      console.log(`   📝 Notas: Pagamento MB Way confirmado manualmente`)
-      console.log(`   📊 Log de atividade admin registado`)
+      console.log('   ✅ Pagamento MB Way aceite: PENDING → PAID')
+      console.log('   ✅ Status atualizado: PENDING → CONFIRMED')
+      console.log('   📝 Notas: Pagamento MB Way confirmado manualmente')
+      console.log('   📊 Log de atividade admin registado')
       console.log(`   📧 Email de confirmação seria enviado para ${updatedOrder.user?.email || updatedOrder.guestEmail}\n`)
 
       await new Promise(resolve => setTimeout(resolve, 300))
     }
 
     // Step 5: Test rejection scenario for non-MB Way method (should fail)
-    console.log(`❌ PASSO 4: Testar rejeição de métodos não-MB Way\n`)
+    console.log('❌ PASSO 4: Testar rejeição de métodos não-MB Way\n')
 
     // Create a bank transfer order to test rejection
     const bankTransferOrder = await prisma.order.create({
@@ -193,42 +191,42 @@ async function testMBWayPayments() {
         paymentStatus: 'PENDING',
         notes: 'Transferência bancária teste',
         shippingAddressId: testAddress.id,
-        billingAddressId: testAddress.id
-      }
+        billingAddressId: testAddress.id,
+      },
     })
 
-    console.log(`🔄 Tentativa de confirmar pagamento não-MB Way:`)
+    console.log('🔄 Tentativa de confirmar pagamento não-MB Way:')
     console.log(`📦 Pedido: ${bankTransferOrder.orderNumber}`)
-    console.log(`💳 Método: bank_transfer (não é MB Way)`)
-    console.log(`\n💳 PUT /api/admin/orders`)
-    console.log(`   Body: {`)
+    console.log('💳 Método: bank_transfer (não é MB Way)')
+    console.log('\n💳 PUT /api/admin/orders')
+    console.log('   Body: {')
     console.log(`     "orderId": "${bankTransferOrder.id}",`)
-    console.log(`     "paymentStatus": "PAID"`)
-    console.log(`   }`)
-    console.log(`   ❌ Resposta esperada: 400 Bad Request`)
-    console.log(`   📝 Erro: "Manual payment acceptance is only supported for MB Way payments"`)
+    console.log('     "paymentStatus": "PAID"')
+    console.log('   }')
+    console.log('   ❌ Resposta esperada: 400 Bad Request')
+    console.log('   📝 Erro: "Manual payment acceptance is only supported for MB Way payments"')
 
     // Clean up test order
     await prisma.order.delete({
-      where: { id: bankTransferOrder.id }
+      where: { id: bankTransferOrder.id },
     })
 
     // Step 6: Final MB Way statistics
-    console.log(`\n📊 PASSO 5: Estatísticas finais MB Way\n`)
+    console.log('\n📊 PASSO 5: Estatísticas finais MB Way\n')
 
     const mbwayStats = await prisma.order.groupBy({
       by: ['paymentStatus'],
       where: {
         orderNumber: {
-          startsWith: 'MBWAY-TEST-'
+          startsWith: 'MBWAY-TEST-',
         },
-        paymentMethod: 'mbway'
+        paymentMethod: 'mbway',
       },
       _count: { _all: true },
-      _sum: { totalAmount: true }
+      _sum: { totalAmount: true },
     })
 
-    console.log(`📱 Resumo dos pagamentos MB Way processados:`)
+    console.log('📱 Resumo dos pagamentos MB Way processados:')
     mbwayStats.forEach(stat => {
       const totalValue = stat._sum.totalAmount ? Number(stat._sum.totalAmount) : 0
       const emoji = stat.paymentStatus === 'PAID' ? '✅' : '⏳'
@@ -255,4 +253,4 @@ async function testMBWayPayments() {
   }
 }
 
-testMBWayPayments()
+void testMBWayPayments()

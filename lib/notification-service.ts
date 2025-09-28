@@ -9,6 +9,7 @@ export enum NotificationType {
   ORDER_CONFIRMATION = 'ORDER_CONFIRMATION',
   ORDER_SHIPPED = 'ORDER_SHIPPED',
   ORDER_DELIVERED = 'ORDER_DELIVERED',
+  ORDER_REFUNDED = 'ORDER_REFUNDED',
   PASSWORD_RESET = 'PASSWORD_RESET',
   STOCK_ALERT = 'STOCK_ALERT',
   PROMOTION = 'PROMOTION',
@@ -39,6 +40,13 @@ interface OrderNotification extends BaseNotification {
   trackingUrl?: string
 }
 
+interface RefundNotification extends BaseNotification {
+  type: NotificationType.ORDER_REFUNDED
+  orderNumber: string
+  refundAmount: string
+  reason: string
+}
+
 interface PasswordResetNotification extends BaseNotification {
   type: NotificationType.PASSWORD_RESET
   resetUrl: string
@@ -65,6 +73,7 @@ interface AccountUpdateNotification extends BaseNotification {
 type NotificationData =
   | WelcomeNotification
   | OrderNotification
+  | RefundNotification
   | PasswordResetNotification
   | StockAlertNotification
   | PromotionNotification
@@ -152,6 +161,11 @@ export class NotificationService {
         case NotificationType.PROMOTION:
           subject = data.subject ?? 'Special offer from Malmequer! 🌸'
           html = data.content ?? `<h1>Special Offer</h1><p>Hello ${data.recipientName}, check out our latest promotions!</p>`
+          break
+
+        case NotificationType.ORDER_REFUNDED:
+          subject = `Refund processed for order #${data.orderNumber}`
+          html = `<h1>Refund Processed</h1><p>Hello ${data.recipientName}, a refund of ${data.refundAmount} has been processed for your order #${data.orderNumber}.</p><p>Reason: ${data.reason}</p><p>The refund will appear in your account within 3-5 business days.</p>`
           break
 
         case NotificationType.ACCOUNT_UPDATE:
@@ -261,6 +275,25 @@ export class NotificationService {
       userId,
       productName,
       productUrl,
+    })
+  }
+
+  static async sendRefundNotification(
+    email: string,
+    name: string,
+    orderNumber: string,
+    refundAmount: string,
+    reason: string,
+    userId?: string,
+  ): Promise<void> {
+    await this.sendNotification({
+      type: NotificationType.ORDER_REFUNDED,
+      recipientEmail: email,
+      recipientName: name,
+      userId,
+      orderNumber,
+      refundAmount,
+      reason,
     })
   }
 }

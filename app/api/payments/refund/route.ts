@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
+import { log } from '@/lib/logger'
+import { NotificationService } from '@/lib/notification-service'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
 
@@ -91,6 +93,42 @@ export async function POST(request: NextRequest) {
           reason,
         },
       },
+    })
+
+    // Send refund notification email
+    try {
+      const order = await prisma.order.findUnique({
+        where: { id: payment.orderId },
+        include: { user: true },
+      })
+
+      if (order) {
+        const email = order.user?.email ??order.guestEmail
+        const customerName = order.user?.name ??'Customer'
+
+        if (email) {
+          await NotificationService.sendRefundNotification(
+            email,
+            customerName,
+            order.orderNumber,
+            `€${refund.amount / 100}`,
+            reason ??'Refund processed',
+          )
+        }
+      }
+    } catch (emailError) {
+      log.error('Failed to send refund notification email', {
+        error: emailError instanceof Error ? emailError : String(emailError),
+        paymentId,
+        orderId: payment.orderId,
+      })
+    }
+
+    log.info('Refund processed successfully', {
+      refundId: refund.id,
+      amount: refund.amount / 100,
+      orderId: payment.orderId,
+      adminId: user.id,
     })
 
     return NextResponse.json({

@@ -18,7 +18,7 @@ async function seedPaymentMethods() {
         enabled: true,
         processingMode: 'MANUAL' as const,
         description: 'Referência Multibanco - Pagamento em ATM ou homebanking',
-        displayOrder: 1
+        displayOrder: 1,
       },
       {
         method: 'mbway',
@@ -27,7 +27,7 @@ async function seedPaymentMethods() {
         enabled: true,
         processingMode: 'MANUAL' as const,
         description: 'Pagamento através da app MB Way',
-        displayOrder: 2
+        displayOrder: 2,
       },
       {
         method: 'visa',
@@ -36,7 +36,7 @@ async function seedPaymentMethods() {
         enabled: true,
         processingMode: 'AUTO' as const,
         description: 'Cartão de crédito/débito VISA - Processamento automático',
-        displayOrder: 3
+        displayOrder: 3,
       },
       {
         method: 'mastercard',
@@ -45,7 +45,7 @@ async function seedPaymentMethods() {
         enabled: true,
         processingMode: 'AUTO' as const,
         description: 'Cartão de crédito/débito MasterCard - Processamento automático',
-        displayOrder: 4
+        displayOrder: 4,
       },
       {
         method: 'applepay',
@@ -54,7 +54,7 @@ async function seedPaymentMethods() {
         enabled: true,
         processingMode: 'AUTO' as const,
         description: 'Pagamento através do Apple Pay - Processamento automático',
-        displayOrder: 5
+        displayOrder: 5,
       },
       {
         method: 'googlepay',
@@ -63,14 +63,14 @@ async function seedPaymentMethods() {
         enabled: true,
         processingMode: 'AUTO' as const,
         description: 'Pagamento através do Google Pay - Processamento automático',
-        displayOrder: 6
-      }
+        displayOrder: 6,
+      },
     ]
 
     // Create payment method configurations
     for (const methodConfig of paymentMethods) {
-      const created = await prisma.paymentMethodConfig.create({
-        data: methodConfig
+      const _created = await prisma.paymentMethodConfig.create({
+        data: methodConfig,
       })
 
       const processingType = methodConfig.processingMode === 'MANUAL' ? '👨‍💼 Manual' : '🤖 Automático'
@@ -87,7 +87,7 @@ async function seedPaymentMethods() {
     // Show summary
     const summary = await prisma.paymentMethodConfig.groupBy({
       by: ['processingMode'],
-      _count: { _all: true }
+      _count: { _all: true },
     })
 
     console.log('\n📊 Summary:')
@@ -97,7 +97,7 @@ async function seedPaymentMethods() {
     })
 
     const totalEnabled = await prisma.paymentMethodConfig.count({
-      where: { enabled: true }
+      where: { enabled: true },
     })
 
     console.log(`   ✅ Ativos: ${totalEnabled} métodos`)
@@ -110,4 +110,4 @@ async function seedPaymentMethods() {
   }
 }
 
-seedPaymentMethods()
+void seedPaymentMethods()

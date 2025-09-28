@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import { randomBytes } from 'crypto'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -25,15 +25,15 @@ async function testGuestCheckout() {
 
     // Step 1: Clear existing guest data for clean test
     await prisma.cartItem.deleteMany({
-      where: { sessionId: guestSession }
+      where: { sessionId: guestSession },
     })
 
     await prisma.address.deleteMany({
-      where: { sessionId: guestSession }
+      where: { sessionId: guestSession },
     })
 
     await prisma.order.deleteMany({
-      where: { sessionId: guestSession }
+      where: { sessionId: guestSession },
     })
 
     console.log('🧹 Dados de teste de convidado limpos\n')
@@ -46,18 +46,18 @@ async function testGuestCheckout() {
         status: 'ACTIVE',
         category: {
           name: {
-            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos']
-          }
-        }
+            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos'],
+          },
+        },
       },
       include: {
         category: true,
-        variants: true
+        variants: true,
       },
-      take: 3
+      take: 3,
     })
 
-    console.log(`📦 Produtos disponíveis:`)
+    console.log('📦 Produtos disponíveis:')
     products.forEach((product, index) => {
       console.log(`   ${index + 1}. ${product.name} - €${product.price}`)
     })
@@ -67,7 +67,7 @@ async function testGuestCheckout() {
       const product = products[i]
       const quantity = i + 1 // 1, 2, 3
 
-      console.log(`\n➕ POST /api/cart (sem autenticação)`)
+      console.log('\n➕ POST /api/cart (sem autenticação)')
       console.log(`   Headers: Cookie: guest_session_id=${guestSession.substring(0, 16)}...`)
       console.log(`   Body: { "productId": "${product.id}", "quantity": ${quantity} }`)
 
@@ -75,11 +75,11 @@ async function testGuestCheckout() {
         data: {
           sessionId: guestSession,
           productId: product.id,
-          quantity
+          quantity,
         },
         include: {
-          product: true
-        }
+          product: true,
+        },
       })
 
       console.log(`   ✅ Adicionado: ${cartItem.product.name} x${cartItem.quantity}`)
@@ -90,17 +90,17 @@ async function testGuestCheckout() {
       where: { sessionId: guestSession },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
     const cartTotal = cartItems.reduce(
       (sum, item) => sum + item.quantity * Number(item.product.price),
-      0
+      0,
     )
 
-    console.log(`\n🛒 Carrinho do convidado:`)
+    console.log('\n🛒 Carrinho do convidado:')
     cartItems.forEach((item, index) => {
       const subtotal = Number(item.product.price) * item.quantity
       console.log(`   ${index + 1}. ${item.product.name} x${item.quantity} = €${subtotal.toFixed(2)}`)
@@ -108,7 +108,7 @@ async function testGuestCheckout() {
     console.log(`   💰 Total: €${cartTotal.toFixed(2)}`)
 
     // Step 3: Guest checkout - Create order with guest addresses
-    console.log(`\n📋 PASSO 2: Checkout para convidado\n`)
+    console.log('\n📋 PASSO 2: Checkout para convidado\n')
 
     const orderNumber = `GUEST-${Date.now()}`
     const subtotalAmount = cartTotal
@@ -116,17 +116,17 @@ async function testGuestCheckout() {
     const shippingAmount = cartTotal > 50 ? 0 : 5.99 // Free shipping over €50
     const totalAmount = subtotalAmount + taxAmount + shippingAmount
 
-    console.log(`➕ POST /api/orders (sem autenticação)`)
+    console.log('➕ POST /api/orders (sem autenticação)')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession.substring(0, 16)}...`)
-    console.log(`   Body: {`)
+    console.log('   Body: {')
     console.log(`     "guestEmail": "${guestEmail}",`)
     console.log(`     "guestPhone": "${guestPhone}",`)
     console.log(`     "items": [${cartItems.length} products from cart],`)
-    console.log(`     "shippingAddress": { guest shipping data },`)
-    console.log(`     "billingAddress": { guest billing data },`)
-    console.log(`     "paymentMethod": "stripe",`)
-    console.log(`     "shippingMethod": "standard"`)
-    console.log(`   }`)
+    console.log('     "shippingAddress": { guest shipping data },')
+    console.log('     "billingAddress": { guest billing data },')
+    console.log('     "paymentMethod": "stripe",')
+    console.log('     "shippingMethod": "standard"')
+    console.log('   }')
 
     // Create addresses as part of order for guest
     const shippingAddressData = {
@@ -138,7 +138,7 @@ async function testGuestCheckout() {
       state: 'Coimbra',
       postalCode: '3000-123',
       country: 'Portugal',
-      phone: guestPhone
+      phone: guestPhone,
     }
 
     const billingAddressData = {
@@ -151,7 +151,7 @@ async function testGuestCheckout() {
       postalCode: '4700-456',
       country: 'Portugal',
       phone: guestPhone,
-      vatNumber: 'PT987654321'
+      vatNumber: 'PT987654321',
     }
 
     // Create shipping address for guest
@@ -159,8 +159,8 @@ async function testGuestCheckout() {
       data: {
         ...shippingAddressData,
         type: 'SHIPPING',
-        sessionId: guestSession
-      }
+        sessionId: guestSession,
+      },
     })
 
     // Create billing address for guest
@@ -168,8 +168,8 @@ async function testGuestCheckout() {
       data: {
         ...billingAddressData,
         type: 'BILLING',
-        sessionId: guestSession
-      }
+        sessionId: guestSession,
+      },
     })
 
     // Create order for guest
@@ -193,21 +193,21 @@ async function testGuestCheckout() {
           create: cartItems.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.product.price
-          }))
-        }
+            price: item.product.price,
+          })),
+        },
       },
       include: {
         items: {
           include: {
             product: {
-              include: { category: true }
-            }
-          }
+              include: { category: true },
+            },
+          },
         },
         shippingAddress: true,
-        billingAddress: true
-      }
+        billingAddress: true,
+      },
     })
 
     console.log(`   ✅ Pedido de convidado criado: ${guestOrder.orderNumber}`)
@@ -218,8 +218,8 @@ async function testGuestCheckout() {
     console.log(`   💰 Total: €${Number(guestOrder.totalAmount).toFixed(2)}`)
 
     // Show order breakdown
-    console.log(`\n📊 Detalhes do Pedido de Convidado:`)
-    console.log(`   🛍️  Items:`)
+    console.log('\n📊 Detalhes do Pedido de Convidado:')
+    console.log('   🛍️  Items:')
     guestOrder.items.forEach((item, index) => {
       const itemTotal = Number(item.price) * item.quantity
       console.log(`     ${index + 1}. ${item.product.name} x${item.quantity} = €${itemTotal.toFixed(2)}`)
@@ -229,7 +229,7 @@ async function testGuestCheckout() {
     console.log(`   🚛 Envio: €${Number(guestOrder.shippingAmount).toFixed(2)}`)
     console.log(`   💳 TOTAL: €${Number(guestOrder.totalAmount).toFixed(2)}`)
 
-    console.log(`\n🏠 Endereços do Convidado:`)
+    console.log('\n🏠 Endereços do Convidado:')
     console.log(`   📦 Entrega: ${guestOrder.shippingAddress.firstName} ${guestOrder.shippingAddress.lastName}`)
     console.log(`      ${guestOrder.shippingAddress.addressLine1}`)
     console.log(`      ${guestOrder.shippingAddress.postalCode} ${guestOrder.shippingAddress.city}`)
@@ -241,45 +241,45 @@ async function testGuestCheckout() {
     }
 
     // Step 4: Simulate payment process for guest
-    console.log(`\n💳 PASSO 3: Processar pagamento para convidado\n`)
+    console.log('\n💳 PASSO 3: Processar pagamento para convidado\n')
 
-    console.log(`➕ POST /api/payments/create-intent (sem autenticação)`)
+    console.log('➕ POST /api/payments/create-intent (sem autenticação)')
     console.log(`   Body: { "orderId": "${guestOrder.id}" }`)
     console.log(`   💡 Simulação: Stripe criaria PaymentIntent com valor €${Number(guestOrder.totalAmount).toFixed(2)}`)
 
     // Simulate successful payment
-    console.log(`\n🎯 Simulando pagamento bem-sucedido para convidado...`)
+    console.log('\n🎯 Simulando pagamento bem-sucedido para convidado...')
 
     const updatedGuestOrder = await prisma.order.update({
       where: { id: guestOrder.id },
       data: {
         status: 'CONFIRMED',
-        paymentStatus: 'PAID'
+        paymentStatus: 'PAID',
       },
       include: {
         items: {
           include: {
-            product: true
-          }
-        }
-      }
+            product: true,
+          },
+        },
+      },
     })
 
-    console.log(`   ✅ Pagamento processado com sucesso!`)
+    console.log('   ✅ Pagamento processado com sucesso!')
     console.log(`   📋 Status do pedido: ${updatedGuestOrder.status}`)
     console.log(`   💳 Status do pagamento: ${updatedGuestOrder.paymentStatus}`)
 
     // Step 5: Clear guest cart after successful order
-    console.log(`\n🧹 PASSO 4: Limpar carrinho de convidado após pedido\n`)
+    console.log('\n🧹 PASSO 4: Limpar carrinho de convidado após pedido\n')
 
     await prisma.cartItem.deleteMany({
-      where: { sessionId: guestSession }
+      where: { sessionId: guestSession },
     })
 
-    console.log(`   ✅ Carrinho de convidado limpo após checkout bem-sucedido`)
+    console.log('   ✅ Carrinho de convidado limpo após checkout bem-sucedido')
 
     // Step 6: Guest order lookup simulation (by email or order number)
-    console.log(`\n🔍 PASSO 5: Procurar pedidos de convidado\n`)
+    console.log('\n🔍 PASSO 5: Procurar pedidos de convidado\n')
 
     console.log(`📋 Procura por email: ${guestEmail}`)
 
@@ -289,12 +289,12 @@ async function testGuestCheckout() {
         items: {
           include: {
             product: {
-              include: { category: true }
-            }
-          }
-        }
+              include: { category: true },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     console.log(`   ✅ Encontrados ${guestOrders.length} pedidos para ${guestEmail}`)
@@ -311,7 +311,7 @@ async function testGuestCheckout() {
     })
 
     // Step 7: Test order status updates for guest order
-    console.log(`\n📦 PASSO 6: Atualizar status do pedido de convidado\n`)
+    console.log('\n📦 PASSO 6: Atualizar status do pedido de convidado\n')
 
     const statusUpdates = ['PROCESSING', 'SHIPPED', 'DELIVERED']
 
@@ -320,7 +320,7 @@ async function testGuestCheckout() {
 
       await prisma.order.update({
         where: { id: guestOrder.id },
-        data: { status: status as any }
+        data: { status: status as 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED' },
       })
 
       console.log(`   ✅ Status atualizado: ${status}`)
@@ -330,13 +330,13 @@ async function testGuestCheckout() {
     }
 
     const finalGuestOrder = await prisma.order.findUnique({
-      where: { id: guestOrder.id }
+      where: { id: guestOrder.id },
     })
 
     console.log(`\n📋 Status final do pedido de convidado: ${finalGuestOrder?.status}`)
 
     // Step 8: Test multiple guest sessions isolation
-    console.log(`\n🔒 PASSO 7: Teste de isolamento entre convidados\n`)
+    console.log('\n🔒 PASSO 7: Teste de isolamento entre convidados\n')
 
     const anotherGuestSession = generateGuestSessionId()
     console.log(`🔑 Segunda sessão de convidado: ${anotherGuestSession.substring(0, 16)}...`)
@@ -346,21 +346,21 @@ async function testGuestCheckout() {
       data: {
         sessionId: anotherGuestSession,
         productId: products[0].id,
-        quantity: 1
-      }
+        quantity: 1,
+      },
     })
 
     const firstGuestCart = await prisma.cartItem.findMany({
-      where: { sessionId: guestSession }
+      where: { sessionId: guestSession },
     })
 
     const secondGuestCart = await prisma.cartItem.findMany({
-      where: { sessionId: anotherGuestSession }
+      where: { sessionId: anotherGuestSession },
     })
 
     console.log(`   Primeiro convidado: ${firstGuestCart.length} items no carrinho`)
     console.log(`   Segundo convidado: ${secondGuestCart.length} items no carrinho`)
-    console.log(`   ✅ Carrinhos de convidados isolados corretamente`)
+    console.log('   ✅ Carrinhos de convidados isolados corretamente')
 
     console.log('\n🎉 Teste de checkout para convidados concluído!')
     console.log('\n📋 Resumo do fluxo testado:')
@@ -386,4 +386,4 @@ async function testGuestCheckout() {
   }
 }
 
-testGuestCheckout()
+void testGuestCheckout()

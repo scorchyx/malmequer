@@ -11,14 +11,14 @@ async function seedVariants() {
       where: {
         category: {
           name: {
-            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos']
-          }
-        }
+            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos'],
+          },
+        },
       },
       include: {
         category: true,
-        variants: true
-      }
+        variants: true,
+      },
     })
 
     console.log(`Found ${products.length} clothing products`)
@@ -28,7 +28,7 @@ async function seedVariants() {
       'Parte de Cima': ['PP', 'P', 'M', 'G', 'GG'],
       'Parte de Baixo': ['PP', 'P', 'M', 'G', 'GG'],
       'Conjuntos': ['PP', 'P', 'M', 'G', 'GG'],
-      'Vestidos': ['PP', 'P', 'M', 'G', 'GG']
+      'Vestidos': ['PP', 'P', 'M', 'G', 'GG'],
     }
 
     const colors = [
@@ -36,7 +36,7 @@ async function seedVariants() {
       { name: 'Branco', value: 'branco' },
       { name: 'Azul Marinho', value: 'azul-marinho' },
       { name: 'Rosa', value: 'rosa' },
-      { name: 'Bege', value: 'bege' }
+      { name: 'Bege', value: 'bege' },
     ]
 
     for (const product of products) {
@@ -60,8 +60,8 @@ async function seedVariants() {
             name: 'Tamanho',
             value: size,
             inventory: Math.floor(Math.random() * 20) + 5, // 5-24 units
-            sku: `${product.sku}-${size}`
-          }
+            sku: `${product.sku}-${size}`,
+          },
         })
       }
 
@@ -75,8 +75,8 @@ async function seedVariants() {
             name: 'Cor',
             value: color.value,
             inventory: Math.floor(Math.random() * 15) + 10, // 10-24 units
-            sku: `${product.sku}-${color.value}`
-          }
+            sku: `${product.sku}-${color.value}`,
+          },
         })
       }
 
@@ -90,8 +90,8 @@ async function seedVariants() {
         where: { id: product.id },
         include: {
           variants: true,
-          category: true
-        }
+          category: true,
+        },
       })
 
       if (updatedProduct) {
@@ -111,4 +111,4 @@ async function seedVariants() {
   }
 }
 
-seedVariants()
+void seedVariants()

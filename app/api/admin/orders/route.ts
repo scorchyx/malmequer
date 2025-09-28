@@ -89,27 +89,27 @@ async function putHandler(request: NextRequest, context: { user: any }) {
     // Check if payment method allows manual acceptance based on configuration
     if (paymentStatus === 'PAID' && existingOrder.paymentMethod) {
       const paymentMethodConfig = await prisma.paymentMethodConfig.findUnique({
-        where: { method: existingOrder.paymentMethod }
+        where: { method: existingOrder.paymentMethod },
       })
 
       if (!paymentMethodConfig) {
         return NextResponse.json(
           { error: 'Payment method configuration not found' },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
       if (paymentMethodConfig.processingMode !== 'MANUAL') {
         return NextResponse.json(
           { error: `Manual payment acceptance is not enabled for ${paymentMethodConfig.name}. Current mode: ${paymentMethodConfig.processingMode}` },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
       if (!paymentMethodConfig.enabled) {
         return NextResponse.json(
           { error: `Payment method ${paymentMethodConfig.name} is currently disabled` },
-          { status: 400 }
+          { status: 400 },
         )
       }
     }

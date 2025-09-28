@@ -7,23 +7,23 @@ async function main() {
     {
       name: 'Parte de Cima',
       slug: 'parte-de-cima',
-      description: 'Blusas, camisetas, tops e outras peças para a parte superior do corpo'
+      description: 'Blusas, camisetas, tops e outras peças para a parte superior do corpo',
     },
     {
       name: 'Parte de Baixo',
       slug: 'parte-de-baixo',
-      description: 'Calças, saias, shorts e outras peças para a parte inferior do corpo'
+      description: 'Calças, saias, shorts e outras peças para a parte inferior do corpo',
     },
     {
       name: 'Conjuntos',
       slug: 'conjuntos',
-      description: 'Conjuntos coordenados de duas ou mais peças'
+      description: 'Conjuntos coordenados de duas ou mais peças',
     },
     {
       name: 'Vestidos',
       slug: 'vestidos',
-      description: 'Vestidos para todas as ocasiões'
-    }
+      description: 'Vestidos para todas as ocasiões',
+    },
   ]
 
   console.log('Seeding categories...')
@@ -33,9 +33,9 @@ async function main() {
       where: { slug: category.slug },
       update: {
         name: category.name,
-        description: category.description
+        description: category.description,
       },
-      create: category
+      create: category,
     })
     console.log(`Created/updated category: ${result.name}`)
   }

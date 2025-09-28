@@ -58,9 +58,7 @@ export class CacheService {
   }
 
   async getClient(): Promise<RedisClientType | null> {
-    if (this.redis === null) {
-      this.redis = await getRedisClient()
-    }
+    this.redis ??= await getRedisClient()
     return this.redis
   }
 

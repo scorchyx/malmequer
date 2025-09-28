@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
+import { NextRequest, NextResponse } from 'next/server'
 
 const GUEST_SESSION_COOKIE = 'guest_session_id'
 const GUEST_SESSION_MAX_AGE = 30 * 24 * 60 * 60 // 30 days in seconds
@@ -33,7 +33,7 @@ export function setGuestSessionCookie(response: NextResponse, sessionId: string)
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: '/'
+    path: '/',
   })
 }
 

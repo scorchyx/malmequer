@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAdminAuth, logAdminActivity } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 
-async function getHandler(request: NextRequest, _context: { user: any }) {
+async function getHandler(_request: NextRequest, _context: { user: any }) {
   try {
     const paymentMethods = await prisma.paymentMethodConfig.findMany({
       orderBy: [
         { displayOrder: 'asc' },
-        { name: 'asc' }
-      ]
+        { name: 'asc' },
+      ],
     })
 
     return NextResponse.json({
@@ -17,14 +17,14 @@ async function getHandler(request: NextRequest, _context: { user: any }) {
         total: paymentMethods.length,
         enabled: paymentMethods.filter(pm => pm.enabled).length,
         manual: paymentMethods.filter(pm => pm.processingMode === 'MANUAL').length,
-        auto: paymentMethods.filter(pm => pm.processingMode === 'AUTO').length
-      }
+        auto: paymentMethods.filter(pm => pm.processingMode === 'AUTO').length,
+      },
     })
   } catch (error) {
     console.error('Error fetching payment methods:', error)
     return NextResponse.json(
       { error: 'Failed to fetch payment methods' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -38,25 +38,25 @@ async function postHandler(request: NextRequest, context: { user: any }) {
       enabled = true,
       processingMode = 'AUTO',
       description,
-      displayOrder = 0
+      displayOrder = 0,
     } = await request.json()
 
     if (!method || !name || !icon) {
       return NextResponse.json(
         { error: 'Method, name, and icon are required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     // Check if method already exists
     const existingMethod = await prisma.paymentMethodConfig.findUnique({
-      where: { method }
+      where: { method },
     })
 
     if (existingMethod) {
       return NextResponse.json(
         { error: 'Payment method already exists' },
-        { status: 409 }
+        { status: 409 },
       )
     }
 
@@ -68,8 +68,8 @@ async function postHandler(request: NextRequest, context: { user: any }) {
         enabled,
         processingMode,
         description,
-        displayOrder
-      }
+        displayOrder,
+      },
     })
 
     // Log admin activity
@@ -84,8 +84,8 @@ async function postHandler(request: NextRequest, context: { user: any }) {
         method,
         name,
         processingMode,
-        enabled
-      }
+        enabled,
+      },
     )
 
     return NextResponse.json(paymentMethod, { status: 201 })
@@ -93,7 +93,7 @@ async function postHandler(request: NextRequest, context: { user: any }) {
     console.error('Error creating payment method:', error)
     return NextResponse.json(
       { error: 'Failed to create payment method' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -105,24 +105,24 @@ async function putHandler(request: NextRequest, context: { user: any }) {
       enabled,
       processingMode,
       description,
-      displayOrder
+      displayOrder,
     } = await request.json()
 
     if (!id) {
       return NextResponse.json(
         { error: 'Payment method ID is required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     const existingMethod = await prisma.paymentMethodConfig.findUnique({
-      where: { id }
+      where: { id },
     })
 
     if (!existingMethod) {
       return NextResponse.json(
         { error: 'Payment method not found' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
@@ -134,7 +134,7 @@ async function putHandler(request: NextRequest, context: { user: any }) {
 
     const updatedMethod = await prisma.paymentMethodConfig.update({
       where: { id },
-      data: updateData
+      data: updateData,
     })
 
     // Log admin activity
@@ -163,9 +163,9 @@ async function putHandler(request: NextRequest, context: { user: any }) {
           enabled: existingMethod.enabled,
           processingMode: existingMethod.processingMode,
           description: existingMethod.description,
-          displayOrder: existingMethod.displayOrder
+          displayOrder: existingMethod.displayOrder,
         },
-        updateData
+        updateData,
       )
     }
 
@@ -174,7 +174,7 @@ async function putHandler(request: NextRequest, context: { user: any }) {
     console.error('Error updating payment method:', error)
     return NextResponse.json(
       { error: 'Failed to update payment method' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

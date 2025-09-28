@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import { randomBytes } from 'crypto'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -25,19 +25,19 @@ async function testGuestWishlist() {
         status: 'ACTIVE',
         category: {
           name: {
-            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos']
-          }
-        }
+            in: ['Parte de Cima', 'Parte de Baixo', 'Conjuntos', 'Vestidos'],
+          },
+        },
       },
       include: {
         category: true,
         variants: true,
-        images: { take: 1 }
+        images: { take: 1 },
       },
-      take: 5
+      take: 5,
     })
 
-    console.log(`💝 Produtos disponíveis:`)
+    console.log('💝 Produtos disponíveis:')
     products.forEach((product, index) => {
       const sizes = product.variants.filter(v => v.name === 'Tamanho')
       const colors = product.variants.filter(v => v.name === 'Cor')
@@ -53,125 +53,125 @@ async function testGuestWishlist() {
       where: {
         OR: [
           { sessionId: guestSession1 },
-          { sessionId: guestSession2 }
-        ]
-      }
+          { sessionId: guestSession2 },
+        ],
+      },
     })
     console.log('🧹 Wishlists de convidados limpas\n')
 
     // Test 1: Guest 1 adds items to wishlist
     console.log('👤 CONVIDADO 1 - Simulando API calls:\n')
 
-    console.log(`💝 POST /api/wishlist (sem autenticação)`)
+    console.log('💝 POST /api/wishlist (sem autenticação)')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession1.substring(0, 16)}...`)
     console.log(`   Body: { "productId": "${products[0].id}" }`)
 
     const guestWishlistItem1 = await prisma.wishlistItem.create({
       data: {
         sessionId: guestSession1,
-        productId: products[0].id
+        productId: products[0].id,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Resposta: Adicionado ${guestWishlistItem1.product.name} à wishlist`)
 
-    console.log(`\n💝 POST /api/wishlist`)
+    console.log('\n💝 POST /api/wishlist')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession1.substring(0, 16)}...`)
     console.log(`   Body: { "productId": "${products[1].id}" }`)
 
     const guestWishlistItem2 = await prisma.wishlistItem.create({
       data: {
         sessionId: guestSession1,
-        productId: products[1].id
+        productId: products[1].id,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Resposta: Adicionado ${guestWishlistItem2.product.name} à wishlist`)
 
-    console.log(`\n💝 POST /api/wishlist`)
+    console.log('\n💝 POST /api/wishlist')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession1.substring(0, 16)}...`)
     console.log(`   Body: { "productId": "${products[2].id}" }`)
 
     const guestWishlistItem3 = await prisma.wishlistItem.create({
       data: {
         sessionId: guestSession1,
-        productId: products[2].id
+        productId: products[2].id,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Resposta: Adicionado ${guestWishlistItem3.product.name} à wishlist`)
 
     // Test 2: Guest 2 adds different items
-    console.log(`\n👤 CONVIDADO 2 - Simulando API calls:\n`)
+    console.log('\n👤 CONVIDADO 2 - Simulando API calls:\n')
 
-    console.log(`💝 POST /api/wishlist (sem autenticação)`)
+    console.log('💝 POST /api/wishlist (sem autenticação)')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession2.substring(0, 16)}...`)
     console.log(`   Body: { "productId": "${products[3].id}" }`)
 
     const guest2WishlistItem1 = await prisma.wishlistItem.create({
       data: {
         sessionId: guestSession2,
-        productId: products[3].id
+        productId: products[3].id,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Resposta: Adicionado ${guest2WishlistItem1.product.name} à wishlist`)
 
-    console.log(`\n💝 POST /api/wishlist`)
+    console.log('\n💝 POST /api/wishlist')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession2.substring(0, 16)}...`)
     console.log(`   Body: { "productId": "${products[4].id}" }`)
 
     const guest2WishlistItem2 = await prisma.wishlistItem.create({
       data: {
         sessionId: guestSession2,
-        productId: products[4].id
+        productId: products[4].id,
       },
       include: {
         product: {
           include: {
             category: true,
-            images: { take: 1 }
-          }
-        }
-      }
+            images: { take: 1 },
+          },
+        },
+      },
     })
 
     console.log(`   ✅ Resposta: Adicionado ${guest2WishlistItem2.product.name} à wishlist`)
 
     // Test 3: Show both guest wishlists separately
-    console.log(`\n📋 GET /api/wishlist - CONVIDADO 1`)
+    console.log('\n📋 GET /api/wishlist - CONVIDADO 1')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession1.substring(0, 16)}...`)
 
     const guest1Wishlist = await prisma.wishlistItem.findMany({
@@ -181,17 +181,17 @@ async function testGuestWishlist() {
           include: {
             category: true,
             variants: true,
-            images: { take: 1 }
-          }
-        }
+            images: { take: 1 },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
-    console.log(`   ✅ Resposta:`)
+    console.log('   ✅ Resposta:')
     console.log(`      Items: ${guest1Wishlist.length}`)
 
-    console.log(`\n💝 Wishlist do Convidado 1:`)
+    console.log('\n💝 Wishlist do Convidado 1:')
     guest1Wishlist.forEach((item, index) => {
       console.log(`   ${index + 1}. ${item.product.name}`)
       console.log(`      Categoria: ${item.product.category.name}`)
@@ -202,7 +202,7 @@ async function testGuestWishlist() {
       console.log('')
     })
 
-    console.log(`📋 GET /api/wishlist - CONVIDADO 2`)
+    console.log('📋 GET /api/wishlist - CONVIDADO 2')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession2.substring(0, 16)}...`)
 
     const guest2Wishlist = await prisma.wishlistItem.findMany({
@@ -212,17 +212,17 @@ async function testGuestWishlist() {
           include: {
             category: true,
             variants: true,
-            images: { take: 1 }
-          }
-        }
+            images: { take: 1 },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
-    console.log(`   ✅ Resposta:`)
+    console.log('   ✅ Resposta:')
     console.log(`      Items: ${guest2Wishlist.length}`)
 
-    console.log(`\n💝 Wishlist do Convidado 2:`)
+    console.log('\n💝 Wishlist do Convidado 2:')
     guest2Wishlist.forEach((item, index) => {
       console.log(`   ${index + 1}. ${item.product.name}`)
       console.log(`      Categoria: ${item.product.category.name}`)
@@ -239,7 +239,7 @@ async function testGuestWishlist() {
     console.log(`   Nota: Remover "${guest1Wishlist[1].product.name}" da wishlist`)
 
     await prisma.wishlistItem.delete({
-      where: { id: guest1Wishlist[1].id }
+      where: { id: guest1Wishlist[1].id },
     })
 
     console.log(`   ✅ Resposta: "${guest1Wishlist[1].product.name}" removido da wishlist`)
@@ -249,12 +249,12 @@ async function testGuestWishlist() {
       where: { sessionId: guestSession1 },
       include: {
         product: {
-          include: { category: true }
-        }
-      }
+          include: { category: true },
+        },
+      },
     })
 
-    console.log(`\n💝 Wishlist Atualizada do Convidado 1:`)
+    console.log('\n💝 Wishlist Atualizada do Convidado 1:')
     if (updatedGuest1Wishlist.length === 0) {
       console.log('   💝 Wishlist vazia')
     } else {
@@ -264,60 +264,60 @@ async function testGuestWishlist() {
     }
 
     // Test 6: Try to add duplicate product to test error handling
-    console.log(`\n🚫 POST /api/wishlist (produto duplicado) - CONVIDADO 2`)
+    console.log('\n🚫 POST /api/wishlist (produto duplicado) - CONVIDADO 2')
     console.log(`   Headers: Cookie: guest_session_id=${guestSession2.substring(0, 16)}...`)
     console.log(`   Body: { "productId": "${products[3].id}" }`)
-    console.log(`   Nota: Tentar adicionar produto já existente`)
+    console.log('   Nota: Tentar adicionar produto já existente')
 
     const duplicateCheck = await prisma.wishlistItem.findUnique({
       where: {
         sessionId_productId: {
           sessionId: guestSession2,
-          productId: products[3].id
-        }
-      }
+          productId: products[3].id,
+        },
+      },
     })
 
     if (duplicateCheck) {
-      console.log(`   ❌ Erro esperado: Produto já está na wishlist (status 400)`)
+      console.log('   ❌ Erro esperado: Produto já está na wishlist (status 400)')
     }
 
     // Test 7: Isolation test - ensure guest wishlists are separate
-    console.log(`\n🔒 Teste de Isolamento:`)
+    console.log('\n🔒 Teste de Isolamento:')
 
     const finalGuest1Wishlist = await prisma.wishlistItem.findMany({
-      where: { sessionId: guestSession1 }
+      where: { sessionId: guestSession1 },
     })
 
     const finalGuest2Wishlist = await prisma.wishlistItem.findMany({
-      where: { sessionId: guestSession2 }
+      where: { sessionId: guestSession2 },
     })
 
     console.log(`   Convidado 1: ${finalGuest1Wishlist.length} items na wishlist`)
     console.log(`   Convidado 2: ${finalGuest2Wishlist.length} items na wishlist`)
-    console.log(`   ✅ Wishlists isoladas corretamente`)
+    console.log('   ✅ Wishlists isoladas corretamente')
 
     // Test 8: Migration simulation when guest becomes user
-    console.log(`\n🔄 Simulação de Migração (Convidado → Utilizador Autenticado):`)
+    console.log('\n🔄 Simulação de Migração (Convidado → Utilizador Autenticado):')
 
     // Get test user
     const testUser = await prisma.user.findFirst({
-      where: { email: 'rubenj.m.araujo@gmail.com' }
+      where: { email: 'rubenj.m.araujo@gmail.com' },
     })
 
     if (testUser) {
       console.log(`   👤 Utilizador de teste: ${testUser.name}`)
       console.log(`   🔑 Sessão de convidado: ${guestSession1.substring(0, 16)}...`)
-      console.log(`   📝 Cenário: Convidado faz login e wishlist é migrada`)
+      console.log('   📝 Cenário: Convidado faz login e wishlist é migrada')
 
       // Clear user's existing wishlist for clean test
       await prisma.wishlistItem.deleteMany({
-        where: { userId: testUser.id }
+        where: { userId: testUser.id },
       })
 
       // Migrate guest wishlist to user account
       const guestItems = await prisma.wishlistItem.findMany({
-        where: { sessionId: guestSession1 }
+        where: { sessionId: guestSession1 },
       })
 
       console.log(`   📦 ${guestItems.length} items para migrar`)
@@ -328,9 +328,9 @@ async function testGuestWishlist() {
           where: {
             userId_productId: {
               userId: testUser.id,
-              productId: item.productId
-            }
-          }
+              productId: item.productId,
+            },
+          },
         })
 
         if (!existingUserItem) {
@@ -338,8 +338,8 @@ async function testGuestWishlist() {
           await prisma.wishlistItem.create({
             data: {
               userId: testUser.id,
-              productId: item.productId
-            }
+              productId: item.productId,
+            },
           })
           console.log(`     ✅ Migrado: ${item.productId}`)
         }
@@ -347,7 +347,7 @@ async function testGuestWishlist() {
 
       // Delete guest items after migration
       await prisma.wishlistItem.deleteMany({
-        where: { sessionId: guestSession1 }
+        where: { sessionId: guestSession1 },
       })
 
       // Show final user wishlist
@@ -355,9 +355,9 @@ async function testGuestWishlist() {
         where: { userId: testUser.id },
         include: {
           product: {
-            include: { category: true }
-          }
-        }
+            include: { category: true },
+          },
+        },
       })
 
       console.log(`   💝 Wishlist final do utilizador: ${userWishlist.length} items`)
@@ -386,4 +386,4 @@ async function testGuestWishlist() {
   }
 }
 
-testGuestWishlist()
+void testGuestWishlist()

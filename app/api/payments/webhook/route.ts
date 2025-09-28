@@ -42,6 +42,26 @@ export async function POST(request: NextRequest) {
         await handleFailedPayment(failedPayment)
         break
 
+      case 'charge.succeeded':
+        const charge = event.data.object
+        await handleChargeSucceeded(charge)
+        break
+
+      case 'source.chargeable':
+        const source = event.data.object
+        await handleSourceChargeable(source)
+        break
+
+      case 'source.failed':
+        const failedSource = event.data.object
+        await handleSourceFailed(failedSource)
+        break
+
+      case 'source.canceled':
+        const canceledSource = event.data.object
+        await handleSourceCanceled(canceledSource)
+        break
+
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
@@ -118,22 +138,24 @@ async function handleSuccessfulPayment(paymentIntent: any) {
       }
 
       // Send order confirmation email
-      const orderItems = order.items.map((item: any) => ({
-        name: item.product.name,
-        quantity: item.quantity,
-        price: `€${item.price}`,
-      }))
+      if (order.user) {
+        const orderItems = order.items.map((item: any) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: `€${item.price}`,
+        }))
 
-      NotificationService.sendOrderConfirmation(
-        order.user.email,
-        order.user.name ?? 'Customer',
-        order.orderNumber,
-        `€${order.totalAmount}`,
-        orderItems,
-        order.user.id,
-      ).catch(error =>
-        console.error('Failed to send order confirmation email:', error),
-      )
+        NotificationService.sendOrderConfirmation(
+          order.user.email,
+          order.user.name ?? 'Customer',
+          order.orderNumber,
+          `€${order.totalAmount}`,
+          orderItems,
+          order.user.id,
+        ).catch(error =>
+          console.error('Failed to send order confirmation email:', error),
+        )
+      }
     }
 
     console.log(`Payment successful for order ${orderId}`)
@@ -170,5 +192,188 @@ async function handleFailedPayment(paymentIntent: any) {
     console.log(`Payment failed for order ${orderId}`)
   } catch (error) {
     console.error('Error handling failed payment:', error)
+  }
+}
+
+// Handle Multibanco/MB WAY charge succeeded
+async function handleChargeSucceeded(charge: any) {
+  try {
+    const orderId = charge.metadata?.orderId
+    const paymentMethod = charge.payment_method_details?.type
+
+    if (!orderId) {
+      console.error('No orderId in charge metadata')
+      return
+    }
+
+    // For Multibanco/MB WAY payments
+    if (paymentMethod === 'multibanco' || paymentMethod === 'mb_way') {
+      await prisma.payment.updateMany({
+        where: {
+          orderId: orderId,
+          status: 'PENDING',
+        },
+        data: {
+          status: 'PAID',
+          paymentMethod: paymentMethod,
+          stripePaymentId: charge.id,
+        },
+      })
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: 'PAID',
+          status: 'CONFIRMED',
+        },
+      })
+
+      // Update inventory and send notification
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          items: { include: { product: true } },
+          user: true,
+        },
+      })
+
+      if (order) {
+        // Update inventory
+        for (const item of order.items) {
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: { inventory: { decrement: item.quantity } },
+          })
+
+          await prisma.inventoryLog.create({
+            data: {
+              type: 'SALE',
+              quantity: -item.quantity,
+              reason: `${paymentMethod.toUpperCase()} payment for order ${order.orderNumber}`,
+              productId: item.productId,
+              userId: order.userId,
+            },
+          })
+        }
+
+        // Send confirmation email
+        if (order.user) {
+          const orderItems = order.items.map((item: any) => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            price: `€${item.price}`,
+          }))
+
+          await NotificationService.sendOrderConfirmation(
+            order.user.email,
+            order.user.name ?? 'Customer',
+            order.orderNumber,
+            `€${order.totalAmount}`,
+            orderItems,
+            order.user.id,
+          )
+        } else if (order.guestEmail) {
+          // Handle guest orders
+          const orderItems = order.items.map((item: any) => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            price: `€${item.price}`,
+          }))
+
+          await NotificationService.sendOrderConfirmation(
+            order.guestEmail,
+            'Guest Customer',
+            order.orderNumber,
+            `€${order.totalAmount}`,
+            orderItems,
+            undefined,
+          )
+        }
+      }
+
+      console.log(`${paymentMethod.toUpperCase()} payment confirmed for order ${orderId}`)
+    }
+  } catch (error) {
+    console.error('Error handling charge succeeded:', error)
+  }
+}
+
+// Handle source chargeable (for Multibanco)
+async function handleSourceChargeable(source: any) {
+  try {
+    const orderId = source.metadata?.orderId
+
+    if (orderId && source.type === 'multibanco') {
+      console.log(`Multibanco reference generated for order ${orderId}:`)
+      console.log(`Entity: ${source.multibanco?.entity}`)
+      console.log(`Reference: ${source.multibanco?.reference}`)
+
+      // You could store these details or send them to the customer
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          notes: `Multibanco - Entity: ${source.multibanco?.entity}, Reference: ${source.multibanco?.reference}`,
+        },
+      })
+    }
+  } catch (error) {
+    console.error('Error handling source chargeable:', error)
+  }
+}
+
+// Handle source failed
+async function handleSourceFailed(source: any) {
+  try {
+    const orderId = source.metadata?.orderId
+
+    if (!orderId) {
+      console.error('No orderId in source metadata')
+      return
+    }
+
+    await prisma.payment.updateMany({
+      where: {
+        orderId: orderId,
+        status: 'PENDING',
+      },
+      data: {
+        status: 'FAILED',
+      },
+    })
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentStatus: 'FAILED',
+      },
+    })
+
+    console.log(`Payment source failed for order ${orderId}`)
+  } catch (error) {
+    console.error('Error handling source failed:', error)
+  }
+}
+
+// Handle source canceled
+async function handleSourceCanceled(source: any) {
+  try {
+    const orderId = source.metadata?.orderId
+
+    if (!orderId) {
+      console.error('No orderId in source metadata')
+      return
+    }
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'CANCELLED',
+        paymentStatus: 'FAILED',
+      },
+    })
+
+    console.log(`Payment source canceled for order ${orderId}`)
+  } catch (error) {
+    console.error('Error handling source canceled:', error)
   }
 }
