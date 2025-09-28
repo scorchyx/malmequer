@@ -1,4 +1,8 @@
+/* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client'
+import seedPaymentMethods from './seed-payment-methods.js'
+import seedVariants from './seed-variants.js'
+import seedAdvancedFeatures from './seed-advanced-features.js'
 
 const prisma = new PrismaClient()
 
@@ -41,6 +45,18 @@ async function main() {
   }
 
   console.log('✅ Categories seeded successfully!')
+
+  // Run additional seeds
+  console.log('\n🔧 Running payment methods seed...')
+  await seedPaymentMethods()
+
+  console.log('\n👗 Running variants seed...')
+  await seedVariants()
+
+  console.log('\n🚀 Running advanced features seed...')
+  await seedAdvancedFeatures()
+
+  console.log('\n🎉 All seeds completed successfully!')
 }
 
 main()
