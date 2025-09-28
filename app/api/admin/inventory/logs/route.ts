@@ -45,7 +45,6 @@ async function getHandler(request: NextRequest, _context: { user: any }) {
             select: {
               id: true,
               name: true,
-              sku: true,
             },
           },
           user: {
@@ -79,8 +78,8 @@ async function getHandler(request: NextRequest, _context: { user: any }) {
       quantity: log.quantity,
       reason: log.reason,
       createdAt: log.createdAt,
-      product: log.product,
-      user: log.user,
+      product: (log as any).product,
+      user: (log as any).user,
       impact: log.type === 'SALE' || log.type === 'ADJUSTMENT' ? -log.quantity : log.quantity,
     }))
 

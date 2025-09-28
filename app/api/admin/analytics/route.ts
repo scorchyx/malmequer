@@ -329,19 +329,26 @@ async function getProductAnalytics(startDate: Date) {
       LIMIT 10
     `,
 
-    // Low stock products (less than 10 items)
+    // Low stock products (products with total variant inventory < 10)
     prisma.product.findMany({
       where: {
-        inventory: { lt: 10 },
         status: 'ACTIVE',
+        variants: {
+          some: {
+            inventory: { lt: 10 },
+          },
+        },
       },
       select: {
         id: true,
         name: true,
-        inventory: true,
         price: true,
+        variants: {
+          select: {
+            inventory: true,
+          },
+        },
       },
-      orderBy: { inventory: 'asc' },
       take: 10,
     }),
 

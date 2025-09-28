@@ -65,7 +65,6 @@ async function getHandler(request: NextRequest, context: { user: any }) {
           },
         },
         orderBy: [
-          { inventory: 'asc' }, // Show lowest stock first
           { name: 'asc' },
         ],
       }),
@@ -73,8 +72,8 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       // Total count for pagination
       prisma.product.count({ where }),
 
-      // Stock summary statistics
-      prisma.product.aggregate({
+      // Stock summary statistics (now calculated from variants)
+      prisma.productVariant.aggregate({
         _count: true,
         _sum: {
           inventory: true,
@@ -85,16 +84,34 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       }),
     ])
 
-    // Get stock alerts counts
+    // Get stock alerts counts (now based on variants)
     const [lowStockCount, outOfStockCount, overstockedCount] = await Promise.all([
       prisma.product.count({
-        where: { inventory: { gt: 0, lte: 10 } },
+        where: {
+          variants: {
+            some: {
+              inventory: { gt: 0, lte: 10 }
+            }
+          }
+        },
       }),
       prisma.product.count({
-        where: { inventory: { lte: 0 } },
+        where: {
+          variants: {
+            every: {
+              inventory: { lte: 0 }
+            }
+          }
+        },
       }),
       prisma.product.count({
-        where: { inventory: { gte: 100 } },
+        where: {
+          variants: {
+            some: {
+              inventory: { gte: 100 }
+            }
+          }
+        },
       }),
     ])
 
@@ -120,10 +137,11 @@ async function getHandler(request: NextRequest, context: { user: any }) {
     })
 
     const enrichedProducts = products.map(product => {
+      const totalInventory = (product as any).variants?.reduce((sum: number, v: any) => sum + v.inventory, 0) || 0
       const stockStatus =
-        product.inventory <= 0 ? 'out-of-stock' :
-          product.inventory <= 10 ? 'low-stock' :
-            product.inventory >= 100 ? 'overstocked' : 'normal'
+        totalInventory <= 0 ? 'out-of-stock' :
+          totalInventory <= 10 ? 'low-stock' :
+            totalInventory >= 100 ? 'overstocked' : 'normal'
 
       const recentMovement = recentMovements.find(m => m.productId === product.id)
       const salesVelocity = recentMovement?._sum.quantity || 0
@@ -131,15 +149,14 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       return {
         id: product.id,
         name: product.name,
-        sku: product.sku,
-        category: product.category?.name,
-        inventory: product.inventory,
+        category: (product as any).category?.name,
+        inventory: totalInventory,
         price: Number(product.price),
         stockStatus,
         salesVelocity,
-        totalSold: product._count.orderItems,
-        variants: product.variants,
-        stockValue: product.inventory * Number(product.price),
+        totalSold: (product as any)._count?.orderItems || 0,
+        variants: (product as any).variants || [],
+        stockValue: totalInventory * Number(product.price),
         restockSuggestion: salesVelocity > 0 ? Math.ceil(salesVelocity / 30 * 45) : null, // 45 days of stock
       }
     })
@@ -155,8 +172,8 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       summary: {
         totalProducts: stockSummary._count,
         totalStockValue: enrichedProducts.reduce((sum, p) => sum + p.stockValue, 0),
-        totalUnits: Number(stockSummary._sum.inventory) || 0,
-        averageStock: Number(stockSummary._avg.inventory) || 0,
+        totalUnits: Number(stockSummary._sum?.inventory) || 0,
+        averageStock: Number(stockSummary._avg?.inventory) || 0,
         alerts: {
           lowStock: lowStockCount,
           outOfStock: outOfStockCount,
@@ -180,19 +197,27 @@ async function getHandler(request: NextRequest, context: { user: any }) {
 // Update product inventory
 async function putHandler(request: NextRequest, context: { user: any }) {
   try {
-    const { productId, newInventory, reason, type } = await request.json()
+    const { productId } = await request.json()
 
-    if (!productId || newInventory === undefined) {
+    if (!productId) {
       return NextResponse.json(
-        { error: 'Product ID and new inventory level are required' },
+        { error: 'Product ID is required' },
         { status: 400 },
       )
     }
 
-    // Get current product
+    // Get current product with variants
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      select: { inventory: true, name: true, sku: true },
+      select: {
+        name: true,
+        variants: {
+          select: {
+            id: true,
+            inventory: true,
+          }
+        }
+      },
     })
 
     if (!product) {
@@ -202,44 +227,12 @@ async function putHandler(request: NextRequest, context: { user: any }) {
       )
     }
 
-    const currentInventory = product.inventory
-    const quantityChange = newInventory - currentInventory
-
-    // Update product inventory
-    const updatedProduct = await prisma.product.update({
-      where: { id: productId },
-      data: { inventory: newInventory },
-    })
-
-    // Log inventory movement
-    await prisma.inventoryLog.create({
-      data: {
-        type: type || (quantityChange > 0 ? 'RESTOCK' : 'ADJUSTMENT'),
-        quantity: Math.abs(quantityChange),
-        reason: reason || `Inventory adjusted from ${currentInventory} to ${newInventory}`,
-        productId,
-        userId: context.user.id,
-      },
-    })
-
-    // Log admin activity
-    await logAdminActivity(
-      context.user.id,
-      'UPDATE_INVENTORY',
-      'Product',
-      productId,
-      `Updated inventory for ${product.name} (${product.sku}): ${currentInventory} → ${newInventory}`,
-      { inventory: currentInventory },
-      { inventory: newInventory, reason },
+    // Note: Direct product inventory updates not supported anymore
+    // Inventory is now managed at the variant level
+    return NextResponse.json(
+      { error: 'Product inventory is now managed at variant level. Use variant-specific inventory updates.' },
+      { status: 400 },
     )
-
-    return NextResponse.json({
-      productId,
-      previousInventory: currentInventory,
-      newInventory,
-      quantityChange,
-      updatedAt: updatedProduct.updatedAt,
-    })
   } catch (error) {
     console.error('Error updating inventory:', error)
     return NextResponse.json(
@@ -262,15 +255,14 @@ async function postHandler(request: NextRequest, context: { user: any }) {
     }
 
     const results = []
-    const inventoryLogs = []
 
     for (const update of updates) {
-      const { productId, newInventory, individualReason } = update
+      const { productId } = update
 
       // Get current product
       const product = await prisma.product.findUnique({
         where: { id: productId },
-        select: { inventory: true, name: true, sku: true },
+        select: { name: true },
       })
 
       if (!product) {
@@ -282,47 +274,17 @@ async function postHandler(request: NextRequest, context: { user: any }) {
         continue
       }
 
-      const currentInventory = product.inventory
-      const quantityChange = newInventory - currentInventory
-
-      try {
-        // Update product inventory
-        await prisma.product.update({
-          where: { id: productId },
-          data: { inventory: newInventory },
-        })
-
-        // Prepare inventory log
-        inventoryLogs.push({
-          type: InventoryLogType.ADJUSTMENT,
-          quantity: Math.abs(quantityChange),
-          reason: individualReason || reason || `Bulk update: ${currentInventory} → ${newInventory}`,
-          productId,
-          userId: context.user.id,
-        })
-
-        results.push({
-          productId,
-          success: true,
-          previousInventory: currentInventory,
-          newInventory,
-          quantityChange,
-        })
-      } catch (updateError) {
-        results.push({
-          productId,
-          success: false,
-          error: 'Failed to update inventory',
-        })
-      }
-    }
-
-    // Bulk create inventory logs
-    if (inventoryLogs.length > 0) {
-      await prisma.inventoryLog.createMany({
-        data: inventoryLogs,
+      // Note: Bulk inventory updates not supported for products anymore
+      // Inventory is now managed at variant level
+      results.push({
+        productId,
+        success: false,
+        error: 'Product inventory is now managed at variant level',
       })
+      continue
     }
+
+    // Note: Inventory logs would be created here if variant updates were supported
 
     // Log admin activity
     const successCount = results.filter(r => r.success).length
