@@ -94,16 +94,16 @@ async function getHandler(request: NextRequest, _context: { user: any }) {
       summary: summary.reduce((acc, item) => {
         acc[item.type] = {
           count: item._count,
-          totalQuantity: item._sum.quantity || 0,
+          totalQuantity: item._sum.quantity ?? 0,
         }
         return acc
       }, {} as Record<string, { count: number; totalQuantity: number }>),
       filters: {
-        productId: productId || null,
-        type: type || null,
+        productId: productId ?? null,
+        type: type ?? null,
         dateRange: {
-          start: startDate || null,
-          end: endDate || null,
+          start: startDate ?? null,
+          end: endDate ?? null,
         },
       },
     })

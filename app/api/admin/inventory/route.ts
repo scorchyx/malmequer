@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAdminAuth, logAdminActivity } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
-import { InventoryLogType } from '@prisma/client'
 
 // Get inventory overview and low stock alerts
-async function getHandler(request: NextRequest, context: { user: any }) {
+async function getHandler(request: NextRequest, _context: { user: any }) {
   try {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') ?? '1')
@@ -90,27 +89,27 @@ async function getHandler(request: NextRequest, context: { user: any }) {
         where: {
           variants: {
             some: {
-              inventory: { gt: 0, lte: 10 }
-            }
-          }
+              inventory: { gt: 0, lte: 10 },
+            },
+          },
         },
       }),
       prisma.product.count({
         where: {
           variants: {
             every: {
-              inventory: { lte: 0 }
-            }
-          }
+              inventory: { lte: 0 },
+            },
+          },
         },
       }),
       prisma.product.count({
         where: {
           variants: {
             some: {
-              inventory: { gte: 100 }
-            }
-          }
+              inventory: { gte: 100 },
+            },
+          },
         },
       }),
     ])
@@ -137,14 +136,14 @@ async function getHandler(request: NextRequest, context: { user: any }) {
     })
 
     const enrichedProducts = products.map(product => {
-      const totalInventory = (product as any).variants?.reduce((sum: number, v: any) => sum + v.inventory, 0) || 0
+      const totalInventory = (product as any).variants?.reduce((sum: number, v: any) => sum + v.inventory, 0) ?? 0
       const stockStatus =
         totalInventory <= 0 ? 'out-of-stock' :
           totalInventory <= 10 ? 'low-stock' :
             totalInventory >= 100 ? 'overstocked' : 'normal'
 
       const recentMovement = recentMovements.find(m => m.productId === product.id)
-      const salesVelocity = recentMovement?._sum.quantity || 0
+      const salesVelocity = recentMovement?._sum.quantity ?? 0
 
       return {
         id: product.id,
@@ -154,8 +153,8 @@ async function getHandler(request: NextRequest, context: { user: any }) {
         price: Number(product.price),
         stockStatus,
         salesVelocity,
-        totalSold: (product as any)._count?.orderItems || 0,
-        variants: (product as any).variants || [],
+        totalSold: (product as any)._count?.orderItems ?? 0,
+        variants: (product as any).variants ?? [],
         stockValue: totalInventory * Number(product.price),
         restockSuggestion: salesVelocity > 0 ? Math.ceil(salesVelocity / 30 * 45) : null, // 45 days of stock
       }
@@ -172,8 +171,8 @@ async function getHandler(request: NextRequest, context: { user: any }) {
       summary: {
         totalProducts: stockSummary._count,
         totalStockValue: enrichedProducts.reduce((sum, p) => sum + p.stockValue, 0),
-        totalUnits: Number(stockSummary._sum?.inventory) || 0,
-        averageStock: Number(stockSummary._avg?.inventory) || 0,
+        totalUnits: Number(stockSummary._sum?.inventory) ?? 0,
+        averageStock: Number(stockSummary._avg?.inventory) ?? 0,
         alerts: {
           lowStock: lowStockCount,
           outOfStock: outOfStockCount,
@@ -181,8 +180,8 @@ async function getHandler(request: NextRequest, context: { user: any }) {
         },
       },
       filters: {
-        applied: filter || 'all',
-        search: search || null,
+        applied: filter ?? 'all',
+        search: search ?? null,
       },
     })
   } catch (error) {
@@ -195,7 +194,7 @@ async function getHandler(request: NextRequest, context: { user: any }) {
 }
 
 // Update product inventory
-async function putHandler(request: NextRequest, context: { user: any }) {
+async function putHandler(request: NextRequest, _context: { user: any }) {
   try {
     const { productId } = await request.json()
 
@@ -215,8 +214,8 @@ async function putHandler(request: NextRequest, context: { user: any }) {
           select: {
             id: true,
             inventory: true,
-          }
-        }
+          },
+        },
       },
     })
 
