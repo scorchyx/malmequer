@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Remove coupon from cart
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     const user = await getCurrentUser()
 

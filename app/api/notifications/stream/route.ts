@@ -205,11 +205,11 @@ export async function POST(request: NextRequest) {
 
     const notification: Notification = {
       id: crypto.randomUUID(),
-      type: type || 'system_message',
+      type: type ?? 'system_message',
       title,
       message,
       userId,
-      isAdminOnly: isAdminOnly || false,
+      isAdminOnly: isAdminOnly ?? false,
       timestamp: Date.now(),
     }
 
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Get connection stats (admin only)
-export async function PUT(request: NextRequest) {
+export async function PUT(_request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
@@ -251,7 +251,7 @@ export async function PUT(request: NextRequest) {
 
     const connectionStats = Array.from(connections.entries()).map(([id, conn]) => ({
       id,
-      userId: conn.userId || null,
+      userId: conn.userId ?? null,
       isAdmin: conn.isAdmin,
       connectedSince: Date.now() - conn.lastHeartbeat,
       lastHeartbeat: new Date(conn.lastHeartbeat).toISOString(),

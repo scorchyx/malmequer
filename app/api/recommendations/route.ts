@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
+import { cache, CacheTTL } from '@/lib/cache'
 import { log } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
 
@@ -18,15 +18,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
 
     const params: RecommendationParams = {
-      type: (searchParams.get('type') as any) || 'popular',
-      productId: searchParams.get('productId') || undefined,
-      categoryId: searchParams.get('categoryId') || undefined,
-      limit: Math.min(parseInt(searchParams.get('limit') || '10'), 20),
+      type: (searchParams.get('type') as any) ?? 'popular',
+      productId: searchParams.get('productId') ?? undefined,
+      categoryId: searchParams.get('categoryId') ?? undefined,
+      limit: Math.min(parseInt(searchParams.get('limit') ?? '10'), 20),
       userId: user?.id,
     }
 
     // Create cache key
-    const cacheKey = `recommendations:${params.type}:${params.productId || 'none'}:${params.categoryId || 'none'}:${params.userId || 'anonymous'}:${params.limit}`
+    const cacheKey = `recommendations:${params.type}:${params.productId ?? 'none'}:${params.categoryId ?? 'none'}:${params.userId ?? 'anonymous'}:${params.limit}`
 
     // Try cache first
     const cached = await cache.get(cacheKey)
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       metadata: {
         count: recommendations.length,
         generatedAt: new Date().toISOString(),
-        userId: params.userId || null,
+        userId: params.userId ?? null,
         cached: false,
       },
     }
@@ -360,7 +360,7 @@ async function getFrequentlyBoughtTogether(params: RecommendationParams) {
               slug: true,
               price: true,
               comparePrice: true,
-                      status: true,
+              status: true,
               images: {
                 take: 1,
                 select: { url: true, alt: true },
