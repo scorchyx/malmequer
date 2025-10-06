@@ -124,8 +124,8 @@ export async function DELETE(request: NextRequest) {
         where: { userId },
       })
 
-      // 2. Delete wishlist items
-      await tx.wishlistItem.deleteMany({
+      // 2. Delete wishlists (cascade will delete wishlist items)
+      await tx.wishlist.deleteMany({
         where: { userId },
       })
 

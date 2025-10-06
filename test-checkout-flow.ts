@@ -182,6 +182,7 @@ async function testCheckoutFlow() {
             productId: item.productId,
             quantity: item.quantity,
             price: item.product.price,
+            name: item.product.name,
           })),
         },
       },
@@ -208,7 +209,7 @@ async function testCheckoutFlow() {
     console.log('   🛍️  Items:')
     order.items.forEach((item, index) => {
       const itemTotal = Number(item.price) * item.quantity
-      console.log(`     ${index + 1}. ${item.product.name} x${item.quantity} = €${itemTotal.toFixed(2)}`)
+      console.log(`     ${index + 1}. ${item.name} x${item.quantity} = €${itemTotal.toFixed(2)}`)
     })
     console.log(`   💰 Subtotal: €${Number(order.subtotalAmount).toFixed(2)}`)
     console.log(`   📈 IVA (23%): €${Number(order.taxAmount).toFixed(2)}`)

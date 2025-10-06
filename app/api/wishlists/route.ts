@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching wishlists:', error)
     return NextResponse.json(
       { error: 'Failed to fetch wishlists' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     if (!name) {
       return NextResponse.json(
         { error: 'Wishlist name is required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating wishlist:', error)
     return NextResponse.json(
       { error: 'Failed to create wishlist' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client'
+import seedAdvancedFeatures from './seed-advanced-features.js'
 import seedPaymentMethods from './seed-payment-methods.js'
 import seedVariants from './seed-variants.js'
-import seedAdvancedFeatures from './seed-advanced-features.js'
 
 const prisma = new PrismaClient()
 

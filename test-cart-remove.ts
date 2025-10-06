@@ -166,11 +166,15 @@ async function testCartRemoval() {
     console.log(`🗑️  DELETE /api/cart?productId=${productToRemove.product.id}`)
     console.log(`   Nota: Remover "${productToRemove.product.name}" do carrinho`)
 
-    const removedItem = await prisma.cartItem.findUnique({
+    const variantId = null
+    const removedItem: any = await prisma.cartItem.findUnique({
       where: {
-        userId_productId: {
+        // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
+        userId_productId_variantId: {
           userId: user.id,
           productId: productToRemove.product.id,
+          // @ts-ignore
+          variantId,
         },
       },
       include: {
@@ -178,7 +182,7 @@ async function testCartRemoval() {
       },
     })
 
-    if (removedItem) {
+    if (removedItem?.product) {
       await prisma.cartItem.delete({
         where: { id: removedItem.id },
       })
@@ -232,9 +236,12 @@ async function testCartRemoval() {
 
       await prisma.cartItem.delete({
         where: {
-          userId_productId: {
+          // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
+          userId_productId_variantId: {
             userId: user.id,
             productId: anotherProductToRemove.product.id,
+            // @ts-ignore
+            variantId: null,
           },
         },
       })
@@ -272,9 +279,12 @@ async function testCartRemoval() {
 
     const nonExistentItem = await prisma.cartItem.findUnique({
       where: {
-        userId_productId: {
+        // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
+        userId_productId_variantId: {
           userId: user.id,
           productId: 'nonexistent-id',
+          // @ts-ignore
+          variantId: null,
         },
       },
     })

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching notifications:', error)
     return NextResponse.json(
       { error: 'Failed to fetch notifications' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (!type || !title || !message) {
       return NextResponse.json(
         { error: 'Type, title, and message are required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating notification:', error)
     return NextResponse.json(
       { error: 'Failed to create notification' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

@@ -107,11 +107,15 @@ async function testCartAPI() {
     console.log(`   Body: { "productId": "${products[0].id}", "quantity": 1 }`)
     console.log('   Note: This would add 1 more to existing quantity')
 
+    const variantId = null
     const existingItem = await prisma.cartItem.findUnique({
       where: {
-        userId_productId: {
+        // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
+        userId_productId_variantId: {
           userId: user.id,
           productId: products[0].id,
+          // @ts-ignore
+          variantId,
         },
       },
     })

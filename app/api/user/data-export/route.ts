@@ -90,12 +90,16 @@ export async function GET(_request: NextRequest) {
         where: { userId },
       }),
 
-      // Wishlist
-      prisma.wishlistItem.findMany({
+      // Wishlists
+      prisma.wishlist.findMany({
         where: { userId },
         include: {
-          product: {
-            select: { name: true, price: true },
+          items: {
+            include: {
+              product: {
+                select: { name: true, price: true },
+              },
+            },
           },
         },
       }),

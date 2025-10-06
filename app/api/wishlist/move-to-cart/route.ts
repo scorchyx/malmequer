@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getOrCreateDefaultWishlist } from '@/lib/wishlist-helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,11 +22,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get default wishlist
+    const wishlist = await getOrCreateDefaultWishlist(user.id)
+
     // Check if product exists in wishlist
     const wishlistItem = await prisma.wishlistItem.findUnique({
       where: {
-        userId_productId: {
-          userId: user.id,
+        wishlistId_productId: {
+          wishlistId: wishlist.id,
           productId,
         },
       },
@@ -64,12 +68,15 @@ export async function POST(request: NextRequest) {
 
     // Start transaction to move from wishlist to cart
     const result = await prisma.$transaction(async (tx) => {
-      // Check if item already exists in cart
+      // Check if item already exists in cart (base product, no variant)
+      const variantId = null
       const existingCartItem = await tx.cartItem.findUnique({
         where: {
-          userId_productId: {
+          userId_productId_variantId: {
             userId: user.id,
             productId,
+            // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
+            variantId,
           },
         },
       })
@@ -86,6 +93,7 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
+            variant: true,
           },
         })
       } else {
@@ -94,6 +102,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: user.id,
             productId,
+            variantId,
             quantity,
           },
           include: {
@@ -102,6 +111,7 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
+            variant: true,
           },
         })
       }

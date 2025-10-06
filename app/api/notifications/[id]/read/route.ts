@@ -4,14 +4,14 @@ import { prisma } from '@/lib/prisma'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -27,7 +27,7 @@ export async function PUT(
     if (!notification) {
       return NextResponse.json(
         { error: 'Notification not found' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
@@ -47,7 +47,7 @@ export async function PUT(
     console.error('Error marking notification as read:', error)
     return NextResponse.json(
       { error: 'Failed to mark notification as read' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

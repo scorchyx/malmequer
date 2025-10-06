@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ token: string }> }
+  { params }: { params: Promise<{ token: string }> },
 ) {
   try {
     const { token } = await params
@@ -38,7 +38,7 @@ export async function GET(
     if (!wishlist) {
       return NextResponse.json(
         { error: 'Wishlist not found or not public' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
@@ -60,7 +60,7 @@ export async function GET(
     console.error('Error fetching shared wishlist:', error)
     return NextResponse.json(
       { error: 'Failed to fetch shared wishlist' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

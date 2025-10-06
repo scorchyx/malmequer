@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
@@ -16,7 +16,7 @@ export async function GET(
     if (!validTypes.includes(type)) {
       return NextResponse.json(
         { error: 'Invalid relation type' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -55,7 +55,7 @@ export async function GET(
       ...relation.relatedProduct,
       totalInventory: relation.relatedProduct.variants.reduce(
         (sum, variant) => sum + variant.inventory,
-        0
+        0,
       ),
       relationPosition: relation.position,
     }))
@@ -69,7 +69,7 @@ export async function GET(
     console.error('Error fetching related products:', error)
     return NextResponse.json(
       { error: 'Failed to fetch related products' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

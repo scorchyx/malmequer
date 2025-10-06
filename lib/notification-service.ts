@@ -91,11 +91,6 @@ export class NotificationService {
 
           // If settings exist, check if the specific notification type is enabled
           if (settings) {
-            if (!settings.emailNotifications) {
-              // Email notifications disabled
-              return
-            }
-
             // Check specific notification type preferences
             switch (data.type) {
               case NotificationType.ORDER_CONFIRMATION:

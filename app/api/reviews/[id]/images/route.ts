@@ -4,14 +4,14 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -21,7 +21,7 @@ export async function POST(
     if (!images || !Array.isArray(images)) {
       return NextResponse.json(
         { error: 'Images array is required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -36,12 +36,12 @@ export async function POST(
     if (!review) {
       return NextResponse.json(
         { error: 'Review not found' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
     // Create review images
-    const reviewImages = await prisma.reviewImage.createMany({
+    await prisma.reviewImage.createMany({
       data: images.map((image: any, index: number) => ({
         reviewId: id,
         url: image.url,
@@ -63,21 +63,21 @@ export async function POST(
     console.error('Error adding review images:', error)
     return NextResponse.json(
       { error: 'Failed to add review images' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -87,7 +87,7 @@ export async function DELETE(
     if (!imageId) {
       return NextResponse.json(
         { error: 'Image ID is required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -102,7 +102,7 @@ export async function DELETE(
     if (!review) {
       return NextResponse.json(
         { error: 'Review not found' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
@@ -120,7 +120,7 @@ export async function DELETE(
     console.error('Error deleting review image:', error)
     return NextResponse.json(
       { error: 'Failed to delete review image' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

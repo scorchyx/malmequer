@@ -250,11 +250,15 @@ async function testGuestCart() {
     console.log(`   Body: { "productId": "${products[2].id}", "quantity": 1 }`)
     console.log('   Nota: Adicionar mais 1 unidade ao produto existente')
 
+    const variantId = null
     const existingGuest2Item = await prisma.cartItem.findUnique({
       where: {
-        sessionId_productId: {
+        // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
+        sessionId_productId_variantId: {
           sessionId: guestSession2,
           productId: products[2].id,
+          // @ts-ignore
+          variantId,
         },
       },
     })

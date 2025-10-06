@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching refunds:', error)
     return NextResponse.json(
       { error: 'Failed to fetch refunds' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     if (!orderId || !reason || !items || !Array.isArray(items)) {
       return NextResponse.json(
         { error: 'Order ID, reason, and items are required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     if (!order) {
       return NextResponse.json(
         { error: 'Order not found' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating refund:', error)
     return NextResponse.json(
       { error: 'Failed to create refund' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

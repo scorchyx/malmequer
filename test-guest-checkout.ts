@@ -194,6 +194,7 @@ async function testGuestCheckout() {
             productId: item.productId,
             quantity: item.quantity,
             price: item.product.price,
+            name: item.product.name,
           })),
         },
       },
@@ -222,7 +223,7 @@ async function testGuestCheckout() {
     console.log('   🛍️  Items:')
     guestOrder.items.forEach((item, index) => {
       const itemTotal = Number(item.price) * item.quantity
-      console.log(`     ${index + 1}. ${item.product.name} x${item.quantity} = €${itemTotal.toFixed(2)}`)
+      console.log(`     ${index + 1}. ${item.name} x${item.quantity} = €${itemTotal.toFixed(2)}`)
     })
     console.log(`   💰 Subtotal: €${Number(guestOrder.subtotalAmount).toFixed(2)}`)
     console.log(`   📈 IVA (23%): €${Number(guestOrder.taxAmount).toFixed(2)}`)

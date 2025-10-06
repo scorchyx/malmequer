@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getOrCreateDefaultWishlist } from '@/lib/wishlist-helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,10 +20,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Get default wishlist
+    const wishlist = await getOrCreateDefaultWishlist(user.id)
+
     const wishlistItem = await prisma.wishlistItem.findUnique({
       where: {
-        userId_productId: {
-          userId: user.id,
+        wishlistId_productId: {
+          wishlistId: wishlist.id,
           productId,
         },
       },

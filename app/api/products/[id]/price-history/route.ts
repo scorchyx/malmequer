@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
@@ -56,21 +56,21 @@ export async function GET(
     console.error('Error fetching price history:', error)
     return NextResponse.json(
       { error: 'Failed to fetch price history' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser()
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -80,7 +80,7 @@ export async function POST(
     if (!price || typeof price !== 'number') {
       return NextResponse.json(
         { error: 'Valid price is required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -93,7 +93,7 @@ export async function POST(
     if (!product) {
       return NextResponse.json(
         { error: 'Product not found' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
@@ -137,7 +137,7 @@ export async function POST(
     console.error('Error updating price:', error)
     return NextResponse.json(
       { error: 'Failed to update price' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

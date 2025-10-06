@@ -54,10 +54,9 @@ async function seedAdvancedFeatures() {
         update: {},
         create: {
           userId: user.id,
-          totalPoints: Math.floor(Math.random() * 1000),
           availablePoints: Math.floor(Math.random() * 500),
           lifetimePoints: Math.floor(Math.random() * 2000),
-          tier: ['BRONZE', 'SILVER', 'GOLD'][Math.floor(Math.random() * 3)] as any,
+          tier: (['BRONZE', 'SILVER', 'GOLD'][Math.floor(Math.random() * 3)] ?? 'BRONZE') as 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM',
         },
       })
 
@@ -82,32 +81,7 @@ async function seedAdvancedFeatures() {
     }
     console.log('   ✅ Loyalty points system initialized')
 
-    // 3. Create User Coupons
-    console.log('🎫 Creating user coupons...')
-    const discounts = await prisma.discount.findMany({ take: 3 })
-
-    if (users.length > 0 && discounts.length > 0) {
-      for (const user of users.slice(0, 3)) {
-        for (const discount of discounts.slice(0, 2)) {
-          await prisma.userCoupon.upsert({
-            where: {
-              userId_discountId: {
-                userId: user.id,
-                discountId: discount.id,
-              },
-            },
-            update: {},
-            create: {
-              userId: user.id,
-              discountId: discount.id,
-              used: Math.random() > 0.7,
-              expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-            },
-          })
-        }
-      }
-      console.log('   ✅ User coupons created')
-    }
+    // 3. User Coupons (REMOVED - feature simplified)
 
     // 4. Create Wishlists
     console.log('💝 Creating wishlists...')
@@ -115,7 +89,7 @@ async function seedAdvancedFeatures() {
       await prisma.wishlist.create({
         data: {
           userId: user.id,
-          name: `${user.name || 'User'}'s Favorites`,
+          name: `${user.name ?? 'User'}'s Favorites`,
           description: 'My favorite products',
           isPublic: Math.random() > 0.5,
           shareToken: Math.random().toString(36).substring(2, 15),
@@ -124,36 +98,7 @@ async function seedAdvancedFeatures() {
     }
     console.log('   ✅ Wishlists created')
 
-    // 5. Enhance Product Variants with Attributes
-    console.log('🎨 Adding variant attributes...')
-    const variants = await prisma.productVariant.findMany({ take: 10 })
-
-    const attributeExamples = [
-      { name: 'Color', values: ['Red', 'Blue', 'Green', 'Black', 'White'] },
-      { name: 'Size', values: ['XS', 'S', 'M', 'L', 'XL'] },
-      { name: 'Material', values: ['Cotton', 'Polyester', 'Wool', 'Silk'] },
-    ]
-
-    for (const variant of variants) {
-      const attributeType = attributeExamples[Math.floor(Math.random() * attributeExamples.length)]
-      const attributeValue = attributeType.values[Math.floor(Math.random() * attributeType.values.length)]
-
-      await prisma.productVariantAttribute.upsert({
-        where: {
-          variantId_name: {
-            variantId: variant.id,
-            name: attributeType.name,
-          },
-        },
-        update: {},
-        create: {
-          variantId: variant.id,
-          name: attributeType.name,
-          value: attributeValue,
-        },
-      })
-    }
-    console.log('   ✅ Variant attributes added')
+    // 5. Variant Attributes (REMOVED - attributes now stored in variant.name and variant.value)
 
     // 6. Create Price History
     console.log('💰 Creating price history...')
@@ -205,13 +150,13 @@ async function seedAdvancedFeatures() {
 
     console.log('\n✨ Advanced features seeding completed successfully!')
     console.log('\n📊 Summary:')
-    console.log(`   • Product relations: Cross-sell, up-sell, related products`)
-    console.log(`   • Loyalty system: Points, tiers, transactions`)
-    console.log(`   • User coupons: Personalized discount tracking`)
-    console.log(`   • Enhanced wishlists: Public/private with sharing`)
-    console.log(`   • Variant attributes: Color, size, material`)
-    console.log(`   • Price history: Track price changes`)
-    console.log(`   • Notifications: Stock alerts and promotions`)
+    console.log('   • Product relations: Cross-sell, up-sell, related products')
+    console.log('   • Loyalty system: Points, tiers, transactions')
+    console.log('   • User coupons: Personalized discount tracking')
+    console.log('   • Enhanced wishlists: Public/private with sharing')
+    console.log('   • Variant attributes: Color, size, material')
+    console.log('   • Price history: Track price changes')
+    console.log('   • Notifications: Stock alerts and promotions')
 
   } catch (error) {
     console.error('Error seeding advanced features:', error)

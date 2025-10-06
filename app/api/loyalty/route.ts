@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
       const newLoyaltyPoints = await prisma.loyaltyPoints.create({
         data: {
           userId: user.id,
-          totalPoints: 0,
           availablePoints: 0,
           lifetimePoints: 0,
           tier: 'BRONZE',
@@ -74,9 +73,6 @@ export async function POST(request: NextRequest) {
     const loyaltyPoints = await prisma.loyaltyPoints.upsert({
       where: { userId: user.id },
       update: {
-        totalPoints: {
-          increment: type === 'EARNED' ? points : -points,
-        },
         availablePoints: {
           increment: type === 'EARNED' ? points : -points,
         },
@@ -86,7 +82,6 @@ export async function POST(request: NextRequest) {
       },
       create: {
         userId: user.id,
-        totalPoints: type === 'EARNED' ? points : 0,
         availablePoints: type === 'EARNED' ? points : 0,
         lifetimePoints: type === 'EARNED' ? points : 0,
         tier: 'BRONZE',

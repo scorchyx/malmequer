@@ -88,6 +88,7 @@ export const createAddressSchema = z.object({
 // Cart validation schemas
 export const addToCartSchema = z.object({
   productId: z.string().cuid('Invalid product ID'),
+  variantId: z.string().cuid('Invalid variant ID').optional(),
   quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high'),
 })
 

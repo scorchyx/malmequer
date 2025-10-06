@@ -1,51 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getGuestSessionId, setGuestSessionCookie } from '@/lib/guest-session'
 import { prisma } from '@/lib/prisma'
+import { getOrCreateDefaultWishlist } from '@/lib/wishlist-helpers'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-    let wishlistItems
-
-    if (user) {
-      // Authenticated user wishlist
-      wishlistItems = await prisma.wishlistItem.findMany({
-        where: { userId: user.id },
-        include: {
-          product: {
-            include: {
-              images: { take: 1, orderBy: { order: 'asc' } },
-              category: true,
-              _count: {
-                select: { reviews: true },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      })
-    } else {
-      // Guest user wishlist
-      const sessionId = getGuestSessionId(request)
-
-      wishlistItems = await prisma.wishlistItem.findMany({
-        where: { sessionId },
-        include: {
-          product: {
-            include: {
-              images: { take: 1, orderBy: { order: 'asc' } },
-              category: true,
-              _count: {
-                select: { reviews: true },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      })
+    if (!user) {
+      return NextResponse.json(
+        { items: [], count: 0 },
+      )
     }
+
+    // Get or create default wishlist
+    const wishlist = await getOrCreateDefaultWishlist(user.id)
+
+    // Get wishlist items
+    const wishlistItems = await prisma.wishlistItem.findMany({
+      where: { wishlistId: wishlist.id },
+      include: {
+        product: {
+          include: {
+            images: { take: 1, orderBy: { order: 'asc' } },
+            category: true,
+            _count: {
+              select: { reviews: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
 
     // Calculate average rating for each product
     const wishlistWithRatings = await Promise.all(
@@ -65,17 +51,10 @@ export async function GET(request: NextRequest) {
       }),
     )
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       items: wishlistWithRatings,
       count: wishlistItems.length,
     })
-
-    // Set guest session cookie if needed
-    if (!user && !request.cookies.get('guest_session_id')?.value) {
-      setGuestSessionCookie(response, getGuestSessionId(request))
-    }
-
-    return response
   } catch (error) {
     console.error('Error fetching wishlist:', error)
     return NextResponse.json(
@@ -88,6 +67,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 },
+      )
+    }
 
     const { productId } = await request.json()
 
@@ -117,85 +103,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let existingItem
-    let wishlistItem
+    // Get or create default wishlist
+    const wishlist = await getOrCreateDefaultWishlist(user.id)
 
-    if (user) {
-      // Authenticated user wishlist
-      existingItem = await prisma.wishlistItem.findUnique({
-        where: {
-          userId_productId: {
-            userId: user.id,
-            productId,
-          },
-        },
-      })
-
-      if (existingItem) {
-        return NextResponse.json(
-          { error: 'Product already in wishlist' },
-          { status: 400 },
-        )
-      }
-
-      wishlistItem = await prisma.wishlistItem.create({
-        data: {
-          userId: user.id,
+    // Check if already in wishlist
+    const existingItem = await prisma.wishlistItem.findUnique({
+      where: {
+        wishlistId_productId: {
+          wishlistId: wishlist.id,
           productId,
         },
-        include: {
-          product: {
-            include: {
-              images: { take: 1, orderBy: { order: 'asc' } },
-              category: true,
-            },
-          },
-        },
-      })
-    } else {
-      // Guest user wishlist
-      const sessionId = getGuestSessionId(request)
+      },
+    })
 
-      existingItem = await prisma.wishlistItem.findUnique({
-        where: {
-          sessionId_productId: {
-            sessionId,
-            productId,
-          },
-        },
-      })
-
-      if (existingItem) {
-        return NextResponse.json(
-          { error: 'Product already in wishlist' },
-          { status: 400 },
-        )
-      }
-
-      wishlistItem = await prisma.wishlistItem.create({
-        data: {
-          sessionId,
-          productId,
-        },
-        include: {
-          product: {
-            include: {
-              images: { take: 1, orderBy: { order: 'asc' } },
-              category: true,
-            },
-          },
-        },
-      })
+    if (existingItem) {
+      return NextResponse.json(
+        { error: 'Product already in wishlist' },
+        { status: 400 },
+      )
     }
 
-    const response = NextResponse.json(wishlistItem, { status: 201 })
+    // Add to wishlist
+    const wishlistItem = await prisma.wishlistItem.create({
+      data: {
+        wishlistId: wishlist.id,
+        productId,
+      },
+      include: {
+        product: {
+          include: {
+            images: { take: 1, orderBy: { order: 'asc' } },
+            category: true,
+          },
+        },
+      },
+    })
 
-    // Set guest session cookie if needed
-    if (!user && !request.cookies.get('guest_session_id')?.value) {
-      setGuestSessionCookie(response, getGuestSessionId(request))
-    }
-
-    return response
+    return NextResponse.json(wishlistItem, { status: 201 })
   } catch (error) {
     console.error('Error adding to wishlist:', error)
     return NextResponse.json(
@@ -209,6 +153,13 @@ export async function DELETE(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 },
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const productId = searchParams.get('productId')
 
@@ -219,31 +170,18 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    let wishlistItem
+    // Get default wishlist
+    const wishlist = await getOrCreateDefaultWishlist(user.id)
 
-    if (user) {
-      // Authenticated user wishlist
-      wishlistItem = await prisma.wishlistItem.findUnique({
-        where: {
-          userId_productId: {
-            userId: user.id,
-            productId,
-          },
+    // Find item in wishlist
+    const wishlistItem = await prisma.wishlistItem.findUnique({
+      where: {
+        wishlistId_productId: {
+          wishlistId: wishlist.id,
+          productId,
         },
-      })
-    } else {
-      // Guest user wishlist
-      const sessionId = getGuestSessionId(request)
-
-      wishlistItem = await prisma.wishlistItem.findUnique({
-        where: {
-          sessionId_productId: {
-            sessionId,
-            productId,
-          },
-        },
-      })
-    }
+      },
+    })
 
     if (!wishlistItem) {
       return NextResponse.json(
@@ -256,14 +194,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: wishlistItem.id },
     })
 
-    const response = NextResponse.json({ message: 'Item removed from wishlist' })
-
-    // Set guest session cookie if needed
-    if (!user && !request.cookies.get('guest_session_id')?.value) {
-      setGuestSessionCookie(response, getGuestSessionId(request))
-    }
-
-    return response
+    return NextResponse.json({ message: 'Item removed from wishlist' })
   } catch (error) {
     console.error('Error removing from wishlist:', error)
     return NextResponse.json(

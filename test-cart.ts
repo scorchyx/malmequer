@@ -81,11 +81,15 @@ async function testCartWithVariants() {
     // Test 2: Add same product with different quantity (should update existing)
     console.log('\n➕ Test 2: Adding same product again (should update quantity)')
 
+    const variantId = null
     const existingItem = await prisma.cartItem.findUnique({
       where: {
-        userId_productId: {
+        // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
+        userId_productId_variantId: {
           userId: user.id,
           productId: product.id,
+          // @ts-ignore
+          variantId,
         },
       },
     })

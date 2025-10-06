@@ -21,7 +21,6 @@ export async function GET() {
     settings ??= await prisma.notificationSettings.create({
       data: {
         userId: user.id,
-        emailNotifications: true,
         orderConfirmations: true,
         orderUpdates: true,
         stockAlerts: false,
@@ -52,7 +51,6 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
     const {
-      emailNotifications,
       orderConfirmations,
       orderUpdates,
       stockAlerts,
@@ -62,7 +60,6 @@ export async function PUT(request: NextRequest) {
 
     // Validate boolean fields
     const booleanFields = {
-      emailNotifications,
       orderConfirmations,
       orderUpdates,
       stockAlerts,
@@ -89,7 +86,6 @@ export async function PUT(request: NextRequest) {
       settings = await prisma.notificationSettings.create({
         data: {
           userId: user.id,
-          emailNotifications: emailNotifications ?? true,
           orderConfirmations: orderConfirmations ?? true,
           orderUpdates: orderUpdates ?? true,
           stockAlerts: stockAlerts ?? false,
@@ -100,7 +96,6 @@ export async function PUT(request: NextRequest) {
     } else {
       // Update existing settings (only update provided fields)
       const updateData: any = {}
-      if (emailNotifications !== undefined) updateData.emailNotifications = emailNotifications
       if (orderConfirmations !== undefined) updateData.orderConfirmations = orderConfirmations
       if (orderUpdates !== undefined) updateData.orderUpdates = orderUpdates
       if (stockAlerts !== undefined) updateData.stockAlerts = stockAlerts
