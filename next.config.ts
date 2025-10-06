@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
   },
   // Configure caching directory
   distDir: '.next',
+  // Image optimization
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/dt1d75zg0/**',
+      },
+    ],
+  },
 }
 
 export default nextConfig
