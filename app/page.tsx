@@ -9,11 +9,7 @@ export default function HomePage() {
 
       <main className="flex-1">
         <HeroBanner
-          imageUrl="https://res.cloudinary.com/dt1d75zg0/image/upload/v1754059915/malmequer-hero-banner-01_pyb8un.jpg"
-          title="Descobre a Nossa Nova Coleção"
-          subtitle="Produtos de qualidade com entregas rápidas em todo o país"
-          ctaText="Explorar Produtos"
-          ctaLink="/products"
+          imageUrl="https://res.cloudinary.com/dt1d75zg0/image/upload/v1763593356/WhatsApp_Image_2025-11-19_at_23.01.52_psvn2m.jpg"
         />
 
         {/* Adiciona mais secções aqui conforme necessário */}
