@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generalRateLimit, authRateLimit } from '@/lib/rate-limiter'
 import { addSecurityHeaders } from '@/lib/security-headers'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Apply rate limiting based on path

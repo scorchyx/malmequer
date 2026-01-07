@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get('user-agent') ?? 'unknown',
       })
       return NextResponse.json(
-        { error: 'User already exists' },
+        { error: 'Este email já está registado' },
         { status: 400 },
       )
     }

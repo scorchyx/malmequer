@@ -2,21 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 // Base schemas
-export const emailSchema = z.string().email('Invalid email format').min(1, 'Email is required')
+export const emailSchema = z.string().email('Formato de email inválido').min(1, 'Email é obrigatório')
 export const passwordSchema = z.string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(128, 'Password must be less than 128 characters')
-  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one lowercase letter, one uppercase letter, and one number')
+  .min(8, 'A password deve ter pelo menos 8 caracteres')
+  .max(128, 'A password deve ter menos de 128 caracteres')
+  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'A password deve conter pelo menos uma letra minúscula, uma maiúscula e um número')
 
 export const nameSchema = z.string()
-  .min(1, 'Name is required')
-  .max(100, 'Name must be less than 100 characters')
-  .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Name contains invalid characters')
+  .min(1, 'Nome é obrigatório')
+  .max(100, 'O nome deve ter menos de 100 caracteres')
+  .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'O nome contém caracteres inválidos')
 
 export const slugSchema = z.string()
-  .min(1, 'Slug is required')
-  .max(100, 'Slug must be less than 100 characters')
-  .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens')
+  .min(1, 'Slug é obrigatório')
+  .max(100, 'O slug deve ter menos de 100 caracteres')
+  .regex(/^[a-z0-9-]+$/, 'O slug só pode conter letras minúsculas, números e hífens')
 
 // User validation schemas
 export const registerSchema = z.object({
@@ -123,7 +123,7 @@ export function validateRequestBody<T>(schema: z.ZodSchema<T>) {
           success: false,
           response: NextResponse.json(
             {
-              error: 'Validation failed',
+              error: 'Erro de validação',
               details: error.issues.map((err: z.ZodIssue) => ({
                 field: err.path.join('.'),
                 message: err.message,

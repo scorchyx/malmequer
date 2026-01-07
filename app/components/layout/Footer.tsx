@@ -60,25 +60,30 @@ export default function Footer() {
           {/* Quick Links */}
           <div>
             <h3 className="text-gray-900 font-bold text-lg mb-4">Links Rápidos</h3>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm text-gray-600">
               <li>
                 <Link href="/ver-tudo" className="hover:text-gray-900 transition">
-                  Ver tudo
+                  Ver todos os produtos
                 </Link>
               </li>
               <li>
-                <Link href="/categories" className="hover:text-gray-900 transition">
-                  Categorias
+                <Link href="/pesquisa" className="hover:text-gray-900 transition">
+                  Pesquisa
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-gray-900 transition">
-                  Sobre Nós
+                <Link href="/favoritos" className="hover:text-gray-900 transition">
+                  Favoritos
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-gray-900 transition">
-                  Contactos
+                <Link href="/encomendas" className="hover:text-gray-900 transition">
+                  Minhas Encomendas
+                </Link>
+              </li>
+              <li>
+                <Link href="/perfil" className="hover:text-gray-900 transition">
+                  Minha Conta
                 </Link>
               </li>
             </ul>
@@ -87,30 +92,30 @@ export default function Footer() {
           {/* Customer Service */}
           <div>
             <h3 className="text-gray-900 font-bold text-lg mb-4">Apoio ao Cliente</h3>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <Link href="/help" className="hover:text-gray-900 transition">
-                  Centro de Ajuda
+                <Link href="/carrinho" className="hover:text-gray-900 transition">
+                  Carrinho de Compras
                 </Link>
               </li>
               <li>
-                <Link href="/shipping" className="hover:text-gray-900 transition">
-                  Envios e Devoluções
+                <Link href="/checkout" className="hover:text-gray-900 transition">
+                  Finalizar Compra
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-gray-900 transition">
-                  Termos e Condições
+                <Link href="/encomendas" className="hover:text-gray-900 transition">
+                  Rastrear Encomenda
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-gray-900 transition">
-                  Política de Privacidade
+                <Link href="/definicoes" className="hover:text-gray-900 transition">
+                  Definições
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="hover:text-gray-900 transition">
-                  Perguntas Frequentes
+                <Link href="/docs" className="hover:text-gray-900 transition">
+                  API Docs
                 </Link>
               </li>
             </ul>

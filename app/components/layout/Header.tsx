@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingCart, User, Search, Menu } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
+import { ShoppingCart, User, Search, Menu, Heart, Package, Settings, LogOut, LogIn, Shield } from 'lucide-react'
 import { useState } from 'react'
 import CartDrawer from '../cart/CartDrawer'
 
@@ -18,8 +20,11 @@ const TikTokIcon = ({ className }: { className?: string }) => (
 )
 
 export default function Header() {
+  const router = useRouter()
+  const { data: session } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white">
@@ -68,14 +73,112 @@ export default function Header() {
           {/* Desktop Icons - Top Right */}
           <div className="flex items-center gap-4">
             {/* Search */}
-            <button className="p-2 text-gray-700 hover:text-gray-900">
+            <button
+              onClick={() => router.push('/pesquisa')}
+              className="p-2 text-gray-700 hover:text-gray-900"
+            >
               <Search className="h-5 w-5" />
             </button>
 
-            {/* Account */}
-            <Link href="/account" className="p-2 text-gray-700 hover:text-gray-900">
-              <User className="h-5 w-5" />
+            {/* Wishlist */}
+            <Link href="/favoritos" className="p-2 text-gray-700 hover:text-gray-900">
+              <Heart className="h-5 w-5" />
             </Link>
+
+            {/* Account - Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="p-2 text-gray-700 hover:text-gray-900"
+              >
+                <User className="h-5 w-5" />
+              </button>
+
+              {/* User Dropdown Menu */}
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  {session ? (
+                    <>
+                      <div className="px-4 py-2 border-b">
+                        <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
+                        <p className="text-xs text-gray-500">{session.user?.email}</p>
+                      </div>
+                      <Link
+                        href="/perfil"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User className="h-4 w-4" />
+                        Meu Perfil
+                      </Link>
+                      <Link
+                        href="/encomendas"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Package className="h-4 w-4" />
+                        Minhas Encomendas
+                      </Link>
+                      <Link
+                        href="/favoritos"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Heart className="h-4 w-4" />
+                        Favoritos
+                      </Link>
+                      <Link
+                        href="/definicoes"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        Definições
+                      </Link>
+                      {(session.user as any)?.role === 'ADMIN' && (
+                        <Link
+                          href="/admin"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 border-t"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Shield className="h-4 w-4" />
+                          Painel Admin
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false)
+                          signOut({ callbackUrl: '/' })
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full border-t"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sair
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <LogIn className="h-4 w-4" />
+                        Entrar
+                      </Link>
+                      <Link
+                        href="/registar"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User className="h-4 w-4" />
+                        Criar Conta
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Cart */}
             <button
@@ -97,18 +200,20 @@ export default function Header() {
           <div className="flex h-14 items-center justify-center">
             {/* Desktop Navigation - Centered */}
             <nav className="hidden md:flex items-center gap-8">
-              <Link href="/ver-tudo" className="text-gray-700 hover:text-gray-900 font-medium uppercase">
+              <Link href="/ver-tudo" className="text-gray-700 hover:text-gray-900 font-medium uppercase text-sm">
                 Ver tudo
               </Link>
-              <Link href="/categories" className="text-gray-700 hover:text-gray-900 font-medium uppercase">
-                Categorias
+              <Link href="/pesquisa" className="text-gray-700 hover:text-gray-900 font-medium uppercase text-sm">
+                Pesquisa
               </Link>
-              <Link href="/about" className="text-gray-700 hover:text-gray-900 font-medium uppercase">
-                Sobre Nós
+              <Link href="/favoritos" className="text-gray-700 hover:text-gray-900 font-medium uppercase text-sm">
+                Favoritos
               </Link>
-              <Link href="/contact" className="text-gray-700 hover:text-gray-900 font-medium uppercase">
-                Contactos
-              </Link>
+              {session && (
+                <Link href="/encomendas" className="text-gray-700 hover:text-gray-900 font-medium uppercase text-sm">
+                  Encomendas
+                </Link>
+              )}
             </nav>
 
             {/* Mobile Menu Toggle */}
@@ -125,35 +230,94 @@ export default function Header() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="border-t md:hidden">
-          <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
+          <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            {session && (
+              <div className="pb-3 mb-3 border-b">
+                <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
+                <p className="text-xs text-gray-500">{session.user?.email}</p>
+              </div>
+            )}
             <Link
               href="/ver-tudo"
-              className="text-gray-700 hover:text-gray-900 font-medium py-2 uppercase"
+              className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm"
               onClick={() => setMobileMenuOpen(false)}
             >
               Ver tudo
             </Link>
             <Link
-              href="/categories"
-              className="text-gray-700 hover:text-gray-900 font-medium py-2 uppercase"
+              href="/pesquisa"
+              className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Categorias
+              Pesquisa
             </Link>
             <Link
-              href="/about"
-              className="text-gray-700 hover:text-gray-900 font-medium py-2 uppercase"
+              href="/favoritos"
+              className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Sobre Nós
+              Favoritos
             </Link>
-            <Link
-              href="/blog"
-              className="text-gray-700 hover:text-gray-900 font-medium py-2 uppercase"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Blog
-            </Link>
+            {session ? (
+              <>
+                <Link
+                  href="/perfil"
+                  className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Meu Perfil
+                </Link>
+                <Link
+                  href="/encomendas"
+                  className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Minhas Encomendas
+                </Link>
+                <Link
+                  href="/definicoes"
+                  className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Definições
+                </Link>
+                {(session.user as any)?.role === 'ADMIN' && (
+                  <Link
+                    href="/admin"
+                    className="text-blue-600 hover:text-blue-700 font-medium py-2 text-sm border-t pt-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Painel Admin
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    signOut({ callbackUrl: '/' })
+                  }}
+                  className="text-red-600 hover:text-red-700 font-medium py-2 text-sm text-left border-t pt-3"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm border-t pt-3"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/registar"
+                  className="text-gray-700 hover:text-gray-900 font-medium py-2 text-sm"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Criar Conta
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       )}
