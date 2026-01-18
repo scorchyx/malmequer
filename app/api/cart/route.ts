@@ -109,10 +109,13 @@ export async function POST(request: NextRequest) {
     // Validate request body
     const validation = await validateRequestBody(addToCartSchema)(request)
     if (!validation.success) {
+      log.warn('Cart validation failed', { validation })
       return validation.response
     }
 
     const { productId, variantId: rawVariantId, quantity } = validation.data
+
+    log.info('Adding to cart', { productId, variantId: rawVariantId, quantity, userId: user?.id })
     const variantId = rawVariantId ?? null
 
     let cartItem
@@ -242,11 +245,14 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
     log.error('Failed to add to cart', {
-      error: error instanceof Error ? error : String(error),
+      error: errorMessage,
+      stack: errorStack,
     })
     return NextResponse.json(
-      { error: 'Failed to add to cart' },
+      { error: 'Failed to add to cart', details: errorMessage },
       { status: 500 },
     )
   }

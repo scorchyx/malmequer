@@ -113,11 +113,6 @@ export default function Footer() {
                   Definições
                 </Link>
               </li>
-              <li>
-                <Link href="/docs" className="hover:text-malmequer-gold transition-colors duration-200">
-                  API Docs
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -138,28 +133,6 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Newsletter */}
-      <div className="border-t border-cloud">
-        <div className="container-malmequer py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="text-ink font-semibold mb-1">Subscreva a nossa newsletter</h3>
-              <p className="text-sm text-mist">Receba as últimas novidades e ofertas exclusivas</p>
-            </div>
-            <div className="flex w-full md:w-auto gap-2">
-              <input
-                type="email"
-                placeholder="O seu email"
-                className="flex-1 md:w-64 px-4 py-3 bg-snow border border-cloud text-ink placeholder-mist focus:outline-none focus:border-ink transition-colors duration-200"
-              />
-              <button className="px-6 py-3 bg-ink text-white font-medium text-sm uppercase tracking-wider hover:bg-stone transition-colors duration-200">
-                Subscrever
-              </button>
-            </div>
           </div>
         </div>
       </div>

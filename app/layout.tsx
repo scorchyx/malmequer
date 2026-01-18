@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Cormorant_Garamond, Inter } from 'next/font/google'
+import { Cormorant_Garamond, Inter, Imperial_Script } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 
@@ -14,6 +14,13 @@ const cormorantGaramond = Cormorant_Garamond({
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
   variable: '--font-body',
+  subsets: ['latin'],
+  display: 'swap',
+})
+
+const imperialScript = Imperial_Script({
+  weight: '400',
+  variable: '--font-imperial-script',
   subsets: ['latin'],
   display: 'swap',
 })
@@ -45,7 +52,7 @@ export default function RootLayout({
   return (
     <html lang="pt">
       <body
-        className={`${cormorantGaramond.variable} ${inter.variable} antialiased`}
+        className={`${cormorantGaramond.variable} ${inter.variable} ${imperialScript.variable} antialiased`}
       >
         <Providers>
           {children}

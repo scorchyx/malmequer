@@ -126,9 +126,12 @@ h6 {
   line-height: 1.4;
 }
 
-/* Links */
-a {
+/* Links - only inherit color if no explicit text color class is set */
+a:not([class*="text-"]) {
   color: inherit;
+}
+
+a {
   text-decoration: none;
 }
 

@@ -152,7 +152,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <Link
                   href="/ver-tudo"
                   onClick={onClose}
-                  className="px-6 py-3 bg-ink text-white text-sm font-medium uppercase tracking-wider hover:bg-stone transition-colors duration-200"
+                  className="inline-block px-6 py-3 bg-ink text-white text-sm font-medium uppercase tracking-wider hover:bg-stone transition-colors duration-200"
+                  style={{ color: 'white' }}
                 >
                   Ver Produtos
                 </Link>

@@ -108,7 +108,9 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
       })
 
       if (!response.ok) {
-        throw new Error('Erro ao adicionar ao carrinho')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Cart API error:', response.status, errorData)
+        throw new Error(errorData.error || 'Erro ao adicionar ao carrinho')
       }
 
       // Refresh to update cart count
@@ -152,6 +154,7 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
                 'branco': '#FFFFFF',
                 'vermelho': '#DC2626',
                 'azul': '#2563EB',
+                'azul-marinho': '#1E3A5F',
                 'verde': '#16A34A',
                 'amarelo': '#EAB308',
                 'rosa': '#EC4899',
@@ -162,47 +165,44 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
               }
               const colorValue = colorMap[variant.value.toLowerCase()] || '#808080'
 
+              if (isCor) {
+                return (
+                  <button
+                    key={variant.id}
+                    onClick={() => handleVariantChange(type, variant.id)}
+                    disabled={variant.inventory === 0}
+                    className={`
+                      w-10 h-10 sm:w-12 sm:h-12 rounded-full p-1 transition-all touch-manipulation
+                      ${selectedVariants[type] === variant.id ? 'ring-2 ring-ink ring-offset-2' : ''}
+                      ${variant.inventory === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}
+                    title={variant.value}
+                    style={{
+                      backgroundColor: colorValue,
+                      border: colorValue === '#FFFFFF' ? '2px solid #E5E7EB' : '2px solid transparent'
+                    }}
+                  />
+                )
+              }
+
               return (
                 <button
                   key={variant.id}
                   onClick={() => handleVariantChange(type, variant.id)}
                   disabled={variant.inventory === 0}
                   className={`
-                    ${isCor ? 'w-12 h-12 rounded-full' : 'px-6 py-3 rounded-lg border-2'}
-                    font-medium transition-all flex items-center justify-center
+                    px-4 py-2 sm:px-6 sm:py-3 border-2 font-medium transition-all touch-manipulation
                     ${
-                      !isCor && selectedVariants[type] === variant.id
-                        ? 'border-black bg-black text-white'
-                        : !isCor
-                        ? 'border-gray-300 text-gray-900 hover:border-gray-400'
-                        : ''
+                      selectedVariants[type] === variant.id
+                        ? 'border-ink bg-ink text-white'
+                        : 'border-cloud text-ink hover:border-stone'
                     }
-                    ${
-                      variant.inventory === 0
-                        ? 'opacity-50 cursor-not-allowed'
-                        : ''
-                    }
-                    ${
-                      isCor && selectedVariants[type] === variant.id
-                        ? 'ring-2 ring-black ring-offset-2'
-                        : ''
-                    }
+                    ${variant.inventory === 0 ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
-                  title={isCor ? variant.value : undefined}
                 >
-                  {isCor ? (
-                    <span
-                      className="w-full h-full rounded-full"
-                      style={{
-                        backgroundColor: colorValue,
-                        border: colorValue === '#FFFFFF' ? '1px solid #E5E7EB' : 'none'
-                      }}
-                    />
-                  ) : (
-                    <span className={variant.inventory === 0 ? 'line-through' : ''}>
-                      {variant.value}
-                    </span>
-                  )}
+                  <span className={variant.inventory === 0 ? 'line-through' : ''}>
+                    {variant.value}
+                  </span>
                 </button>
               )
             })}
