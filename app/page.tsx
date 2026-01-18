@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Heart, Sparkles, ShoppingBag } from 'lucide-react'
+import { Sparkles, ShieldCheck, Headphones } from 'lucide-react'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import HeroBanner from './components/home/HeroBanner'
@@ -22,24 +22,24 @@ export default function HomePage() {
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-cloud flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Qualidade Premium</h3>
-                <p className="text-sm sm:text-base text-stone">Materiais cuidadosamente selecionados para o seu conforto</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Variedade de Estilos</h3>
+                <p className="text-sm sm:text-base text-stone">Uma coleção diversificada para todos os gostos</p>
               </div>
 
               <div className="text-center p-5 sm:p-6 active:bg-snow sm:hover:bg-snow transition-colors duration-200">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-cloud flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Heart className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
+                  <ShieldCheck className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Feito com Amor</h3>
-                <p className="text-sm sm:text-base text-stone">Cada peça é criada com dedicação e atenção aos detalhes</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Compra Segura</h3>
+                <p className="text-sm sm:text-base text-stone">Pagamentos protegidos e dados seguros</p>
               </div>
 
               <div className="text-center p-5 sm:p-6 active:bg-snow sm:hover:bg-snow transition-colors duration-200">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-cloud flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <ShoppingBag className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
+                  <Headphones className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Entrega Rápida</h3>
-                <p className="text-sm sm:text-base text-stone">Receba as suas encomendas de forma rápida e segura</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Atendimento Dedicado</h3>
+                <p className="text-sm sm:text-base text-stone">Estamos aqui para ajudar</p>
               </div>
             </div>
           </div>
