@@ -28,9 +28,9 @@ export default function HeroBanner({
       <div className="relative h-full flex items-end sm:items-center pb-12 sm:pb-0">
         <div className="container-malmequer">
           <div className="max-w-2xl text-center sm:text-left mx-auto sm:mx-0">
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-4 sm:mb-6 leading-tight drop-shadow-2xl">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-4 sm:mb-6 leading-tight [text-shadow:_0_2px_12px_rgba(0,0,0,0.8),_0_4px_24px_rgba(0,0,0,0.6)]">
               Elegância em
-              <span className="block text-malmequer-gold drop-shadow-lg">
+              <span className="block text-malmequer-gold [text-shadow:_0_2px_8px_rgba(0,0,0,0.7),_0_4px_16px_rgba(0,0,0,0.5)]">
                 Cada Detalhe
               </span>
             </h1>
@@ -46,7 +46,7 @@ export default function HeroBanner({
               </Link>
               <Link
                 href="/ver-tudo"
-                className="flex items-center justify-center text-center px-8 py-4 bg-malmequer-gold text-ink uppercase tracking-wider text-sm font-medium leading-none active:scale-95 sm:hover:bg-malmequer-amber transition-all shadow-xl touch-manipulation"
+                className="flex items-center justify-center text-center px-8 py-4 bg-malmequer-gold text-ink uppercase tracking-wider text-sm font-medium leading-none active:scale-95 active:bg-malmequer-amber sm:hover:bg-malmequer-amber transition-all shadow-xl touch-manipulation"
               >
                 Novidades
               </Link>
