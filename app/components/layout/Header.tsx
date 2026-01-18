@@ -77,7 +77,7 @@ export default function Header() {
                 href="https://www.facebook.com/malmequer.pt"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink text-white flex items-center justify-center hover:bg-stone transition-colors duration-200"
+                className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink text-white flex items-center justify-center"
                 aria-label="Facebook"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ export default function Header() {
                 href="https://www.instagram.com/malmequer_insta/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink text-white flex items-center justify-center hover:bg-stone transition-colors duration-200"
+                className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink text-white flex items-center justify-center"
                 aria-label="Instagram"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,7 @@ export default function Header() {
                 href="https://www.tiktok.com/@malmequer_tiktok"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink text-white flex items-center justify-center hover:bg-stone transition-colors duration-200"
+                className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink text-white flex items-center justify-center"
                 aria-label="TikTok"
               >
                 <TikTokIcon className="h-4 w-4" />
