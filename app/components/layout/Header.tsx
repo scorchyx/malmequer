@@ -109,7 +109,7 @@ export default function Header() {
 
           {/* Center: Logo */}
           <Link href="/" className="flex items-center justify-center flex-shrink-0">
-            <div className="text-3xl sm:text-4xl lg:text-5xl text-ink font-display whitespace-nowrap">
+            <div className="text-2xl sm:text-3xl lg:text-4xl text-ink font-bold whitespace-nowrap">
               Malmequer
             </div>
           </Link>
