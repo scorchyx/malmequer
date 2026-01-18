@@ -24,8 +24,8 @@ export async function GET() {
 
     // Organize by type for easier access
     const result = {
-      shipping: defaultAddresses.find(addr => addr.type === 'SHIPPING') ?? null,
-      billing: defaultAddresses.find(addr => addr.type === 'BILLING') ?? null,
+      shipping: defaultAddresses.find((addr: { type: string }) => addr.type === 'SHIPPING') ?? null,
+      billing: defaultAddresses.find((addr: { type: string }) => addr.type === 'BILLING') ?? null,
     }
 
     return NextResponse.json(result)

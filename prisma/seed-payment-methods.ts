@@ -111,17 +111,4 @@ async function seedPaymentMethods() {
   }
 }
 
-// Run the seed
-if (require.main === module) {
-  seedPaymentMethods()
-    .then(() => {
-      console.log('✅ Payment methods seeded successfully!')
-      process.exit(0)
-    })
-    .catch((error) => {
-      console.error('❌ Payment methods seeding failed:', error)
-      process.exit(1)
-    })
-}
-
 export default seedPaymentMethods

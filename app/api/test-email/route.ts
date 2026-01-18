@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendEmail } from '@/lib/email'
+import { NotificationService } from '@/lib/notification-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,50 +12,80 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send test email with simple HTML
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Welcome to Malmequer</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px; margin-bottom: 30px;">
-            <h1 style="color: white; margin: 0;">Welcome to Malmequer! 🌼</h1>
-          </div>
+    // Send test email based on type
+    switch (type) {
+      case 'WELCOME':
+        await NotificationService.sendWelcomeEmail(
+          email,
+          name,
+          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/verify-email?token=test`,
+        )
+        break
 
-          <div style="background: #f9f9f9; padding: 30px; border-radius: 10px;">
-            <h2>Hello ${name}!</h2>
-            <p>Thank you for joining our ecommerce platform. We're excited to have you with us!</p>
+      case 'PASSWORD_RESET':
+        await NotificationService.sendPasswordReset(
+          email,
+          name,
+          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/redefinir-password?token=test123`,
+        )
+        break
 
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="http://localhost:3000" style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                Explore Our Store
-              </a>
-            </div>
+      case 'ORDER_CONFIRMATION':
+        await NotificationService.sendOrderConfirmation(
+          email,
+          name,
+          'ORD-TEST-12345',
+          '€99.99',
+          [
+            { name: 'Product 1', quantity: 2, price: '€29.99' },
+            { name: 'Product 2', quantity: 1, price: '€39.99' },
+          ],
+        )
+        break
 
-            <p>If you have any questions, feel free to contact our support team.</p>
+      case 'ORDER_SHIPPED':
+        await NotificationService.sendOrderShipped(
+          email,
+          name,
+          'ORD-TEST-12345',
+          '€99.99',
+          [
+            { name: 'Product 1', quantity: 2, price: '€29.99' },
+            { name: 'Product 2', quantity: 1, price: '€39.99' },
+          ],
+          undefined,
+          'https://tracking.example.com/12345',
+        )
+        break
 
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+      case 'STOCK_ALERT':
+        await NotificationService.sendStockAlert(
+          email,
+          name,
+          'Amazing Product',
+          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/produto/amazing-product`,
+        )
+        break
 
-            <p style="font-size: 12px; color: #666; text-align: center;">
-              This email was sent from Malmequer Ecommerce Platform<br>
-              You received this because you created an account with us.
-            </p>
-          </div>
-        </body>
-      </html>
-    `
+      case 'REFUND':
+        await NotificationService.sendRefundNotification(
+          email,
+          name,
+          'ORD-TEST-12345',
+          '€99.99',
+          'Customer requested refund',
+        )
+        break
 
-    await sendEmail({
-      to: email,
-      subject: 'Welcome to Malmequer! 🌼',
-      html,
-    })
+      default:
+        return NextResponse.json(
+          { error: `Unknown email type: ${type}` },
+          { status: 400 },
+        )
+    }
 
     return NextResponse.json({
-      message: 'Test email sent successfully!',
+      message: `Test ${type} email sent successfully!`,
       email,
       name,
       type,
@@ -70,4 +100,25 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     )
   }
+}
+
+// GET endpoint to show available email types
+export async function GET() {
+  return NextResponse.json({
+    message: 'Email Test Endpoint',
+    usage: 'POST with { email, name, type }',
+    availableTypes: [
+      'WELCOME',
+      'PASSWORD_RESET',
+      'ORDER_CONFIRMATION',
+      'ORDER_SHIPPED',
+      'STOCK_ALERT',
+      'REFUND',
+    ],
+    example: {
+      email: 'test@example.com',
+      name: 'John Doe',
+      type: 'WELCOME',
+    },
+  })
 }

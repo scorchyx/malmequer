@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Minus, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Minus, Plus, ShoppingCart } from 'lucide-react'
+import { useToast } from '../ui/Toast'
 
 interface ProductVariant {
   id: string
@@ -12,12 +14,17 @@ interface ProductVariant {
 }
 
 interface ProductOptionsProps {
+  productId: string
   variants: ProductVariant[]
   basePrice: number
   baseInventory?: number
 }
 
-export default function ProductOptions({ variants, basePrice, baseInventory = 999 }: ProductOptionsProps) {
+export default function ProductOptions({ productId, variants, basePrice, baseInventory = 999 }: ProductOptionsProps) {
+  const router = useRouter()
+  const { showToast } = useToast()
+  const [isAdding, setIsAdding] = useState(false)
+
   // Group variants by type (name)
   const variantGroups = variants.reduce((acc, variant) => {
     if (!acc[variant.name]) {
@@ -74,6 +81,50 @@ export default function ProductOptions({ variants, basePrice, baseInventory = 99
       ...prev,
       [type]: id,
     }))
+  }
+
+  const handleAddToCart = async () => {
+    setIsAdding(true)
+    try {
+      // Get the first selected variant ID (if any variants exist)
+      const variantId = Object.values(selectedVariants)[0] || null
+
+      const payload: any = {
+        productId,
+        quantity,
+      }
+
+      // Only include variantId if it's not null
+      if (variantId) {
+        payload.variantId = variantId
+      }
+
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao adicionar ao carrinho')
+      }
+
+      // Refresh to update cart count
+      router.refresh()
+
+      // Dispatch event to update cart count in header
+      window.dispatchEvent(new Event('cartUpdated'))
+
+      // Show success message
+      showToast('Produto adicionado ao carrinho!', 'success')
+    } catch (error) {
+      console.error('Erro ao adicionar ao carrinho:', error)
+      showToast('Erro ao adicionar ao carrinho. Tente novamente.', 'error')
+    } finally {
+      setIsAdding(false)
+    }
   }
 
   return (
@@ -191,12 +242,14 @@ export default function ProductOptions({ variants, basePrice, baseInventory = 99
       {/* Add to Cart Button */}
       <div className="space-y-4">
         <button
-          disabled={currentInventory === 0}
-          className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleAddToCart}
+          disabled={currentInventory === 0 || isAdding}
+          className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
         >
-          {currentInventory === 0 ? 'Esgotado' : 'Adicionar ao carrinho'}
+          <ShoppingCart className="h-5 w-5" />
+          {isAdding ? 'A adicionar...' : currentInventory === 0 ? 'Esgotado' : 'Adicionar ao carrinho'}
         </button>
-        <button className="w-full border-2 border-gray-300 text-gray-900 py-3 px-6 rounded-lg font-medium hover:border-gray-400 transition">
+        <button className="w-full border-2 border-gray-300 text-gray-900 py-3 px-6 rounded-lg font-medium hover:border-gray-400 transition touch-manipulation">
           Adicionar aos favoritos
         </button>
       </div>

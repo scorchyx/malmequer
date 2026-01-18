@@ -90,13 +90,13 @@ async function handler(request: NextRequest, context: { user: any }) {
       // Revenue by day
       prisma.$queryRaw`
         SELECT
-          DATE(created_at) as date,
-          SUM(total_amount) as revenue,
+          DATE("createdAt") as date,
+          SUM("totalAmount") as revenue,
           COUNT(*) as orders
         FROM "Order"
-        WHERE created_at >= ${startDate}
-          AND payment_status = 'PAID'
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= ${startDate}
+          AND "paymentStatus" = 'PAID'
+        GROUP BY DATE("createdAt")
         ORDER BY date DESC
         LIMIT 30
       `,

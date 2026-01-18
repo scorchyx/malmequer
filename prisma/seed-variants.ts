@@ -112,17 +112,4 @@ async function seedVariants() {
   }
 }
 
-// Run the seed
-if (require.main === module) {
-  seedVariants()
-    .then(() => {
-      console.log('✅ Variants seeded successfully!')
-      process.exit(0)
-    })
-    .catch((error) => {
-      console.error('❌ Variants seeding failed:', error)
-      process.exit(1)
-    })
-}
-
 export default seedVariants

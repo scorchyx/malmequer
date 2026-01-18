@@ -1,34 +1,40 @@
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Imperial_Script, Encode_Sans_Expanded } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Cormorant_Garamond, Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
-
-const imperialScript = Imperial_Script({
-  weight: '400',
-  variable: '--font-imperial-script',
-  subsets: ['latin'],
-})
-
-// Encode Sans Expanded is visually very similar to Zalando Sans Expanded
-const encodeSansExpanded = Encode_Sans_Expanded({
+// Design System Typography
+const cormorantGaramond = Cormorant_Garamond({
   weight: ['400', '500', '600', '700'],
-  variable: '--font-encode-sans-expanded',
+  variable: '--font-display',
   subsets: ['latin'],
+  display: 'swap',
 })
+
+const inter = Inter({
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-body',
+  subsets: ['latin'],
+  display: 'swap',
+})
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#E8A83E',
+}
 
 export const metadata: Metadata = {
-  title: 'Malmequer - Ecommerce Backend',
-  description: 'Modern ecommerce backend API built with Next.js',
+  title: 'Malmequer - Moda e Estilo',
+  description: 'Descubra a coleção exclusiva Malmequer. Qualidade premium, peças únicas e entrega rápida.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Malmequer',
+  },
 }
 
 export default function RootLayout({
@@ -37,15 +43,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Zalando+Sans+Expanded:wght@400&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="pt">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${imperialScript.variable} antialiased`}
-        style={{ fontFamily: '"Zalando Sans Expanded", system-ui, sans-serif' }}
+        className={`${cormorantGaramond.variable} ${inter.variable} antialiased`}
       >
         <Providers>
           {children}

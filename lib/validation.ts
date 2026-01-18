@@ -40,7 +40,7 @@ export const createProductSchema = z.object({
   sku: z.string().max(50, 'SKU too long').optional(),
   inventory: z.number().int().min(0, 'Inventory cannot be negative'),
   weight: z.number().positive().optional(),
-  categoryId: z.string().cuid('Invalid category ID'),
+  categoryId: z.string().uuid('Invalid category ID'),
   images: z.array(z.object({
     url: z.string().url('Invalid image URL'),
     alt: z.string().max(200, 'Alt text too long').optional(),
@@ -57,12 +57,12 @@ export const createProductSchema = z.object({
 // Order validation schemas
 export const createOrderSchema = z.object({
   items: z.array(z.object({
-    productId: z.string().cuid('Invalid product ID'),
+    productId: z.string().uuid('Invalid product ID'),
     quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high'),
   })).min(1, 'Order must have at least one item'),
-  shippingAddressId: z.string().cuid('Invalid shipping address ID'),
-  billingAddressId: z.string().cuid('Invalid billing address ID'),
-  discountId: z.string().cuid('Invalid discount ID').optional(),
+  shippingAddressId: z.string().uuid('Invalid shipping address ID'),
+  billingAddressId: z.string().uuid('Invalid billing address ID'),
+  discountId: z.string().uuid('Invalid discount ID').optional(),
   paymentMethod: z.string().max(50, 'Payment method name too long').optional(),
   shippingMethod: z.string().max(50, 'Shipping method name too long').optional(),
   notes: z.string().max(500, 'Notes too long').optional(),
@@ -87,8 +87,8 @@ export const createAddressSchema = z.object({
 
 // Cart validation schemas
 export const addToCartSchema = z.object({
-  productId: z.string().cuid('Invalid product ID'),
-  variantId: z.string().cuid('Invalid variant ID').optional(),
+  productId: z.string().uuid('Invalid product ID'),
+  variantId: z.string().uuid('Invalid variant ID').optional(),
   quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high'),
 })
 
@@ -98,7 +98,7 @@ export const createCategorySchema = z.object({
   slug: slugSchema,
   description: z.string().max(500, 'Description too long').optional(),
   image: z.string().url('Invalid image URL').optional(),
-  parentId: z.string().cuid('Invalid parent category ID').optional(),
+  parentId: z.string().uuid('Invalid parent category ID').optional(),
 })
 
 // Pagination and query validation
@@ -106,7 +106,7 @@ export const paginationSchema = z.object({
   page: z.string().regex(/^\d+$/).transform(Number).refine(n => n > 0, 'Page must be positive').optional(),
   limit: z.string().regex(/^\d+$/).transform(Number).refine(n => n > 0 && n <= 100, 'Limit must be between 1 and 100').optional(),
   search: z.string().max(200, 'Search query too long').optional(),
-  category: z.string().cuid('Invalid category ID').optional(),
+  category: z.string().uuid('Invalid category ID').optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']).optional(),
 })
 

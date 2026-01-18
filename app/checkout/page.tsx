@@ -2,20 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
 import Header from '../components/layout/Header'
 import Footer from '../components/layout/Footer'
 import Loading from '../components/ui/Loading'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
+import CheckoutForm from '../components/checkout/CheckoutForm'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 export default function CheckoutPage() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const { showToast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
+  const [clientSecret, setClientSecret] = useState('')
+  const [orderNumber, setOrderNumber] = useState('')
 
   const [shippingData, setShippingData] = useState({
     firstName: '',
@@ -38,17 +43,12 @@ export default function CheckoutPage() {
     }
   }, [session])
 
-  const handleSubmitShipping = (e: React.FormEvent) => {
-    e.preventDefault()
-    setStep(2)
-  }
-
-  const handleSubmitPayment = async (e: React.FormEvent) => {
+  const handleSubmitShipping = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // Create payment intent
+      // Create payment intent and order
       const response = await fetch('/api/payments/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,14 +58,17 @@ export default function CheckoutPage() {
         }),
       })
 
-      if (!response.ok) throw new Error('Erro ao processar pagamento')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao processar')
+      }
 
       const data = await response.json()
-
-      // Redirect to success page
-      router.push(`/encomenda-sucesso?orderId=${data.orderId}`)
+      setClientSecret(data.clientSecret)
+      setOrderNumber(data.orderNumber)
+      setStep(2)
     } catch (error) {
-      showToast('Erro ao processar pagamento', 'error')
+      showToast(error instanceof Error ? error.message : 'Erro ao processar', 'error')
     } finally {
       setIsLoading(false)
     }
@@ -75,32 +78,41 @@ export default function CheckoutPage() {
     return <Loading fullScreen />
   }
 
+  const appearance = {
+    theme: 'stripe' as const,
+  }
+
+  const options = {
+    clientSecret,
+    appearance,
+  }
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-snow">
       <Header />
-      <main className="flex-1 bg-gray-50 py-12">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Finalizar Compra</h1>
+      <main className="flex-1 py-12">
+        <div className="container-malmequer max-w-5xl">
+          <h1 className="font-display text-3xl text-ink mb-8">Finalizar Compra</h1>
 
           {/* Progress Steps */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
               <div className="flex items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300'
+                  className={`w-10 h-10 flex items-center justify-center text-sm font-medium ${
+                    step >= 1 ? 'bg-ink text-white' : 'bg-cloud text-mist'
                   }`}
                 >
                   1
                 </div>
-                <div className="w-32 h-1 bg-gray-300 mx-2">
+                <div className="w-32 h-1 bg-cloud mx-2">
                   <div
-                    className={`h-full ${step >= 2 ? 'bg-blue-600' : 'bg-gray-300'}`}
+                    className={`h-full transition-all duration-200 ${step >= 2 ? 'bg-ink' : 'bg-cloud'}`}
                   />
                 </div>
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300'
+                  className={`w-10 h-10 flex items-center justify-center text-sm font-medium ${
+                    step >= 2 ? 'bg-ink text-white' : 'bg-cloud text-mist'
                   }`}
                 >
                   2
@@ -108,15 +120,15 @@ export default function CheckoutPage() {
               </div>
             </div>
             <div className="flex justify-center gap-32 mt-2">
-              <span className="text-sm font-medium">Envio</span>
-              <span className="text-sm font-medium">Pagamento</span>
+              <span className="text-sm font-medium text-stone">Envio</span>
+              <span className="text-sm font-medium text-stone">Pagamento</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-8">
+          <div className="bg-white border border-cloud p-8">
             {step === 1 && (
               <form onSubmit={handleSubmitShipping}>
-                <h2 className="text-xl font-semibold mb-6">Informações de Envio</h2>
+                <h2 className="text-lg font-semibold text-ink mb-6">Informações de Envio</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     label="Nome"
@@ -184,71 +196,25 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div className="mt-6 flex justify-end">
-                  <Button type="submit">Continuar para pagamento</Button>
+                  <Button type="submit" isLoading={isLoading}>
+                    Continuar para pagamento
+                  </Button>
                 </div>
               </form>
             )}
 
-            {step === 2 && (
-              <form onSubmit={handleSubmitPayment}>
-                <h2 className="text-xl font-semibold mb-6">Método de Pagamento</h2>
-
-                <div className="space-y-4 mb-6">
-                  <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="card"
-                      checked={paymentMethod === 'card'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3"
-                    />
-                    <div>
-                      <div className="font-medium">Cartão de Crédito/Débito</div>
-                      <div className="text-sm text-gray-500">Visa, Mastercard, American Express</div>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="mbway"
-                      checked={paymentMethod === 'mbway'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3"
-                    />
-                    <div>
-                      <div className="font-medium">MB WAY</div>
-                      <div className="text-sm text-gray-500">Pagamento por telemóvel</div>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="multibanco"
-                      checked={paymentMethod === 'multibanco'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3"
-                    />
-                    <div>
-                      <div className="font-medium">Multibanco</div>
-                      <div className="text-sm text-gray-500">Referência multibanco</div>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="flex justify-between">
-                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+            {step === 2 && clientSecret && (
+              <div>
+                <h2 className="text-lg font-semibold text-ink mb-6">Método de Pagamento</h2>
+                <Elements options={options} stripe={stripePromise}>
+                  <CheckoutForm orderNumber={orderNumber} />
+                </Elements>
+                <div className="mt-6">
+                  <Button type="button" variant="secondary" onClick={() => setStep(1)}>
                     Voltar
                   </Button>
-                  <Button type="submit" isLoading={isLoading}>
-                    Confirmar encomenda
-                  </Button>
                 </div>
-              </form>
+              </div>
             )}
           </div>
         </div>

@@ -3,7 +3,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function PATCH(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -40,24 +40,22 @@ export async function PATCH(
     }
 
     // Use transaction to ensure only one default per type
-    const updatedAddress = await prisma.$transaction(async (tx) => {
-      // Unset current default for this type
-      await tx.address.updateMany({
-        where: {
-          userId: user.id,
-          type: address.type,
-          isDefault: true,
-        },
-        data: {
-          isDefault: false,
-        },
-      })
+    // First, unset current default for this type
+    await prisma.address.updateMany({
+      where: {
+        userId: user.id,
+        type: address.type,
+        isDefault: true,
+      },
+      data: {
+        isDefault: false,
+      },
+    })
 
-      // Set this address as default
-      return await tx.address.update({
-        where: { id },
-        data: { isDefault: true },
-      })
+    // Then set this address as default
+    const updatedAddress = await prisma.address.update({
+      where: { id },
+      data: { isDefault: true },
     })
 
     return NextResponse.json({

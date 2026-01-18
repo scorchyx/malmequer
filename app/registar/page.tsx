@@ -91,15 +91,23 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-snow py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <div className="flex justify-center mb-4">
+            <Link href="/" className="text-malmequer-gold hover:text-malmequer-amber flex items-center gap-2 transition-colors duration-200">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Voltar à página inicial
+            </Link>
+          </div>
+          <h2 className="mt-6 text-center font-display text-3xl text-ink">
             Criar nova conta
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-stone">
             Já tem conta?{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/login" className="font-medium text-malmequer-gold hover:text-malmequer-amber transition-colors duration-200">
               Entrar
             </Link>
           </p>
@@ -146,8 +154,8 @@ export default function RegisterPage() {
           </div>
 
           {errors.general && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{errors.general}</p>
+            <div className="bg-error/10 border border-error p-4">
+              <p className="text-sm text-error">{errors.general}</p>
             </div>
           )}
 
@@ -159,16 +167,16 @@ export default function RegisterPage() {
                 type="checkbox"
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-malmequer-gold focus:ring-malmequer-gold border-cloud"
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-black">
+              <label htmlFor="terms" className="ml-2 block text-sm text-ink">
                 Aceito os{' '}
-                <Link href="/termos" className="text-blue-600 hover:text-blue-500">
+                <Link href="/termos" className="text-malmequer-gold hover:text-malmequer-amber transition-colors duration-200">
                   termos e condições
                 </Link>
               </label>
             </div>
-            {errors.terms && <p className="text-sm text-red-600 mt-1">{errors.terms}</p>}
+            {errors.terms && <p className="text-xs text-error mt-1">{errors.terms}</p>}
           </div>
 
           <Button type="submit" className="w-full" isLoading={isLoading}>
@@ -176,7 +184,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-mist">
           Ao criar uma conta, irá receber emails sobre as suas encomendas e novidades.
         </div>
       </div>

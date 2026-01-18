@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
               category: true,
             },
           },
+          variant: true,
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
               category: true,
             },
           },
+          variant: true,
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -258,6 +260,12 @@ export async function DELETE(request: NextRequest) {
     const productId = searchParams.get('productId')
     const variantId = searchParams.get('variantId')
 
+    log.info('DELETE cart request', {
+      productId,
+      variantId,
+      userId: user?.id,
+    })
+
     if (!productId) {
       return NextResponse.json(
         { error: 'Product ID is required' },
@@ -270,19 +278,41 @@ export async function DELETE(request: NextRequest) {
 
     if (user) {
       // Authenticated user cart
-      cartItem = await prisma.cartItem.findUnique({
+      // Find cart item matching productId and variantId (or null)
+      const items = await prisma.cartItem.findMany({
         where: {
-          userId_productId_variantId: {
-            userId: user.id,
-            productId,
-            // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
-            variantId,
-          },
+          userId: user.id,
+          productId,
         },
         include: {
           product: true,
           variant: true,
         },
+      })
+
+      log.info('Found cart items for user', {
+        userId: user.id,
+        productId,
+        itemsCount: items.length,
+        items: items.map(i => ({
+          id: i.id,
+          productId: i.productId,
+          variantId: i.variantId,
+          quantity: i.quantity,
+        })),
+      })
+
+      // Filter by variantId (handle null case)
+      cartItem = items.find(item =>
+        variantId ? item.variantId === variantId : item.variantId === null
+      )
+
+      log.info('Filtered cart item', {
+        searchVariantId: variantId,
+        foundItem: cartItem ? {
+          id: cartItem.id,
+          variantId: cartItem.variantId,
+        } : null,
       })
 
       cacheKey = CacheKeys.userCart(user.id)
@@ -300,19 +330,41 @@ export async function DELETE(request: NextRequest) {
       // Guest user cart
       const sessionId = getGuestSessionId(request)
 
-      cartItem = await prisma.cartItem.findUnique({
+      // Find cart item matching productId and variantId (or null)
+      const items = await prisma.cartItem.findMany({
         where: {
-          sessionId_productId_variantId: {
-            sessionId,
-            productId,
-            // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
-            variantId,
-          },
+          sessionId,
+          productId,
         },
         include: {
           product: true,
           variant: true,
         },
+      })
+
+      log.info('Found cart items for guest', {
+        sessionId,
+        productId,
+        itemsCount: items.length,
+        items: items.map(i => ({
+          id: i.id,
+          productId: i.productId,
+          variantId: i.variantId,
+          quantity: i.quantity,
+        })),
+      })
+
+      // Filter by variantId (handle null case)
+      cartItem = items.find(item =>
+        variantId ? item.variantId === variantId : item.variantId === null
+      )
+
+      log.info('Filtered cart item', {
+        searchVariantId: variantId,
+        foundItem: cartItem ? {
+          id: cartItem.id,
+          variantId: cartItem.variantId,
+        } : null,
       })
 
       cacheKey = `guest_cart:${sessionId}`
@@ -329,6 +381,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (!cartItem) {
+      log.warn('Cart item not found', {
+        productId,
+        variantId,
+        userId: user?.id,
+      })
       return NextResponse.json(
         { error: 'Item not found in cart' },
         { status: 404 },

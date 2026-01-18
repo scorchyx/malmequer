@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { NotificationService } from '@/lib/notification-service'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
+import { cache, CacheKeys } from '@/lib/cache'
 
 export async function POST(request: NextRequest) {
   try {
@@ -131,6 +132,19 @@ async function handleSuccessfulPayment(paymentIntent: any) {
         })
       }
 
+      // Clear cart after successful payment
+      if (order.userId) {
+        await prisma.cartItem.deleteMany({
+          where: { userId: order.userId },
+        })
+        await cache.del(CacheKeys.userCart(order.userId))
+      } else if (order.sessionId) {
+        await prisma.cartItem.deleteMany({
+          where: { sessionId: order.sessionId },
+        })
+        await cache.del(`guest_cart:${order.sessionId}`)
+      }
+
       // Send order confirmation email
       if (order.user) {
         const orderItems = order.items.map((item: any) => ({
@@ -245,6 +259,19 @@ async function handleChargeSucceeded(charge: any) {
               userId: order.userId,
             },
           })
+        }
+
+        // Clear cart after successful payment
+        if (order.userId) {
+          await prisma.cartItem.deleteMany({
+            where: { userId: order.userId },
+          })
+          await cache.del(CacheKeys.userCart(order.userId))
+        } else if (order.sessionId) {
+          await prisma.cartItem.deleteMany({
+            where: { sessionId: order.sessionId },
+          })
+          await cache.del(`guest_cart:${order.sessionId}`)
         }
 
         // Send confirmation email

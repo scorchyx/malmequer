@@ -74,11 +74,20 @@ export const authOptions = {
         },
       }
     },
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // Se é um URL relativo, permite
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      // Se é o mesmo site, permite
+      else if (new URL(url).origin === baseUrl) return url
+      // Caso contrário, redireciona para a homepage
+      return baseUrl
+    },
   },
   pages: {
     signIn: '/login',
-    error: '/login',
+    error: '/login', // Redireciona erros para login em vez de mostrar página de erro
   },
+  debug: process.env.NODE_ENV === 'development', // Ativa debug apenas em desenvolvimento
 }
 
 const handler = NextAuth(authOptions)

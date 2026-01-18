@@ -6,57 +6,57 @@ import HeroBanner from './components/home/HeroBanner'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-pink-50/30">
+    <div className="min-h-screen flex flex-col bg-snow">
       <Header />
 
       <main className="flex-1">
         <HeroBanner
-          imageUrl="https://res.cloudinary.com/dt1d75zg0/image/upload/v1763593356/WhatsApp_Image_2025-11-19_at_23.01.52_psvn2m.jpg"
+          imageUrl="https://res.cloudinary.com/dt1d75zg0/image/upload/v1754059915/malmequer-hero-banner-01_pyb8un.jpg"
         />
 
         {/* Features Section */}
-        <section className="py-16 px-4 bg-white">
-          <div className="container mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <div className="text-center p-6 rounded-2xl hover:bg-pink-50/50 transition-colors">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-pink-600" />
+        <section className="py-12 sm:py-16 bg-white">
+          <div className="container-malmequer">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
+              <div className="text-center p-5 sm:p-6 active:bg-snow sm:hover:bg-snow transition-colors duration-200">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-cloud flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900">Qualidade Premium</h3>
-                <p className="text-gray-600">Materiais cuidadosamente selecionados para o seu conforto</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Qualidade Premium</h3>
+                <p className="text-sm sm:text-base text-stone">Materiais cuidadosamente selecionados para o seu conforto</p>
               </div>
 
-              <div className="text-center p-6 rounded-2xl hover:bg-pink-50/50 transition-colors">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-8 h-8 text-pink-600" />
+              <div className="text-center p-5 sm:p-6 active:bg-snow sm:hover:bg-snow transition-colors duration-200">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-cloud flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Heart className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900">Feito com Amor</h3>
-                <p className="text-gray-600">Cada peça é criada com dedicação e atenção aos detalhes</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Feito com Amor</h3>
+                <p className="text-sm sm:text-base text-stone">Cada peça é criada com dedicação e atenção aos detalhes</p>
               </div>
 
-              <div className="text-center p-6 rounded-2xl hover:bg-pink-50/50 transition-colors">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ShoppingBag className="w-8 h-8 text-pink-600" />
+              <div className="text-center p-5 sm:p-6 active:bg-snow sm:hover:bg-snow transition-colors duration-200">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-cloud flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <ShoppingBag className="w-7 h-7 sm:w-8 sm:h-8 text-malmequer-gold" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900">Entrega Rápida</h3>
-                <p className="text-gray-600">Receba as suas encomendas de forma rápida e segura</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-ink">Entrega Rápida</h3>
+                <p className="text-sm sm:text-base text-stone">Receba as suas encomendas de forma rápida e segura</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 px-4 bg-gradient-to-r from-pink-500 via-pink-400 to-purple-500">
-          <div className="container mx-auto text-center max-w-3xl">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+        <section className="py-16 sm:py-20 bg-ink">
+          <div className="container-malmequer text-center max-w-3xl mx-auto">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-white mb-4 sm:mb-6">
               Descubra o Seu Estilo Único
             </h2>
-            <p className="text-xl text-white/90 mb-8">
+            <p className="text-lg sm:text-xl text-white/80 mb-6 sm:mb-8">
               Explore a nossa coleção exclusiva e encontre peças que refletem a sua personalidade
             </p>
             <Link
               href="/ver-tudo"
-              className="inline-block px-10 py-4 bg-white text-pink-600 rounded-full font-semibold hover:bg-pink-50 transition-all transform hover:scale-105 shadow-xl"
+              className="inline-block px-8 sm:px-10 py-3 sm:py-4 bg-malmequer-gold text-ink uppercase tracking-wider text-sm font-medium active:scale-95 sm:hover:bg-malmequer-amber transition-all shadow-xl touch-manipulation"
             >
               Ver Todas as Peças
             </Link>
@@ -64,26 +64,21 @@ export default function HomePage() {
         </section>
 
         {/* Categories Preview */}
-        <section className="py-20 px-4">
-          <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
+        <section className="py-16 sm:py-20 bg-snow">
+          <div className="container-malmequer">
+            <h2 className="font-display text-3xl sm:text-4xl text-center mb-8 sm:mb-12 text-ink">
               Compre por Categoria
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {['Vestidos', 'Tops', 'Acessórios', 'Novidades'].map((category, index) => (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
+              {['Vestidos', 'Parte de Cima', 'Parte de Baixo', 'Conjuntos'].map((category) => (
                 <Link
                   key={category}
                   href="/ver-tudo"
-                  className="group relative h-64 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all transform hover:scale-105"
+                  className="group relative h-48 sm:h-64 overflow-hidden shadow-lg active:shadow-xl sm:hover:shadow-2xl transition-all touch-manipulation bg-ink"
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${
-                    index === 0 ? 'from-pink-400 to-pink-600' :
-                    index === 1 ? 'from-purple-400 to-purple-600' :
-                    index === 2 ? 'from-rose-400 to-rose-600' :
-                    'from-fuchsia-400 to-fuchsia-600'
-                  }`} />
+                  <div className="absolute inset-0 bg-ink group-hover:bg-stone transition-colors duration-200" />
                   <div className="relative h-full flex items-center justify-center">
-                    <h3 className="text-2xl font-bold text-white">{category}</h3>
+                    <h3 className="text-xl sm:text-2xl font-display text-white">{category}</h3>
                   </div>
                 </Link>
               ))}
@@ -92,19 +87,19 @@ export default function HomePage() {
         </section>
 
         {/* Newsletter Section */}
-        <section className="py-16 px-4 bg-gradient-to-br from-pink-50 to-purple-50">
-          <div className="container mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold mb-4 text-gray-900">Fique por Dentro</h2>
-            <p className="text-gray-600 mb-8">
+        <section className="py-12 sm:py-16 bg-cloud">
+          <div className="container-malmequer max-w-2xl mx-auto text-center">
+            <h2 className="font-display text-2xl sm:text-3xl mb-3 sm:mb-4 text-ink">Fique por Dentro</h2>
+            <p className="text-sm sm:text-base text-stone mb-6 sm:mb-8">
               Subscreva a nossa newsletter e receba novidades, promoções exclusivas e dicas de estilo
             </p>
             <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <input
                 type="email"
                 placeholder="O seu email"
-                className="flex-1 px-6 py-3 rounded-full border-2 border-pink-200 focus:border-pink-400 focus:outline-none text-black"
+                className="flex-1 px-5 sm:px-6 py-3 border border-mist bg-white text-ink placeholder:text-mist focus:border-ink focus:outline-none text-base touch-manipulation transition-colors duration-200"
               />
-              <button className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full font-semibold hover:from-pink-600 hover:to-purple-600 transition-all shadow-lg">
+              <button className="px-6 sm:px-8 py-3 bg-ink text-white uppercase tracking-wider text-sm font-medium active:bg-stone sm:hover:bg-stone transition-all touch-manipulation">
                 Subscrever
               </button>
             </div>

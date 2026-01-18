@@ -5,18 +5,20 @@ import { addSecurityHeaders } from '@/lib/security-headers'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Apply rate limiting based on path
+  // Apply rate limiting based on path (disabled in development)
   let rateLimitResult
 
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/register')) {
-    rateLimitResult = await authRateLimit(request)
-  } else if (pathname.startsWith('/api/')) {
-    rateLimitResult = await generalRateLimit(request)
-  }
+  if (process.env.NODE_ENV !== 'development') {
+    if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/register')) {
+      rateLimitResult = await authRateLimit(request)
+    } else if (pathname.startsWith('/api/')) {
+      rateLimitResult = await generalRateLimit(request)
+    }
 
-  // If rate limit exceeded, return early
-  if (rateLimitResult instanceof NextResponse) {
-    return addSecurityHeaders(rateLimitResult)
+    // If rate limit exceeded, return early
+    if (rateLimitResult instanceof NextResponse) {
+      return addSecurityHeaders(rateLimitResult)
+    }
   }
 
   // Continue with the request

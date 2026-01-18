@@ -106,7 +106,7 @@ export default function AdminOrdersPage() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === status
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-black hover:bg-gray-200'
                 }`}
               >
                 {status}
@@ -120,22 +120,22 @@ export default function AdminOrdersPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                   Encomenda
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                   Cliente
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                   Total
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                   Pagamento
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-right text-xs font-medium text-black uppercase">
                   Ações
                 </th>
               </tr>
@@ -145,7 +145,7 @@ export default function AdminOrdersPage() {
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-black">#{order.orderNumber}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-black">
                       {new Date(order.createdAt).toLocaleDateString('pt-PT')}
                     </div>
                   </td>
@@ -153,7 +153,7 @@ export default function AdminOrdersPage() {
                     <div className="text-sm text-black">
                       {order.user?.name || 'Convidado'}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-black">
                       {order.user?.email || order.guestEmail}
                     </div>
                   </td>
@@ -204,7 +204,7 @@ export default function AdminOrdersPage() {
 
           {orders.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-600">Nenhuma encomenda encontrada</p>
+              <p className="text-black">Nenhuma encomenda encontrada</p>
             </div>
           )}
         </div>

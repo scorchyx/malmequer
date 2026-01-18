@@ -1,61 +1,136 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
+import { cache, CacheKeys } from '@/lib/cache'
+import { getGuestSessionId } from '@/lib/guest-session'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 },
-      )
-    }
 
-    const { orderId } = await request.json()
+    const body = await request.json()
+    const { shippingAddress, paymentMethod = 'card' } = body
 
-    if (!orderId) {
+    if (!shippingAddress) {
       return NextResponse.json(
-        { error: 'Order ID is required' },
+        { error: 'Shipping address is required' },
         { status: 400 },
       )
     }
 
-    // Get order details
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
+    // Get cart items
+    let cartItems
+    if (user) {
+      cartItems = await prisma.cartItem.findMany({
+        where: { userId: user.id },
+        include: { product: true },
+      })
+    } else {
+      const sessionId = getGuestSessionId(request)
+      cartItems = await prisma.cartItem.findMany({
+        where: { sessionId },
+        include: { product: true },
+      })
+    }
+
+    if (!cartItems || cartItems.length === 0) {
+      return NextResponse.json(
+        { error: 'Cart is empty' },
+        { status: 400 },
+      )
+    }
+
+    // Calculate totals
+    const subtotalAmount = cartItems.reduce(
+      (sum, item) => sum + item.quantity * Number(item.product.price),
+      0,
+    )
+    const taxAmount = subtotalAmount * 0.23 // 23% IVA Portugal
+    const shippingAmount = subtotalAmount > 50 ? 0 : 5.99 // Free shipping over €50
+    const totalAmount = subtotalAmount + taxAmount + shippingAmount
+
+    // Generate order number
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+
+    // Create shipping address
+    const createdShippingAddress = await prisma.address.create({
+      data: {
+        firstName: shippingAddress.firstName,
+        lastName: shippingAddress.lastName,
+        addressLine1: shippingAddress.addressLine1,
+        addressLine2: shippingAddress.addressLine2,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        postalCode: shippingAddress.postalCode,
+        country: shippingAddress.country,
+        phone: shippingAddress.phone,
+        type: 'SHIPPING',
+        ...(user ? { userId: user.id } : { sessionId: getGuestSessionId(request) }),
+      },
+    })
+
+    // Create billing address (same as shipping for now)
+    const createdBillingAddress = await prisma.address.create({
+      data: {
+        firstName: shippingAddress.firstName,
+        lastName: shippingAddress.lastName,
+        addressLine1: shippingAddress.addressLine1,
+        addressLine2: shippingAddress.addressLine2,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        postalCode: shippingAddress.postalCode,
+        country: shippingAddress.country,
+        phone: shippingAddress.phone,
+        type: 'BILLING',
+        ...(user ? { userId: user.id } : { sessionId: getGuestSessionId(request) }),
+      },
+    })
+
+    // Create order
+    const order = await prisma.order.create({
+      data: {
+        orderNumber,
+        ...(user ? { userId: user.id } : {
+          sessionId: getGuestSessionId(request),
+          guestEmail: shippingAddress.email,
+          guestPhone: shippingAddress.phone,
+        }),
+        subtotalAmount,
+        taxAmount,
+        shippingAmount,
+        totalAmount,
+        paymentMethod,
+        shippingMethod: 'STANDARD',
+        shippingAddressId: createdShippingAddress.id,
+        billingAddressId: createdBillingAddress.id,
+        paymentStatus: 'PENDING',
+        status: 'PENDING',
+        items: {
+          create: cartItems.map((item) => ({
+            productId: item.productId,
+            name: item.product.name,
+            quantity: item.quantity,
+            price: item.product.price.toNumber(),
+          })),
+        },
+      },
       include: {
         items: {
           include: {
             product: true,
           },
         },
-        user: true,
       },
     })
 
-    if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 },
-      )
-    }
-
-    if (order.userId !== user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 },
-      )
-    }
-
     // Create Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(Number(order.totalAmount) * 100), // Convert to cents
+      amount: Math.round(totalAmount * 100), // Convert to cents
       currency: 'eur',
       metadata: {
         orderId: order.id,
-        userId: user.id,
+        userId: user?.id || 'guest',
         orderNumber: order.orderNumber,
       },
       automatic_payment_methods: {
@@ -66,10 +141,12 @@ export async function POST(request: NextRequest) {
     // Create payment record
     await prisma.payment.create({
       data: {
-        amount: order.totalAmount,
+        amount: totalAmount,
         currency: 'eur',
         stripePaymentId: paymentIntent.id,
         orderId: order.id,
+        status: 'PENDING',
+        paymentMethod: 'card',
         metadata: {
           paymentIntentId: paymentIntent.id,
           clientSecret: paymentIntent.client_secret,
@@ -77,9 +154,14 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // NOTE: Cart is NOT cleared here - it will be cleared when payment succeeds
+    // via the Stripe webhook to ensure users don't lose their cart if they cancel
+
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
     })
   } catch (error) {
     console.error('Error creating payment intent:', error)

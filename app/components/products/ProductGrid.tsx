@@ -18,8 +18,8 @@ interface ProductGridProps {
 export default function ProductGrid({ products }: ProductGridProps) {
   if (products.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">Nenhum produto encontrado.</p>
+      <div className="text-center py-16">
+        <p className="text-mist text-lg">Nenhum produto encontrado.</p>
       </div>
     )
   }

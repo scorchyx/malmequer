@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Header from '../components/layout/Header'
 import Footer from '../components/layout/Footer'
@@ -17,7 +17,7 @@ interface SearchFilters {
   inStock?: boolean
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [products, setProducts] = useState([])
@@ -82,16 +82,15 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+      <main className="flex-1 bg-snow py-8">
+        <div className="container-malmequer">
           {/* Search Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-black">
+            <h1 className="font-display text-2xl text-ink">
               {filters.query ? `Resultados para "${filters.query}"` : 'Pesquisa'}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-mist mt-1">
               {isLoading ? 'A pesquisar...' : `${totalResults} produtos encontrados`}
             </p>
           </div>
@@ -99,12 +98,12 @@ export default function SearchPage() {
           <div className="flex gap-6">
             {/* Filters Sidebar */}
             <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-64 flex-shrink-0`}>
-              <div className="bg-white rounded-lg shadow p-6 sticky top-4">
+              <div className="bg-white p-6 sticky top-4 border border-cloud">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Filtros</h2>
+                  <h2 className="text-sm uppercase tracking-wider text-ink font-medium">Filtros</h2>
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-xs text-malmequer-gold hover:text-malmequer-amber transition-colors duration-200"
                   >
                     Limpar
                   </button>
@@ -113,7 +112,7 @@ export default function SearchPage() {
                 <div className="space-y-6">
                   {/* Price Range */}
                   <div>
-                    <h3 className="font-medium mb-3">Preço</h3>
+                    <h3 className="text-sm font-medium text-stone mb-3">Preço</h3>
                     <div className="space-y-2">
                       <input
                         type="number"
@@ -122,7 +121,7 @@ export default function SearchPage() {
                         onChange={(e) =>
                           updateFilters({ minPrice: e.target.value ? Number(e.target.value) : undefined })
                         }
-                        className="w-full px-3 py-2 border rounded text-black placeholder:text-gray-500"
+                        className="w-full px-3 py-2 border border-cloud text-ink placeholder:text-mist focus:border-ink focus:outline-none transition-colors duration-200"
                       />
                       <input
                         type="number"
@@ -131,7 +130,7 @@ export default function SearchPage() {
                         onChange={(e) =>
                           updateFilters({ maxPrice: e.target.value ? Number(e.target.value) : undefined })
                         }
-                        className="w-full px-3 py-2 border rounded text-black placeholder:text-gray-500"
+                        className="w-full px-3 py-2 border border-cloud text-ink placeholder:text-mist focus:border-ink focus:outline-none transition-colors duration-200"
                       />
                     </div>
                   </div>
@@ -145,35 +144,35 @@ export default function SearchPage() {
                         onChange={(e) => updateFilters({ inStock: e.target.checked })}
                         className="mr-2"
                       />
-                      <span className="text-sm">Apenas em stock</span>
+                      <span className="text-sm text-stone">Apenas em stock</span>
                     </label>
                   </div>
 
                   {/* Quick Price Filters */}
                   <div>
-                    <h3 className="font-medium mb-3">Faixas de preço</h3>
+                    <h3 className="text-sm font-medium text-stone mb-3">Faixas de preço</h3>
                     <div className="space-y-2">
                       <button
                         onClick={() => updateFilters({ minPrice: 0, maxPrice: 25 })}
-                        className="text-sm text-gray-700 hover:text-blue-600 block w-full text-left"
+                        className="text-sm text-stone hover:text-malmequer-gold block w-full text-left transition-colors duration-200"
                       >
                         Até €25
                       </button>
                       <button
                         onClick={() => updateFilters({ minPrice: 25, maxPrice: 50 })}
-                        className="text-sm text-gray-700 hover:text-blue-600 block w-full text-left"
+                        className="text-sm text-stone hover:text-malmequer-gold block w-full text-left transition-colors duration-200"
                       >
                         €25 - €50
                       </button>
                       <button
                         onClick={() => updateFilters({ minPrice: 50, maxPrice: 100 })}
-                        className="text-sm text-gray-700 hover:text-blue-600 block w-full text-left"
+                        className="text-sm text-stone hover:text-malmequer-gold block w-full text-left transition-colors duration-200"
                       >
                         €50 - €100
                       </button>
                       <button
                         onClick={() => updateFilters({ minPrice: 100, maxPrice: undefined })}
-                        className="text-sm text-gray-700 hover:text-blue-600 block w-full text-left"
+                        className="text-sm text-stone hover:text-malmequer-gold block w-full text-left transition-colors duration-200"
                       >
                         Mais de €100
                       </button>
@@ -186,10 +185,10 @@ export default function SearchPage() {
             {/* Results */}
             <div className="flex-1">
               {/* Sort & Mobile Filter Toggle */}
-              <div className="bg-white rounded-lg shadow p-4 mb-4 flex justify-between items-center">
+              <div className="bg-white border border-cloud p-4 mb-4 flex justify-between items-center">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden flex items-center gap-2 text-gray-700"
+                  className="lg:hidden flex items-center gap-2 text-stone hover:text-ink transition-colors duration-200"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -203,13 +202,13 @@ export default function SearchPage() {
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <label className="text-sm text-black">Ordenar por:</label>
+                  <label className="text-sm text-stone">Ordenar por:</label>
                   <select
                     value={filters.sortBy}
                     onChange={(e) =>
                       updateFilters({ sortBy: e.target.value as SearchFilters['sortBy'] })
                     }
-                    className="px-3 py-2 border rounded text-black"
+                    className="px-3 py-2 border border-cloud text-ink focus:border-ink focus:outline-none transition-colors duration-200"
                   >
                     <option value="relevance">Relevância</option>
                     <option value="price-asc">Preço: Menor para Maior</option>
@@ -225,9 +224,9 @@ export default function SearchPage() {
               ) : products.length > 0 ? (
                 <ProductGrid products={products} />
               ) : (
-                <div className="bg-white rounded-lg shadow p-12 text-center">
+                <div className="bg-white border border-cloud p-12 text-center">
                   <svg
-                    className="w-16 h-16 text-gray-400 mx-auto mb-4"
+                    className="w-16 h-16 text-mist mx-auto mb-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -239,13 +238,13 @@ export default function SearchPage() {
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                  <h3 className="text-lg font-semibold text-black mb-2">
+                  <h3 className="text-lg font-semibold text-ink mb-2">
                     Nenhum produto encontrado
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-stone mb-4">
                     Tente ajustar os filtros ou termos de pesquisa
                   </p>
-                  <Button onClick={clearFilters} variant="outline">
+                  <Button onClick={clearFilters} variant="secondary">
                     Limpar filtros
                   </Button>
                 </div>
@@ -254,6 +253,31 @@ export default function SearchPage() {
           </div>
         </div>
       </main>
+    </>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <div className="min-h-screen flex flex-col bg-snow">
+      <Header />
+      <Suspense fallback={
+        <main className="flex-1 bg-snow py-8">
+          <div className="container-malmequer">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 w-64 bg-cloud"></div>
+              <div className="h-4 w-48 bg-cloud"></div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="h-64 bg-cloud"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+      }>
+        <SearchContent />
+      </Suspense>
       <Footer />
     </div>
   )

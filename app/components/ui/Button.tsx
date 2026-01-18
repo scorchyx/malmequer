@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'accent' | 'danger' | 'ghost' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   isLoading?: boolean
   children: ReactNode
@@ -16,20 +16,26 @@ export default function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseStyles = 'font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2'
+  const baseStyles = `
+    font-body font-medium transition-all duration-200 ease-out
+    disabled:opacity-50 disabled:cursor-not-allowed
+    inline-flex items-center justify-center gap-2
+    uppercase tracking-wider text-sm
+  `
 
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700',
-    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
-    ghost: 'text-gray-700 hover:bg-gray-100',
+    primary: 'bg-ink text-white hover:bg-stone',
+    secondary: 'bg-transparent text-ink border border-ink hover:bg-ink hover:text-white',
+    outline: 'bg-transparent text-ink border border-ink hover:bg-ink hover:text-white',
+    accent: 'bg-malmequer-gold text-ink hover:bg-malmequer-amber',
+    danger: 'bg-error text-white hover:opacity-90',
+    ghost: 'text-stone hover:text-ink hover:bg-cloud',
   }
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-4 py-2 text-xs',
+    md: 'px-6 py-3 text-sm',
+    lg: 'px-8 py-4 text-sm',
   }
 
   return (
@@ -39,7 +45,7 @@ export default function Button({
       {...props}
     >
       {isLoading && (
-        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
       )}
       {children}
     </button>
