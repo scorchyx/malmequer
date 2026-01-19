@@ -1,68 +1,92 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Minus, Plus, ShoppingCart } from 'lucide-react'
 import { useToast } from '../ui/Toast'
 
 interface ProductVariant {
   id: string
-  name: string
+  type: 'COR' | 'TAMANHO'
+  label: string
   value: string
-  price: number | null
-  inventory: number
+  priceExtra: number | null
+}
+
+interface StockItem {
+  id: string
+  sizeVariantId: string
+  colorVariantId: string
+  quantity: number
+  sizeVariant: ProductVariant
+  colorVariant: ProductVariant
 }
 
 interface ProductOptionsProps {
   productId: string
   variants: ProductVariant[]
+  stockItems: StockItem[]
   basePrice: number
-  baseInventory?: number
 }
 
-export default function ProductOptions({ productId, variants, basePrice, baseInventory = 999 }: ProductOptionsProps) {
+export default function ProductOptions({ productId, variants, stockItems, basePrice }: ProductOptionsProps) {
   const router = useRouter()
   const { showToast } = useToast()
   const [isAdding, setIsAdding] = useState(false)
 
-  // Group variants by type (name)
-  const variantGroups = variants.reduce((acc, variant) => {
-    if (!acc[variant.name]) {
-      acc[variant.name] = []
-    }
-    acc[variant.name].push(variant)
-    return acc
-  }, {} as Record<string, ProductVariant[]>)
+  // Separate variants by type
+  const sizeVariants = useMemo(() => variants.filter(v => v.type === 'TAMANHO'), [variants])
+  const colorVariants = useMemo(() => variants.filter(v => v.type === 'COR'), [variants])
 
-  const variantTypes = Object.keys(variantGroups)
-
-  // Initialize selected variants - one per type
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {}
-    variantTypes.forEach((type) => {
-      if (variantGroups[type].length > 0) {
-        initial[type] = variantGroups[type][0].id
-      }
-    })
-    return initial
-  })
+  // Initialize selected variants
+  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(
+    sizeVariants.length > 0 ? sizeVariants[0].id : null
+  )
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(
+    colorVariants.length > 0 ? colorVariants[0].id : null
+  )
 
   const [quantity, setQuantity] = useState(1)
 
-  // Get current selected variant for each type
-  const currentVariantValues = Object.entries(selectedVariants).map(([type, id]) => {
-    return variants.find((v) => v.id === id)
-  })
+  // Find current stock item based on selections
+  const currentStockItem = useMemo(() => {
+    if (!selectedSizeId || !selectedColorId) return null
+    return stockItems.find(
+      si => si.sizeVariantId === selectedSizeId && si.colorVariantId === selectedColorId
+    ) || null
+  }, [stockItems, selectedSizeId, selectedColorId])
 
-  // Calculate price and inventory based on all selected variants
-  const currentPrice = currentVariantValues.reduce((price, variant) => {
-    return variant?.price ?? price
-  }, basePrice)
+  const currentInventory = currentStockItem?.quantity || 0
 
-  const currentInventory = currentVariantValues.reduce((inventory, variant) => {
-    if (!variant) return inventory
-    return Math.min(inventory, variant.inventory)
-  }, baseInventory)
+  // Calculate price with extras
+  const currentPrice = useMemo(() => {
+    let price = basePrice
+    const selectedSize = sizeVariants.find(v => v.id === selectedSizeId)
+    const selectedColor = colorVariants.find(v => v.id === selectedColorId)
+
+    if (selectedSize?.priceExtra) price += selectedSize.priceExtra
+    if (selectedColor?.priceExtra) price += selectedColor.priceExtra
+
+    return price
+  }, [basePrice, sizeVariants, colorVariants, selectedSizeId, selectedColorId])
+
+  // Check if a combination has stock
+  const hasStock = (sizeId: string, colorId: string) => {
+    const item = stockItems.find(
+      si => si.sizeVariantId === sizeId && si.colorVariantId === colorId
+    )
+    return item ? item.quantity > 0 : false
+  }
+
+  // Check if a size has any stock with any color
+  const sizeHasAnyStock = (sizeId: string) => {
+    return stockItems.some(si => si.sizeVariantId === sizeId && si.quantity > 0)
+  }
+
+  // Check if a color has any stock with any size
+  const colorHasAnyStock = (colorId: string) => {
+    return stockItems.some(si => si.colorVariantId === colorId && si.quantity > 0)
+  }
 
   const incrementQuantity = () => {
     if (quantity < currentInventory) {
@@ -76,35 +100,24 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
     }
   }
 
-  const handleVariantChange = (type: string, id: string) => {
-    setSelectedVariants((prev) => ({
-      ...prev,
-      [type]: id,
-    }))
-  }
-
   const handleAddToCart = async () => {
+    if (!currentStockItem) {
+      showToast('Selecione tamanho e cor', 'error')
+      return
+    }
+
     setIsAdding(true)
     try {
-      // Get the first selected variant ID (if any variants exist)
-      const variantId = Object.values(selectedVariants)[0] || null
-
-      const payload: any = {
-        productId,
-        quantity,
-      }
-
-      // Only include variantId if it's not null
-      if (variantId) {
-        payload.variantId = variantId
-      }
-
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          productId,
+          stockItemId: currentStockItem.id,
+          quantity,
+        }),
       })
 
       if (!response.ok) {
@@ -113,13 +126,8 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
         throw new Error(errorData.error || 'Erro ao adicionar ao carrinho')
       }
 
-      // Refresh to update cart count
       router.refresh()
-
-      // Dispatch event to update cart count in header
       window.dispatchEvent(new Event('cartUpdated'))
-
-      // Show success message
       showToast('Produto adicionado ao carrinho!', 'success')
     } catch (error) {
       console.error('Erro ao adicionar ao carrinho:', error)
@@ -129,86 +137,129 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
     }
   }
 
+  // Render color circles (can be multiple colors for patterns)
+  const renderColorCircle = (variant: ProductVariant, isSelected: boolean, isDisabled: boolean) => {
+    const colors = variant.value.split(',')
+    const size = colors.length > 1 ? 'w-10 h-10 sm:w-12 sm:h-12' : 'w-10 h-10 sm:w-12 sm:h-12'
+
+    if (colors.length === 1) {
+      const hex = colors[0]
+      return (
+        <button
+          key={variant.id}
+          onClick={() => setSelectedColorId(variant.id)}
+          disabled={isDisabled}
+          className={`
+            ${size} rounded-full transition-all touch-manipulation cursor-pointer
+            ${isSelected ? 'ring-2 ring-ink ring-offset-2' : ''}
+            ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+          `}
+          title={variant.label}
+          style={{
+            backgroundColor: hex,
+            border: hex.toUpperCase() === '#FFFFFF' ? '2px solid #E5E7EB' : '2px solid transparent'
+          }}
+        />
+      )
+    }
+
+    // Multiple colors - render as split circle
+    const gradientStops = colors.map((color, i) => {
+      const percent = (i / colors.length) * 100
+      const nextPercent = ((i + 1) / colors.length) * 100
+      return `${color} ${percent}%, ${color} ${nextPercent}%`
+    }).join(', ')
+
+    return (
+      <button
+        key={variant.id}
+        onClick={() => setSelectedColorId(variant.id)}
+        disabled={isDisabled}
+        className={`
+          ${size} rounded-full transition-all touch-manipulation cursor-pointer
+          ${isSelected ? 'ring-2 ring-ink ring-offset-2' : ''}
+          ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+        title={variant.label}
+        style={{
+          background: `conic-gradient(${gradientStops})`,
+          border: '2px solid #E5E7EB'
+        }}
+      />
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Price */}
       <div>
         <p className="text-4xl font-bold text-gray-900">
-          {Number(currentPrice).toFixed(2)}€
+          {currentPrice.toFixed(2)}€
         </p>
       </div>
 
-      {/* Variant Selection - One section per variant type */}
-      {variantTypes.map((type) => (
-        <div key={type}>
+      {/* Size Selection */}
+      {sizeVariants.length > 0 && (
+        <div>
           <label className="block text-sm font-medium text-gray-900 mb-3">
-            {type}
+            Tamanho
           </label>
           <div className="flex flex-wrap gap-2">
-            {variantGroups[type].map((variant) => {
-              const isCor = type.toLowerCase() === 'cor'
-              const colorMap: Record<string, string> = {
-                'cinzenta': '#808080',
-                'cinza': '#808080',
-                'preto': '#000000',
-                'branco': '#FFFFFF',
-                'vermelho': '#DC2626',
-                'azul': '#2563EB',
-                'azul-marinho': '#1E3A5F',
-                'verde': '#16A34A',
-                'amarelo': '#EAB308',
-                'rosa': '#EC4899',
-                'laranja': '#EA580C',
-                'roxo': '#9333EA',
-                'castanho': '#92400E',
-                'bege': '#D4A574',
-              }
-              const colorValue = colorMap[variant.value.toLowerCase()] || '#808080'
-
-              if (isCor) {
-                return (
-                  <button
-                    key={variant.id}
-                    onClick={() => handleVariantChange(type, variant.id)}
-                    disabled={variant.inventory === 0}
-                    className={`
-                      w-10 h-10 sm:w-12 sm:h-12 rounded-full p-1 transition-all touch-manipulation
-                      ${selectedVariants[type] === variant.id ? 'ring-2 ring-ink ring-offset-2' : ''}
-                      ${variant.inventory === 0 ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
-                    title={variant.value}
-                    style={{
-                      backgroundColor: colorValue,
-                      border: colorValue === '#FFFFFF' ? '2px solid #E5E7EB' : '2px solid transparent'
-                    }}
-                  />
-                )
-              }
+            {sizeVariants.map((variant) => {
+              const isSelected = selectedSizeId === variant.id
+              const isDisabled = !sizeHasAnyStock(variant.id)
+              const hasExtra = variant.priceExtra && variant.priceExtra > 0
 
               return (
                 <button
                   key={variant.id}
-                  onClick={() => handleVariantChange(type, variant.id)}
-                  disabled={variant.inventory === 0}
+                  onClick={() => setSelectedSizeId(variant.id)}
+                  disabled={isDisabled}
                   className={`
-                    px-4 py-2 sm:px-6 sm:py-3 border-2 font-medium transition-all touch-manipulation
-                    ${
-                      selectedVariants[type] === variant.id
-                        ? 'border-ink bg-ink text-white'
-                        : 'border-cloud text-ink hover:border-stone'
+                    px-4 py-2 sm:px-6 sm:py-3 border-2 font-medium transition-all touch-manipulation cursor-pointer
+                    ${isSelected
+                      ? 'border-ink bg-ink text-white'
+                      : 'border-cloud text-ink hover:border-stone'
                     }
-                    ${variant.inventory === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                    ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
                 >
-                  <span className={variant.inventory === 0 ? 'line-through' : ''}>
-                    {variant.value}
+                  <span className={isDisabled ? 'line-through' : ''}>
+                    {variant.label}
                   </span>
+                  {hasExtra && (
+                    <span className="ml-1 text-xs">
+                      (+{Number(variant.priceExtra).toFixed(2)}€)
+                    </span>
+                  )}
                 </button>
               )
             })}
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Color Selection */}
+      {colorVariants.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-900 mb-3">
+            Cor
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {colorVariants.map((variant) => {
+              const isSelected = selectedColorId === variant.id
+              const isDisabled = !colorHasAnyStock(variant.id)
+
+              return renderColorCircle(variant, isSelected, isDisabled)
+            })}
+          </div>
+          {selectedColorId && (
+            <p className="text-sm text-gray-600 mt-2">
+              {colorVariants.find(v => v.id === selectedColorId)?.label}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Quantity Selection */}
       <div>
@@ -223,7 +274,9 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
           >
             <Minus className="h-5 w-5 stroke-[3]" />
           </button>
-          <span className={`text-lg font-medium w-12 text-center ${quantity >= currentInventory ? 'opacity-50' : ''}`}>{quantity}</span>
+          <span className={`text-lg font-medium w-12 text-center ${quantity >= currentInventory ? 'opacity-50' : ''}`}>
+            {quantity}
+          </span>
           <button
             onClick={incrementQuantity}
             disabled={quantity >= currentInventory}
@@ -237,19 +290,24 @@ export default function ProductOptions({ productId, variants, basePrice, baseInv
             Apenas {currentInventory} {currentInventory === 1 ? 'unidade disponível' : 'unidades disponíveis'}
           </p>
         )}
+        {currentInventory === 0 && selectedSizeId && selectedColorId && (
+          <p className="text-sm text-red-600 mt-2">
+            Esta combinação está esgotada
+          </p>
+        )}
       </div>
 
       {/* Add to Cart Button */}
       <div className="space-y-4">
         <button
           onClick={handleAddToCart}
-          disabled={currentInventory === 0 || isAdding}
+          disabled={currentInventory === 0 || isAdding || !currentStockItem}
           className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
         >
           <ShoppingCart className="h-5 w-5" />
           {isAdding ? 'A adicionar...' : currentInventory === 0 ? 'Esgotado' : 'Adicionar ao carrinho'}
         </button>
-        <button className="w-full border-2 border-gray-300 text-gray-900 py-3 px-6 rounded-lg font-medium hover:border-gray-400 transition touch-manipulation">
+        <button className="w-full border-2 border-gray-300 text-gray-900 py-3 px-6 rounded-lg font-medium hover:border-gray-400 transition touch-manipulation cursor-pointer">
           Adicionar aos favoritos
         </button>
       </div>

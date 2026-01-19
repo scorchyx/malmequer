@@ -175,11 +175,11 @@ export default function WishlistPage() {
                     <div className="mb-3">
                       {item.product.comparePrice && (
                         <span className="text-sm text-gray-500 line-through mr-2">
-                          €{item.product.comparePrice.toFixed(2)}
+                          €{Number(item.product.comparePrice).toFixed(2)}
                         </span>
                       )}
                       <span className="text-lg font-bold text-gray-900">
-                        €{item.product.price.toFixed(2)}
+                        €{Number(item.product.price).toFixed(2)}
                       </span>
                     </div>
 

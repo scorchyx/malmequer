@@ -46,6 +46,12 @@ export async function GET(request: NextRequest) {
           category: true,
           images: true,
           variants: true,
+          stockItems: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
           _count: {
             select: { reviews: true },
           },
@@ -94,39 +100,110 @@ export async function POST(request: NextRequest) {
       description,
       price,
       comparePrice,
-      sku: _sku,
-      inventory: _inventory,
       weight,
       categoryId,
       images,
-      variants,
+      sizes,
+      colors,
+      stockItems,
     } = validation.data
 
-    const product = await prisma.product.create({
-      data: {
-        name,
-        slug,
-        description,
-        price,
-        comparePrice,
-        weight,
-        categoryId,
-        images: {
-          create: images?.map((image: any, index: number) => ({
-            url: image.url,
-            alt: image.alt,
-            order: index,
-          })) ?? [],
+    const product = await prisma.$transaction(async (tx) => {
+      // Create product
+      const created = await tx.product.create({
+        data: {
+          name,
+          slug,
+          description,
+          price,
+          comparePrice,
+          weight,
+          categoryId,
+          images: {
+            create: images?.map((image: any, index: number) => ({
+              url: image.url,
+              alt: image.alt,
+              order: index,
+            })) ?? [],
+          },
         },
-        variants: {
-          create: variants ?? [],
+      })
+
+      // Create size variants
+      const sizeVariants: { id: string; value: string }[] = []
+      if (sizes && sizes.length > 0) {
+        for (let i = 0; i < sizes.length; i++) {
+          const size = sizes[i]
+          const variant = await tx.productVariant.create({
+            data: {
+              productId: created.id,
+              type: 'TAMANHO',
+              label: size.label,
+              value: size.value,
+              sku: size.sku || null,
+              priceExtra: size.priceExtra || null,
+              position: i,
+            },
+          })
+          sizeVariants.push({ id: variant.id, value: variant.value })
+        }
+      }
+
+      // Create color variants
+      const colorVariants: { id: string; value: string }[] = []
+      if (colors && colors.length > 0) {
+        for (let i = 0; i < colors.length; i++) {
+          const color = colors[i]
+          const variant = await tx.productVariant.create({
+            data: {
+              productId: created.id,
+              type: 'COR',
+              label: color.label,
+              value: color.value,
+              sku: color.sku || null,
+              priceExtra: color.priceExtra || null,
+              position: i,
+            },
+          })
+          colorVariants.push({ id: variant.id, value: variant.value })
+        }
+      }
+
+      // Create stock items
+      if (stockItems && stockItems.length > 0 && sizeVariants.length > 0 && colorVariants.length > 0) {
+        for (const item of stockItems) {
+          const sizeVariant = sizeVariants.find(s => s.value === item.sizeValue)
+          const colorVariant = colorVariants.find(c => c.value === item.colorValue)
+
+          if (sizeVariant && colorVariant) {
+            await tx.stockItem.create({
+              data: {
+                productId: created.id,
+                sizeVariantId: sizeVariant.id,
+                colorVariantId: colorVariant.id,
+                quantity: item.quantity,
+                sku: item.sku || null,
+              },
+            })
+          }
+        }
+      }
+
+      // Return product with relations
+      return tx.product.findUnique({
+        where: { id: created.id },
+        include: {
+          category: true,
+          images: true,
+          variants: true,
+          stockItems: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
         },
-      },
-      include: {
-        category: true,
-        images: true,
-        variants: true,
-      },
+      })
     })
 
     return NextResponse.json(product, { status: 201 })

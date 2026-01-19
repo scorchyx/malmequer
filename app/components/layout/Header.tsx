@@ -119,7 +119,7 @@ export default function Header() {
             {/* Search */}
             <button
               onClick={() => router.push('/pesquisa')}
-              className="p-2 text-ink hover:text-malmequer-gold touch-manipulation transition-colors duration-200"
+              className="p-2 text-ink hover:text-malmequer-gold touch-manipulation transition-colors duration-200 cursor-pointer"
               aria-label="Pesquisar"
             >
               <Search className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -138,7 +138,7 @@ export default function Header() {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="p-2 text-ink hover:text-malmequer-gold touch-manipulation transition-colors duration-200"
+                className="p-2 text-ink hover:text-malmequer-gold touch-manipulation transition-colors duration-200 cursor-pointer"
                 aria-label="Conta"
               >
                 <User className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -205,7 +205,7 @@ export default function Header() {
                             setUserMenuOpen(false)
                             signOut({ callbackUrl: '/' })
                           }}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-error hover:bg-snow w-full border-t border-cloud transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-error hover:bg-snow w-full border-t border-cloud transition-colors cursor-pointer"
                         >
                           <LogOut className="h-4 w-4" />
                           Sair
@@ -239,7 +239,7 @@ export default function Header() {
             {/* Cart */}
             <button
               onClick={() => setCartOpen(true)}
-              className="p-2 text-ink hover:text-malmequer-gold relative touch-manipulation transition-colors duration-200"
+              className="p-2 text-ink hover:text-malmequer-gold relative touch-manipulation transition-colors duration-200 cursor-pointer"
               aria-label="Carrinho"
             >
               <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />

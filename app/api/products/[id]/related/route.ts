@@ -37,10 +37,10 @@ export async function GET(
             category: {
               select: { name: true },
             },
-            variants: {
+            stockItems: {
               select: {
                 id: true,
-                inventory: true,
+                quantity: true,
               },
             },
             _count: {
@@ -53,8 +53,8 @@ export async function GET(
 
     const relatedProducts = relations.map(relation => ({
       ...relation.relatedProduct,
-      totalInventory: relation.relatedProduct.variants.reduce(
-        (sum, variant) => sum + variant.inventory,
+      totalInventory: relation.relatedProduct.stockItems.reduce(
+        (sum: number, si: { quantity: number }) => sum + si.quantity,
         0,
       ),
       relationPosition: relation.position,

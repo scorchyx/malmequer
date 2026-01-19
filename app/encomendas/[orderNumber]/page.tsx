@@ -198,7 +198,7 @@ export default function OrderDetailPage() {
                       )}
                       <p className="text-sm text-gray-500">Quantidade: {item.quantity}</p>
                     </div>
-                    <p className="font-semibold">€{(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-semibold">€{(Number(item.price) * item.quantity).toFixed(2)}</p>
                   </div>
                 ))}
               </div>
@@ -208,25 +208,25 @@ export default function OrderDetailPage() {
             <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
-                <span>€{order.subtotalAmount.toFixed(2)}</span>
+                <span>€{Number(order.subtotalAmount).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Envio</span>
-                <span>€{order.shippingAmount.toFixed(2)}</span>
+                <span>€{Number(order.shippingAmount).toFixed(2)}</span>
               </div>
-              {order.discountAmount > 0 && (
+              {Number(order.discountAmount) > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Desconto</span>
-                  <span>-€{order.discountAmount.toFixed(2)}</span>
+                  <span>-€{Number(order.discountAmount).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">IVA</span>
-                <span>€{order.taxAmount.toFixed(2)}</span>
+                <span>€{Number(order.taxAmount).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold pt-2 border-t">
                 <span>Total</span>
-                <span>€{order.totalAmount.toFixed(2)}</span>
+                <span>€{Number(order.totalAmount).toFixed(2)}</span>
               </div>
             </div>
           </div>

@@ -33,12 +33,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
           position: 'asc',
         },
       },
+      stockItems: {
+        include: {
+          sizeVariant: true,
+          colorVariant: true,
+        },
+      },
     },
   })
 
   if (!product) {
     notFound()
   }
+
+  // Calculate total stock
+  const totalStock = product.stockItems.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
     <div className="min-h-screen flex flex-col bg-snow">
@@ -138,13 +147,32 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 productId={product.id}
                 variants={product.variants.map((v) => ({
                   id: v.id,
-                  name: v.name,
+                  type: v.type,
+                  label: v.label,
                   value: v.value,
-                  price: v.price ? Number(v.price) : null,
-                  inventory: v.inventory,
+                  priceExtra: v.priceExtra ? Number(v.priceExtra) : null,
+                }))}
+                stockItems={product.stockItems.map((si) => ({
+                  id: si.id,
+                  sizeVariantId: si.sizeVariantId,
+                  colorVariantId: si.colorVariantId,
+                  quantity: si.quantity,
+                  sizeVariant: {
+                    id: si.sizeVariant.id,
+                    type: si.sizeVariant.type,
+                    label: si.sizeVariant.label,
+                    value: si.sizeVariant.value,
+                    priceExtra: si.sizeVariant.priceExtra ? Number(si.sizeVariant.priceExtra) : null,
+                  },
+                  colorVariant: {
+                    id: si.colorVariant.id,
+                    type: si.colorVariant.type,
+                    label: si.colorVariant.label,
+                    value: si.colorVariant.value,
+                    priceExtra: si.colorVariant.priceExtra ? Number(si.colorVariant.priceExtra) : null,
+                  },
                 }))}
                 basePrice={Number(product.price)}
-                baseInventory={1}
               />
 
               <div className="mt-8 pt-8 border-t border-cloud">
@@ -158,7 +186,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-mist">Disponibilidade:</dt>
-                    <dd className="text-success">Em stock</dd>
+                    <dd className={totalStock > 0 ? 'text-success' : 'text-error'}>
+                      {totalStock > 0 ? 'Em stock' : 'Esgotado'}
+                    </dd>
                   </div>
                 </dl>
               </div>

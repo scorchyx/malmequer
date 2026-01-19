@@ -285,7 +285,7 @@ class IntegrityValidator {
       // Get product current stock
       const product = await prisma.product.findUnique({
         where: { id: productId },
-        select: { id: true, name: true, variants: { select: { inventory: true } } },
+        select: { id: true, name: true, stockItems: { select: { quantity: true } } },
       })
 
       if (!product) {
@@ -314,20 +314,19 @@ class IntegrityValidator {
         }
       }
 
-      // Calculate total inventory from variants
-      const totalVariantInventory = product.variants.reduce((sum, variant) => sum + variant.inventory, 0)
+      // Calculate total inventory from stock items
+      const totalStockInventory = product.stockItems.reduce((sum: number, si: { quantity: number }) => sum + si.quantity, 0)
 
-      // Note: Stock reconciliation would need to be updated for variant-level inventory
-      // For now, just check for negative variant inventory
-      const negativeVariants = product.variants.filter(v => v.inventory < 0)
-      if (negativeVariants.length > 0) {
+      // Check for negative stock items
+      const negativeStockItems = product.stockItems.filter((si: { quantity: number }) => si.quantity < 0)
+      if (negativeStockItems.length > 0) {
         result.isValid = false
-        result.errors.push(`Negative stock detected in ${negativeVariants.length} variants`)
+        result.errors.push(`Negative stock detected in ${negativeStockItems.length} stock items`)
       }
 
       // Check for very low stock (warning)
-      if (totalVariantInventory > 0 && totalVariantInventory < 5) {
-        result.warnings.push(`Low total stock warning: ${totalVariantInventory} units remaining across all variants`)
+      if (totalStockInventory > 0 && totalStockInventory < 5) {
+        result.warnings.push(`Low total stock warning: ${totalStockInventory} units remaining across all stock items`)
       }
 
     } catch (error) {

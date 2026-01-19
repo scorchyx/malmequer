@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '../ui/Button'
 import { useToast } from '../ui/Toast'
+import { Plus, Trash2, RefreshCw } from 'lucide-react'
 
 interface Category {
   id: string
@@ -15,13 +16,25 @@ interface ProductImage {
   alt: string
 }
 
-interface ProductVariant {
-  name: string
+interface SizeVariant {
+  label: string
   value: string
-  price?: number
-  sku?: string
-  inventory: number
-  weight?: number
+  sku: string
+  priceExtra: string
+}
+
+interface ColorVariant {
+  label: string
+  colors: string[] // Array of hex codes
+  sku: string
+  priceExtra: string
+}
+
+interface StockItemData {
+  sizeValue: string
+  colorValue: string
+  quantity: number
+  sku: string
 }
 
 interface ProductFormData {
@@ -35,7 +48,9 @@ interface ProductFormData {
   categoryId: string
   featured: boolean
   images: ProductImage[]
-  variants: ProductVariant[]
+  sizes: SizeVariant[]
+  colors: ColorVariant[]
+  stockItems: StockItemData[]
 }
 
 interface ProductFormProps {
@@ -58,7 +73,9 @@ export default function ProductForm({ productId }: ProductFormProps) {
     categoryId: '',
     featured: false,
     images: [],
-    variants: [],
+    sizes: [],
+    colors: [],
+    stockItems: [],
   })
 
   useEffect(() => {
@@ -85,6 +102,34 @@ export default function ProductForm({ productId }: ProductFormProps) {
       const response = await fetch(`/api/products/${productId}`)
       if (response.ok) {
         const product = await response.json()
+
+        // Group variants by type
+        const sizeVariants = product.variants?.filter((v: any) => v.type === 'TAMANHO') || []
+        const colorVariants = product.variants?.filter((v: any) => v.type === 'COR') || []
+
+        // Convert to form format
+        const sizes: SizeVariant[] = sizeVariants.map((v: any) => ({
+          label: v.label,
+          value: v.value,
+          sku: v.sku || '',
+          priceExtra: v.priceExtra ? String(v.priceExtra) : '',
+        }))
+
+        const colors: ColorVariant[] = colorVariants.map((v: any) => ({
+          label: v.label,
+          colors: v.value.split(','),
+          sku: v.sku || '',
+          priceExtra: v.priceExtra ? String(v.priceExtra) : '',
+        }))
+
+        // Convert stock items
+        const stockItems: StockItemData[] = product.stockItems?.map((si: any) => ({
+          sizeValue: si.sizeVariant.value,
+          colorValue: si.colorVariant.value,
+          quantity: si.quantity,
+          sku: si.sku || '',
+        })) || []
+
         setFormData({
           name: product.name,
           slug: product.slug,
@@ -96,7 +141,9 @@ export default function ProductForm({ productId }: ProductFormProps) {
           categoryId: product.categoryId,
           featured: product.featured,
           images: product.images || [],
-          variants: product.variants || [],
+          sizes,
+          colors,
+          stockItems,
         })
       }
     } catch (error) {
@@ -104,12 +151,46 @@ export default function ProductForm({ productId }: ProductFormProps) {
     }
   }
 
+  // Generate all possible combinations
+  const allCombinations = useMemo(() => {
+    if (formData.sizes.length === 0 || formData.colors.length === 0) return []
+
+    const combinations: { sizeValue: string; sizeLabel: string; colorValue: string; colorLabel: string }[] = []
+    for (const size of formData.sizes) {
+      for (const color of formData.colors) {
+        const colorValue = color.colors.join(',')
+        combinations.push({
+          sizeValue: size.value,
+          sizeLabel: size.label,
+          colorValue,
+          colorLabel: color.label,
+        })
+      }
+    }
+    return combinations
+  }, [formData.sizes, formData.colors])
+
+  const generateStockItems = () => {
+    const newStockItems: StockItemData[] = allCombinations.map(combo => {
+      // Keep existing quantity if found
+      const existing = formData.stockItems.find(
+        si => si.sizeValue === combo.sizeValue && si.colorValue === combo.colorValue
+      )
+      return {
+        sizeValue: combo.sizeValue,
+        colorValue: combo.colorValue,
+        quantity: existing?.quantity || 0,
+        sku: existing?.sku || '',
+      }
+    })
+    setFormData({ ...formData, stockItems: newStockItems })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      // Generate slug if not provided
       const slug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-')
 
       const payload = {
@@ -123,13 +204,23 @@ export default function ProductForm({ productId }: ProductFormProps) {
         categoryId: formData.categoryId,
         featured: formData.featured,
         images: formData.images,
-        variants: formData.variants.map((v) => ({
-          name: v.name,
-          value: v.value,
-          price: v.price || null,
-          sku: v.sku || null,
-          inventory: v.inventory,
-          weight: v.weight || null,
+        sizes: formData.sizes.map(s => ({
+          label: s.label,
+          value: s.value,
+          sku: s.sku || null,
+          priceExtra: s.priceExtra ? parseFloat(s.priceExtra) : null,
+        })),
+        colors: formData.colors.map(c => ({
+          label: c.label,
+          value: c.colors.join(','),
+          sku: c.sku || null,
+          priceExtra: c.priceExtra ? parseFloat(c.priceExtra) : null,
+        })),
+        stockItems: formData.stockItems.map(si => ({
+          sizeValue: si.sizeValue,
+          colorValue: si.colorValue,
+          quantity: si.quantity,
+          sku: si.sku || null,
         })),
       }
 
@@ -159,6 +250,7 @@ export default function ProductForm({ productId }: ProductFormProps) {
     }
   }
 
+  // Image handlers
   const addImage = () => {
     setFormData({
       ...formData,
@@ -179,27 +271,73 @@ export default function ProductForm({ productId }: ProductFormProps) {
     })
   }
 
-  const addVariant = () => {
+  // Size handlers
+  const addSize = () => {
     setFormData({
       ...formData,
-      variants: [
-        ...formData.variants,
-        { name: '', value: '', inventory: 0, sku: '', price: undefined, weight: undefined },
-      ],
+      sizes: [...formData.sizes, { label: '', value: '', sku: '', priceExtra: '' }],
     })
   }
 
-  const updateVariant = (index: number, field: keyof ProductVariant, value: any) => {
-    const newVariants = [...formData.variants]
-    newVariants[index] = { ...newVariants[index], [field]: value }
-    setFormData({ ...formData, variants: newVariants })
+  const updateSize = (index: number, field: keyof SizeVariant, value: string) => {
+    const newSizes = [...formData.sizes]
+    newSizes[index] = { ...newSizes[index], [field]: value }
+    setFormData({ ...formData, sizes: newSizes })
   }
 
-  const removeVariant = (index: number) => {
+  const removeSize = (index: number) => {
     setFormData({
       ...formData,
-      variants: formData.variants.filter((_, i) => i !== index),
+      sizes: formData.sizes.filter((_, i) => i !== index),
     })
+  }
+
+  // Color handlers
+  const addColor = () => {
+    setFormData({
+      ...formData,
+      colors: [...formData.colors, { label: '', colors: ['#808080'], sku: '', priceExtra: '' }],
+    })
+  }
+
+  const updateColor = (index: number, field: keyof ColorVariant, value: any) => {
+    const newColors = [...formData.colors]
+    newColors[index] = { ...newColors[index], [field]: value }
+    setFormData({ ...formData, colors: newColors })
+  }
+
+  const addColorToVariant = (variantIndex: number) => {
+    const newColors = [...formData.colors]
+    newColors[variantIndex].colors.push('#808080')
+    setFormData({ ...formData, colors: newColors })
+  }
+
+  const updateColorInVariant = (variantIndex: number, colorIndex: number, value: string) => {
+    const newColors = [...formData.colors]
+    newColors[variantIndex].colors[colorIndex] = value
+    setFormData({ ...formData, colors: newColors })
+  }
+
+  const removeColorFromVariant = (variantIndex: number, colorIndex: number) => {
+    const newColors = [...formData.colors]
+    if (newColors[variantIndex].colors.length > 1) {
+      newColors[variantIndex].colors = newColors[variantIndex].colors.filter((_, i) => i !== colorIndex)
+      setFormData({ ...formData, colors: newColors })
+    }
+  }
+
+  const removeColor = (index: number) => {
+    setFormData({
+      ...formData,
+      colors: formData.colors.filter((_, i) => i !== index),
+    })
+  }
+
+  // Stock handlers
+  const updateStockItem = (index: number, field: keyof StockItemData, value: any) => {
+    const newStockItems = [...formData.stockItems]
+    newStockItems[index] = { ...newStockItems[index], [field]: value }
+    setFormData({ ...formData, stockItems: newStockItems })
   }
 
   return (
@@ -219,7 +357,7 @@ export default function ProductForm({ productId }: ProductFormProps) {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-black/50"
-              placeholder="Ex: Rosa Vermelha Premium"
+              placeholder="Ex: Camisola Riscas"
             />
           </div>
 
@@ -232,7 +370,7 @@ export default function ProductForm({ productId }: ProductFormProps) {
               value={formData.slug}
               onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-black/50"
-              placeholder="rosa-vermelha-premium (gerado automaticamente se vazio)"
+              placeholder="camisola-riscas (gerado automaticamente se vazio)"
             />
           </div>
 
@@ -307,7 +445,7 @@ export default function ProductForm({ productId }: ProductFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-black mb-1">Preço *</label>
+            <label className="block text-sm font-medium text-black mb-1">Preço Base *</label>
             <div className="relative">
               <span className="absolute left-3 top-2 text-black">€</span>
               <input
@@ -360,7 +498,7 @@ export default function ProductForm({ productId }: ProductFormProps) {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-black">Imagens</h2>
           <Button type="button" onClick={addImage} size="sm">
-            + Adicionar Imagem
+            <Plus className="w-4 h-4 mr-1" /> Adicionar Imagem
           </Button>
         </div>
 
@@ -394,45 +532,45 @@ export default function ProductForm({ productId }: ProductFormProps) {
               <button
                 type="button"
                 onClick={() => removeImage(index)}
-                className="text-red-600 hover:text-red-700 px-3 py-2"
+                className="text-red-600 hover:text-red-700 p-2"
               >
-                ✕
+                <Trash2 className="w-5 h-5" />
               </button>
             </div>
           ))}
         </div>
 
         {formData.images.length === 0 && (
-          <p className="text-black text-center py-4">
-            Nenhuma imagem adicionada. Clique em "Adicionar Imagem" para começar.
+          <p className="text-black/60 text-center py-4">
+            Nenhuma imagem adicionada.
           </p>
         )}
       </div>
 
-      {/* Variants */}
+      {/* Sizes */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-black">Variantes</h2>
-          <Button type="button" onClick={addVariant} size="sm">
-            + Adicionar Variante
+          <h2 className="text-xl font-semibold text-black">Tamanhos</h2>
+          <Button type="button" onClick={addSize} size="sm">
+            <Plus className="w-4 h-4 mr-1" /> Adicionar Tamanho
           </Button>
         </div>
 
         <div className="space-y-4">
-          {formData.variants.map((variant, index) => (
+          {formData.sizes.map((size, index) => (
             <div key={index} className="p-4 border rounded-md bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-black mb-1">
-                    Nome *
+                    Label *
                   </label>
                   <input
                     type="text"
                     required
-                    value={variant.name}
-                    onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                    value={size.label}
+                    onChange={(e) => updateSize(index, 'label', e.target.value)}
                     className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ex: Tamanho"
+                    placeholder="Ex: Médio"
                   />
                 </div>
 
@@ -443,10 +581,10 @@ export default function ProductForm({ productId }: ProductFormProps) {
                   <input
                     type="text"
                     required
-                    value={variant.value}
-                    onChange={(e) => updateVariant(index, 'value', e.target.value)}
+                    value={size.value}
+                    onChange={(e) => updateSize(index, 'value', e.target.value)}
                     className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ex: Médio"
+                    placeholder="Ex: M"
                   />
                 </div>
 
@@ -454,26 +592,10 @@ export default function ProductForm({ productId }: ProductFormProps) {
                   <label className="block text-xs font-medium text-black mb-1">SKU</label>
                   <input
                     type="text"
-                    value={variant.sku || ''}
-                    onChange={(e) => updateVariant(index, 'sku', e.target.value)}
+                    value={size.sku}
+                    onChange={(e) => updateSize(index, 'sku', e.target.value)}
                     className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="SKU-001"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-black mb-1">
-                    Stock *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={variant.inventory}
-                    onChange={(e) =>
-                      updateVariant(index, 'inventory', parseInt(e.target.value) || 0)
-                    }
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="0"
+                    placeholder="SKU-M"
                   />
                 </div>
 
@@ -484,26 +606,8 @@ export default function ProductForm({ productId }: ProductFormProps) {
                   <input
                     type="number"
                     step="0.01"
-                    value={variant.price || ''}
-                    onChange={(e) =>
-                      updateVariant(index, 'price', e.target.value ? parseFloat(e.target.value) : undefined)
-                    }
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-black mb-1">
-                    Peso (kg)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={variant.weight || ''}
-                    onChange={(e) =>
-                      updateVariant(index, 'weight', e.target.value ? parseFloat(e.target.value) : undefined)
-                    }
+                    value={size.priceExtra}
+                    onChange={(e) => updateSize(index, 'priceExtra', e.target.value)}
                     className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
                   />
@@ -513,20 +617,216 @@ export default function ProductForm({ productId }: ProductFormProps) {
               <div className="mt-3 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => removeVariant(index)}
-                  className="text-red-600 hover:text-red-700 text-sm"
+                  onClick={() => removeSize(index)}
+                  className="text-red-600 hover:text-red-700 text-sm flex items-center gap-1"
                 >
-                  Remover variante
+                  <Trash2 className="w-4 h-4" /> Remover
                 </button>
               </div>
             </div>
           ))}
         </div>
 
-        {formData.variants.length === 0 && (
-          <p className="text-black text-center py-4">
-            Nenhuma variante adicionada. Produtos sem variantes usam apenas o preço base.
+        {formData.sizes.length === 0 && (
+          <p className="text-black/60 text-center py-4">
+            Adicione pelo menos um tamanho.
           </p>
+        )}
+      </div>
+
+      {/* Colors */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-black">Cores</h2>
+          <Button type="button" onClick={addColor} size="sm">
+            <Plus className="w-4 h-4 mr-1" /> Adicionar Cor
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          {formData.colors.map((color, variantIndex) => (
+            <div key={variantIndex} className="p-4 border rounded-md bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs font-medium text-black mb-1">
+                    Label *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={color.label}
+                    onChange={(e) => updateColor(variantIndex, 'label', e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: Azul e Branco"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-black mb-1">SKU</label>
+                  <input
+                    type="text"
+                    value={color.sku}
+                    onChange={(e) => updateColor(variantIndex, 'sku', e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="SKU-BLUE"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-black mb-1">
+                    Preço Extra (€)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={color.priceExtra}
+                    onChange={(e) => updateColor(variantIndex, 'priceExtra', e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-black mb-2">
+                  Cores (hex) *
+                </label>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {color.colors.map((hex, colorIndex) => (
+                    <div key={colorIndex} className="flex items-center gap-1">
+                      <input
+                        type="color"
+                        value={hex}
+                        onChange={(e) => updateColorInVariant(variantIndex, colorIndex, e.target.value)}
+                        className="w-10 h-10 border border-gray-300 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={hex}
+                        onChange={(e) => updateColorInVariant(variantIndex, colorIndex, e.target.value)}
+                        className="w-24 px-2 py-1.5 border border-gray-300 rounded text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {color.colors.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeColorFromVariant(variantIndex, colorIndex)}
+                          className="text-red-600 hover:text-red-700 p-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addColorToVariant(variantIndex)}
+                    className="px-2 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-300 rounded"
+                  >
+                    + Adicionar cor
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => removeColor(variantIndex)}
+                  className="text-red-600 hover:text-red-700 text-sm flex items-center gap-1"
+                >
+                  <Trash2 className="w-4 h-4" /> Remover
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {formData.colors.length === 0 && (
+          <p className="text-black/60 text-center py-4">
+            Adicione pelo menos uma cor.
+          </p>
+        )}
+      </div>
+
+      {/* Stock */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-black">Stock</h2>
+          <Button
+            type="button"
+            onClick={generateStockItems}
+            size="sm"
+            disabled={formData.sizes.length === 0 || formData.colors.length === 0}
+          >
+            <RefreshCw className="w-4 h-4 mr-1" /> Gerar Combinações
+          </Button>
+        </div>
+
+        {formData.sizes.length === 0 || formData.colors.length === 0 ? (
+          <p className="text-black/60 text-center py-4">
+            Adicione tamanhos e cores primeiro para poder definir o stock.
+          </p>
+        ) : formData.stockItems.length === 0 ? (
+          <p className="text-black/60 text-center py-4">
+            Clique em "Gerar Combinações" para criar os itens de stock.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-2 text-black font-medium">Tamanho</th>
+                  <th className="text-left py-2 px-2 text-black font-medium">Cor</th>
+                  <th className="text-left py-2 px-2 text-black font-medium">Quantidade</th>
+                  <th className="text-left py-2 px-2 text-black font-medium">SKU</th>
+                </tr>
+              </thead>
+              <tbody>
+                {formData.stockItems.map((item, index) => {
+                  const sizeLabel = formData.sizes.find(s => s.value === item.sizeValue)?.label || item.sizeValue
+                  const colorLabel = formData.colors.find(c => c.colors.join(',') === item.colorValue)?.label || item.colorValue
+                  const colorHexes = item.colorValue.split(',')
+
+                  return (
+                    <tr key={index} className="border-b">
+                      <td className="py-2 px-2 text-black">{sizeLabel}</td>
+                      <td className="py-2 px-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-1">
+                            {colorHexes.map((hex, i) => (
+                              <div
+                                key={i}
+                                className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                                style={{ backgroundColor: hex }}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-black">{colorLabel}</span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={item.quantity}
+                          onChange={(e) => updateStockItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                          className="w-20 px-2 py-1 border border-gray-300 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="py-2 px-2">
+                        <input
+                          type="text"
+                          value={item.sku}
+                          onChange={(e) => updateStockItem(index, 'sku', e.target.value)}
+                          className="w-32 px-2 py-1 border border-gray-300 rounded text-black placeholder:text-black/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="SKU"
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

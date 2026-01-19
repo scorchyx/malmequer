@@ -327,13 +327,13 @@ async function getProductAnalytics(startDate: Date) {
       const products = await prisma.product.findMany({
         where: { id: { in: productIds } },
         include: {
-          variants: true,
+          stockItems: true,
         },
       })
 
       return results.map(result => {
         const product = products.find(p => p.id === result.productId)
-        const totalInventory = product?.variants.reduce((sum, v) => sum + v.inventory, 0) ?? 0
+        const totalInventory = product?.stockItems.reduce((sum: number, si: any) => sum + si.quantity, 0) ?? 0
         return {
           id: product?.id ?? '',
           name: product?.name ?? '',
@@ -345,13 +345,13 @@ async function getProductAnalytics(startDate: Date) {
       })
     }),
 
-    // Low stock products (products with total variant inventory < 10)
+    // Low stock products (products with total stockItem quantity < 10)
     prisma.product.findMany({
       where: {
         status: 'ACTIVE',
-        variants: {
+        stockItems: {
           some: {
-            inventory: { lt: 10 },
+            quantity: { lt: 10 },
           },
         },
       },
@@ -359,9 +359,9 @@ async function getProductAnalytics(startDate: Date) {
         id: true,
         name: true,
         price: true,
-        variants: {
+        stockItems: {
           select: {
-            inventory: true,
+            quantity: true,
           },
         },
       },

@@ -24,13 +24,29 @@ export async function POST(request: NextRequest) {
     if (user) {
       cartItems = await prisma.cartItem.findMany({
         where: { userId: user.id },
-        include: { product: true },
+        include: {
+          product: true,
+          stockItem: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
+        },
       })
     } else {
       const sessionId = getGuestSessionId(request)
       cartItems = await prisma.cartItem.findMany({
         where: { sessionId },
-        include: { product: true },
+        include: {
+          product: true,
+          stockItem: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
+        },
       })
     }
 
@@ -41,9 +57,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate totals
+    // Calculate totals (including price extras from variants)
     const subtotalAmount = cartItems.reduce(
-      (sum, item) => sum + item.quantity * Number(item.product.price),
+      (sum, item) => {
+        let price = Number(item.product.price)
+        if (item.stockItem?.sizeVariant?.priceExtra) {
+          price += Number(item.stockItem.sizeVariant.priceExtra)
+        }
+        if (item.stockItem?.colorVariant?.priceExtra) {
+          price += Number(item.stockItem.colorVariant.priceExtra)
+        }
+        return sum + item.quantity * price
+      },
       0,
     )
     const taxAmount = subtotalAmount * 0.23 // 23% IVA Portugal
@@ -107,12 +132,26 @@ export async function POST(request: NextRequest) {
         paymentStatus: 'PENDING',
         status: 'PENDING',
         items: {
-          create: cartItems.map((item) => ({
-            productId: item.productId,
-            name: item.product.name,
-            quantity: item.quantity,
-            price: item.product.price.toNumber(),
-          })),
+          create: cartItems.map((item) => {
+            let price = Number(item.product.price)
+            if (item.stockItem?.sizeVariant?.priceExtra) {
+              price += Number(item.stockItem.sizeVariant.priceExtra)
+            }
+            if (item.stockItem?.colorVariant?.priceExtra) {
+              price += Number(item.stockItem.colorVariant.priceExtra)
+            }
+            return {
+              productId: item.productId,
+              name: item.product.name,
+              quantity: item.quantity,
+              price,
+              stockItemId: item.stockItemId || null,
+              sizeLabel: item.stockItem?.sizeVariant?.label || null,
+              sizeValue: item.stockItem?.sizeVariant?.value || null,
+              colorLabel: item.stockItem?.colorVariant?.label || null,
+              colorValue: item.stockItem?.colorVariant?.value || null,
+            }
+          }),
         },
       },
       include: {

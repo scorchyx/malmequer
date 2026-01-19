@@ -118,7 +118,7 @@ async function getRelatedProducts(params: RecommendationParams) {
   return await prisma.product.findMany({
     where: {
       status: 'ACTIVE',
-      variants: { some: { inventory: { gt: 0 } } },
+      stockItems: { some: { quantity: { gt: 0 } } },
       id: { not: params.productId },
       categoryId: baseProduct.categoryId,
       price: {
@@ -155,7 +155,7 @@ async function getRelatedProducts(params: RecommendationParams) {
 async function getPopularProducts(params: RecommendationParams) {
   const where: any = {
     status: 'ACTIVE',
-    variants: { some: { inventory: { gt: 0 } } },
+    stockItems: { some: { quantity: { gt: 0 } } },
   }
 
   if (params.categoryId) {
@@ -195,7 +195,7 @@ async function getTrendingProducts(params: RecommendationParams) {
 
   const where: any = {
     status: 'ACTIVE',
-    variants: { some: { inventory: { gt: 0 } } },
+    stockItems: { some: { quantity: { gt: 0 } } },
   }
 
   if (params.categoryId) {
@@ -303,7 +303,7 @@ async function getPersonalizedRecommendations(params: RecommendationParams) {
   return await prisma.product.findMany({
     where: {
       status: 'ACTIVE',
-      variants: { some: { inventory: { gt: 0 } } },
+      stockItems: { some: { quantity: { gt: 0 } } },
       id: { notIn: Array.from(purchasedProductIds) }, // Exclude already purchased
       categoryId: { in: Array.from(purchasedCategories) },
     },
@@ -468,7 +468,7 @@ async function getSimilarUsersRecommendations(params: RecommendationParams) {
     where: {
       id: { in: Array.from(recommendedProductIds) },
       status: 'ACTIVE',
-      variants: { some: { inventory: { gt: 0 } } },
+      stockItems: { some: { quantity: { gt: 0 } } },
     },
     select: {
       id: true,

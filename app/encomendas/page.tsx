@@ -133,7 +133,7 @@ export default function OrdersPage() {
                             <span className="text-gray-600">
                               {item.quantity}x {item.name}
                             </span>
-                            <span className="text-gray-900">€{item.price.toFixed(2)}</span>
+                            <span className="text-gray-900">€{Number(item.price).toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
@@ -141,7 +141,7 @@ export default function OrdersPage() {
 
                     <div className="flex justify-between items-center pt-4 border-t border-gray-200">
                       <div className="text-lg font-bold text-gray-900">
-                        Total: €{order.totalAmount.toFixed(2)}
+                        Total: €{Number(order.totalAmount).toFixed(2)}
                       </div>
                       <Link href={`/encomendas/${order.orderNumber}`}>
                         <Button variant="outline" size="sm">

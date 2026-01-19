@@ -109,7 +109,10 @@ async function handleSuccessfulPayment(paymentIntent: any) {
       where: { id: orderId! },
       include: {
         items: {
-          include: { product: true },
+          include: {
+            product: true,
+            stockItem: true,
+          },
         },
         user: true,
       },
@@ -117,8 +120,17 @@ async function handleSuccessfulPayment(paymentIntent: any) {
 
     if (order) {
       for (const item of order.items) {
-        // Note: Inventory updates now need to be handled at variant level
-        // This would need to be updated to decrement specific variant inventory
+        // Decrement stock from the specific StockItem
+        if (item.stockItemId) {
+          await prisma.stockItem.update({
+            where: { id: item.stockItemId },
+            data: {
+              quantity: {
+                decrement: item.quantity,
+              },
+            },
+          })
+        }
 
         // Log inventory change
         await prisma.inventoryLog.create({
@@ -246,9 +258,18 @@ async function handleChargeSucceeded(charge: any) {
       })
 
       if (order) {
-        // Note: Inventory updates now need to be handled at variant level
         for (const item of order.items) {
-          // This would need to be updated to decrement specific variant inventory
+          // Decrement stock from the specific StockItem
+          if (item.stockItemId) {
+            await prisma.stockItem.update({
+              where: { id: item.stockItemId },
+              data: {
+                quantity: {
+                  decrement: item.quantity,
+                },
+              },
+            })
+          }
 
           await prisma.inventoryLog.create({
             data: {

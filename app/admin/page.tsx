@@ -167,7 +167,7 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-ink">€{order.totalAmount.toFixed(2)}</p>
+                    <p className="font-semibold text-ink">€{Number(order.totalAmount).toFixed(2)}</p>
                     <span className="text-xs bg-malmequer-gold/10 text-malmequer-amber px-2 py-1">
                       {order.status}
                     </span>

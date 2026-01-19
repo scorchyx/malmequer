@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { productId, quantity = 1 } = await request.json()
+    const { productId, stockItemId, quantity = 1 } = await request.json()
 
     if (!productId) {
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       include: {
         product: {
           include: {
-            variants: true,
+            stockItems: true,
           },
         },
       },
@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check inventory across all variants
-    const totalInventory = wishlistItem.product.variants.reduce((sum, variant) => sum + variant.inventory, 0)
+    // Check inventory
+    const totalInventory = wishlistItem.product.stockItems.reduce((sum: number, si: { quantity: number }) => sum + si.quantity, 0)
     if (totalInventory < quantity) {
       return NextResponse.json(
         { error: 'Insufficient inventory' },
@@ -66,18 +66,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // If stockItemId provided, verify stock
+    if (stockItemId) {
+      const stockItem = wishlistItem.product.stockItems.find(si => si.id === stockItemId)
+      if (!stockItem || stockItem.quantity < quantity) {
+        return NextResponse.json(
+          { error: 'Selected variant has insufficient stock' },
+          { status: 400 },
+        )
+      }
+    }
+
     // Start transaction to move from wishlist to cart
     const result = await prisma.$transaction(async (tx) => {
-      // Check if item already exists in cart (base product, no variant)
-      const variantId = null
-      const existingCartItem = await tx.cartItem.findUnique({
+      // Check if item already exists in cart
+      const existingCartItem = await tx.cartItem.findFirst({
         where: {
-          userId_productId_variantId: {
-            userId: user.id,
-            productId,
-            // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
-            variantId,
-          },
+          userId: user.id,
+          productId,
+          stockItemId: stockItemId || null,
         },
       })
 
@@ -93,7 +100,12 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
-            variant: true,
+            stockItem: {
+              include: {
+                sizeVariant: true,
+                colorVariant: true,
+              },
+            },
           },
         })
       } else {
@@ -102,7 +114,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: user.id,
             productId,
-            variantId,
+            stockItemId: stockItemId || null,
             quantity,
           },
           include: {
@@ -111,7 +123,12 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
-            variant: true,
+            stockItem: {
+              include: {
+                sizeVariant: true,
+                colorVariant: true,
+              },
+            },
           },
         })
       }

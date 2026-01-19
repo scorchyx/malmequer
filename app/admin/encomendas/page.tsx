@@ -159,7 +159,7 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-semibold text-black">
-                      €{order.totalAmount.toFixed(2)}
+                      €{Number(order.totalAmount).toFixed(2)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

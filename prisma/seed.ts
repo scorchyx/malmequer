@@ -2,7 +2,6 @@
 import { PrismaClient } from '@prisma/client'
 import seedAdvancedFeatures from './seed-advanced-features.js'
 import seedPaymentMethods from './seed-payment-methods.js'
-import seedVariants from './seed-variants.js'
 
 const prisma = new PrismaClient()
 
@@ -49,9 +48,6 @@ async function main() {
   // Run additional seeds
   console.log('\n🔧 Running payment methods seed...')
   await seedPaymentMethods()
-
-  console.log('\n👗 Running variants seed...')
-  await seedVariants()
 
   console.log('\n🚀 Running advanced features seed...')
   await seedAdvancedFeatures()

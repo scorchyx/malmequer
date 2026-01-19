@@ -23,8 +23,8 @@ export async function GET(
               include: {
                 images: { take: 1, orderBy: { order: 'asc' } },
                 category: { select: { name: true } },
-                variants: {
-                  select: { inventory: true },
+                stockItems: {
+                  select: { quantity: true },
                 },
               },
             },
@@ -51,7 +51,7 @@ export async function GET(
             ...item.product,
             price: Number(item.product.price),
             comparePrice: item.product.comparePrice ? Number(item.product.comparePrice) : null,
-            totalInventory: item.product.variants.reduce((sum, variant) => sum + variant.inventory, 0),
+            totalInventory: item.product.stockItems.reduce((sum: number, si: { quantity: number }) => sum + si.quantity, 0),
           },
         })),
       },

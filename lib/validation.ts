@@ -44,20 +44,29 @@ export const createProductSchema = z.object({
   description: z.string().optional(),
   price: z.number().positive('Price must be positive').max(999999.99, 'Price too high'),
   comparePrice: z.number().positive().optional(),
-  sku: z.string().max(50, 'SKU too long').optional(),
-  inventory: z.number().int().min(0, 'Inventory cannot be negative'),
   weight: z.number().positive().optional(),
   categoryId: cuidSchema,
   images: z.array(z.object({
     url: z.string().url('Invalid image URL'),
     alt: z.string().max(200, 'Alt text too long').optional(),
   })).optional(),
-  variants: z.array(z.object({
-    name: z.string().min(1, 'Variant name required').max(50, 'Variant name too long'),
-    value: z.string().min(1, 'Variant value required').max(50, 'Variant value too long'),
-    price: z.number().positive().optional(),
+  sizes: z.array(z.object({
+    label: z.string().min(1, 'Size label required').max(50, 'Size label too long'),
+    value: z.string().min(1, 'Size value required').max(50, 'Size value too long'),
     sku: z.string().max(50, 'SKU too long').optional(),
-    inventory: z.number().int().min(0, 'Inventory cannot be negative'),
+    priceExtra: z.number().min(0).optional(),
+  })).optional(),
+  colors: z.array(z.object({
+    label: z.string().min(1, 'Color label required').max(50, 'Color label too long'),
+    value: z.string().min(1, 'Color value required'), // Hex codes comma-separated
+    sku: z.string().max(50, 'SKU too long').optional(),
+    priceExtra: z.number().min(0).optional(),
+  })).optional(),
+  stockItems: z.array(z.object({
+    sizeValue: z.string().min(1),
+    colorValue: z.string().min(1),
+    quantity: z.number().int().min(0, 'Quantity cannot be negative'),
+    sku: z.string().max(50, 'SKU too long').optional(),
   })).optional(),
 })
 
@@ -95,7 +104,7 @@ export const createAddressSchema = z.object({
 // Cart validation schemas
 export const addToCartSchema = z.object({
   productId: cuidSchema,
-  variantId: cuidSchema.optional(),
+  stockItemId: cuidSchema.optional(),
   quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too high'),
 })
 

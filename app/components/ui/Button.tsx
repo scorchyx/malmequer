@@ -18,7 +18,7 @@ export default function Button({
 }: ButtonProps) {
   const baseStyles = `
     font-body font-medium transition-all duration-200 ease-out
-    disabled:opacity-50 disabled:cursor-not-allowed
+    disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer
     inline-flex items-center justify-center gap-2
     uppercase tracking-wider text-sm
   `

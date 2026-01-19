@@ -174,7 +174,7 @@ export default function CartPage() {
                         </p>
                       )}
                       <p className="text-lg font-bold text-gray-900 mt-2">
-                        €{(item.variant?.price || item.product.price).toFixed(2)}
+                        €{Number(item.variant?.price || item.product.price).toFixed(2)}
                       </p>
                     </div>
 

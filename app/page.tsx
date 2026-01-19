@@ -85,26 +85,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        {/* Newsletter Section */}
-        <section className="py-12 sm:py-16 bg-cloud">
-          <div className="container-malmequer max-w-2xl mx-auto text-center">
-            <h2 className="font-display text-2xl sm:text-3xl mb-3 sm:mb-4 text-ink">Fique por Dentro</h2>
-            <p className="text-sm sm:text-base text-stone mb-6 sm:mb-8">
-              Subscreva a nossa newsletter e receba novidades, promoções exclusivas e dicas de estilo
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="O seu email"
-                className="flex-1 px-5 sm:px-6 py-3 border border-mist bg-white text-ink placeholder:text-mist focus:border-ink focus:outline-none text-base touch-manipulation transition-colors duration-200"
-              />
-              <button className="px-6 sm:px-8 py-3 bg-ink text-white uppercase tracking-wider text-sm font-medium active:bg-stone sm:hover:bg-stone transition-all touch-manipulation">
-                Subscrever
-              </button>
-            </div>
-          </div>
-        </section>
       </main>
 
       <Footer />

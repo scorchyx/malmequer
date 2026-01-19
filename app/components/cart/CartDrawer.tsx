@@ -5,6 +5,20 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
+interface ProductVariant {
+  id: string
+  type: 'COR' | 'TAMANHO'
+  label: string
+  value: string
+  priceExtra: number | null
+}
+
+interface StockItem {
+  id: string
+  sizeVariant: ProductVariant
+  colorVariant: ProductVariant
+}
+
 interface CartItem {
   id: string
   quantity: number
@@ -15,12 +29,7 @@ interface CartItem {
     price: number
     images: Array<{ url: string; alt: string }>
   }
-  variant?: {
-    id: string
-    name: string
-    value: string
-    price: number | null
-  } | null
+  stockItem?: StockItem | null
 }
 
 interface CartData {
@@ -55,22 +64,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   }
 
   // Remove item from cart
-  const removeItem = async (productId: string, variantId: string | null) => {
+  const removeItem = async (productId: string, stockItemId: string | null) => {
     try {
-      console.log('Removing item:', { productId, variantId })
-
       const params = new URLSearchParams({ productId })
-      if (variantId) {
-        params.append('variantId', variantId)
+      if (stockItemId) {
+        params.append('stockItemId', stockItemId)
       }
-
-      console.log('DELETE URL:', `/api/cart?${params.toString()}`)
 
       const response = await fetch(`/api/cart?${params.toString()}`, {
         method: 'DELETE',
       })
-
-      console.log('DELETE response status:', response.status)
 
       if (response.ok) {
         // Refresh cart data
@@ -161,8 +164,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             ) : (
               <div className="space-y-4">
                 {cartItems.map((item) => {
-                  const itemPrice = item.variant?.price || item.product.price
-                  const itemTotal = Number(itemPrice) * item.quantity
+                  // Calculate price with extras
+                  let itemPrice = Number(item.product.price)
+                  if (item.stockItem?.sizeVariant?.priceExtra) {
+                    itemPrice += Number(item.stockItem.sizeVariant.priceExtra)
+                  }
+                  if (item.stockItem?.colorVariant?.priceExtra) {
+                    itemPrice += Number(item.stockItem.colorVariant.priceExtra)
+                  }
+                  const itemTotal = itemPrice * item.quantity
 
                   return (
                     <div key={item.id} className="flex gap-4 border-b border-cloud pb-4">
@@ -183,14 +193,29 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         <h3 className="text-sm font-medium text-ink">
                           {item.product.name}
                         </h3>
-                        {item.variant && (
-                          <p className="text-xs text-mist mt-1">
-                            {item.variant.name}: {item.variant.value}
-                          </p>
+                        {item.stockItem && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-mist">
+                              {item.stockItem.sizeVariant.label}
+                            </span>
+                            <span className="text-xs text-cloud">•</span>
+                            <div className="flex items-center gap-1">
+                              {item.stockItem.colorVariant.value.split(',').map((hex, i) => (
+                                <span
+                                  key={i}
+                                  className="w-3 h-3 rounded-full border border-cloud"
+                                  style={{ backgroundColor: hex }}
+                                />
+                              ))}
+                              <span className="text-xs text-mist ml-1">
+                                {item.stockItem.colorVariant.label}
+                              </span>
+                            </div>
+                          </div>
                         )}
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-sm text-stone">
-                            {item.quantity} x €{Number(itemPrice).toFixed(2)}
+                            {item.quantity} x €{itemPrice.toFixed(2)}
                           </p>
                           <p className="text-sm font-semibold text-ink">
                             €{itemTotal.toFixed(2)}
@@ -200,7 +225,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                       {/* Remove button */}
                       <button
-                        onClick={() => removeItem(item.product.id, item.variant?.id || null)}
+                        onClick={() => removeItem(item.product.id, item.stockItem?.id || null)}
                         className="text-mist hover:text-error transition-colors duration-200"
                         aria-label="Remover item"
                       >

@@ -104,9 +104,9 @@ export async function GET(request: NextRequest) {
 
     // Stock filter
     if (filters.inStock) {
-      where.variants = {
+      where.stockItems = {
         some: {
-          inventory: {
+          quantity: {
             gt: 0,
           },
         },
@@ -179,12 +179,16 @@ export async function GET(request: NextRequest) {
               alt: true,
             },
           },
-          variants: {
+          stockItems: {
             select: {
               id: true,
-              name: true,
-              price: true,
-              inventory: true,
+              quantity: true,
+              sizeVariant: {
+                select: { label: true },
+              },
+              colorVariant: {
+                select: { label: true },
+              },
             },
           },
           reviews: {
@@ -241,13 +245,15 @@ export async function GET(request: NextRequest) {
     // Calculate average ratings
     const enrichedProducts = products.map(product => {
       const avgRating = product.reviews.length > 0
-        ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
+        ? product.reviews.reduce((sum: number, review: { rating: number }) => sum + review.rating, 0) / product.reviews.length
         : 0
 
       const isOnSale = product.comparePrice && Number(product.comparePrice) > Number(product.price)
       const discountPercentage = isOnSale
         ? Math.round(((Number(product.comparePrice) - Number(product.price)) / Number(product.comparePrice)) * 100)
         : 0
+
+      const totalInventory = product.stockItems.reduce((sum: number, si: { quantity: number }) => sum + si.quantity, 0)
 
       return {
         id: product.id,
@@ -258,15 +264,15 @@ export async function GET(request: NextRequest) {
         comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
         isOnSale,
         discountPercentage,
-        inventory: 0, // Will be calculated from variants
-        inStock: product.variants.some(v => v.inventory > 0),
+        inventory: totalInventory,
+        inStock: totalInventory > 0,
         category: product.category,
         images: product.images,
-        variants: product.variants.map(v => ({
-          id: v.id,
-          name: v.name,
-          price: Number(v.price),
-          inventory: v.inventory,
+        stockItems: product.stockItems.map(si => ({
+          id: si.id,
+          quantity: si.quantity,
+          sizeLabel: si.sizeVariant?.label,
+          colorLabel: si.colorVariant?.label,
         })),
         rating: {
           average: Math.round(avgRating * 10) / 10,

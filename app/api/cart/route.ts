@@ -4,18 +4,24 @@ import { cache, CacheKeys, CacheTTL } from '@/lib/cache'
 import { getGuestSessionId, setGuestSessionCookie } from '@/lib/guest-session'
 import { log } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
-import { validateRequestBody, addToCartSchema } from '@/lib/validation'
+import { z } from 'zod'
+
+// Updated schema for new stock system
+const addToCartSchema = z.object({
+  productId: z.string().min(1),
+  stockItemId: z.string().min(1).optional(),
+  quantity: z.number().int().positive().default(1),
+})
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
-    const response = NextResponse.json({}) // Initialize response for cookie setting
+    const response = NextResponse.json({})
 
     let cartItems
     let cacheKey
 
     if (user) {
-      // Authenticated user cart
       cacheKey = CacheKeys.userCart(user.id)
       const cachedCart = await cache.get(cacheKey)
       if (cachedCart) {
@@ -31,15 +37,18 @@ export async function GET(request: NextRequest) {
               category: true,
             },
           },
-          variant: true,
+          stockItem: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       })
     } else {
-      // Guest user cart
       const sessionId = getGuestSessionId(request)
 
-      // Set session cookie if new guest
       if (!request.cookies.get('guest_session_id')?.value) {
         setGuestSessionCookie(response, sessionId)
       }
@@ -63,16 +72,28 @@ export async function GET(request: NextRequest) {
               category: true,
             },
           },
-          variant: true,
+          stockItem: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       })
     }
 
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.quantity * Number(item.product.price),
-      0,
-    )
+    // Calculate total with price extras from variants
+    const total = cartItems.reduce((sum, item) => {
+      let price = Number(item.product.price)
+      if (item.stockItem?.sizeVariant?.priceExtra) {
+        price += Number(item.stockItem.sizeVariant.priceExtra)
+      }
+      if (item.stockItem?.colorVariant?.priceExtra) {
+        price += Number(item.stockItem.colorVariant.priceExtra)
+      }
+      return sum + item.quantity * price
+    }, 0)
 
     const result = {
       items: cartItems,
@@ -80,12 +101,10 @@ export async function GET(request: NextRequest) {
       count: cartItems.reduce((sum, item) => sum + item.quantity, 0),
     }
 
-    // Cache for 2 minutes
     await cache.set(cacheKey, result, CacheTTL.SHORT * 2)
 
     const finalResponse = NextResponse.json(result)
 
-    // Ensure guest session cookie is set for new guests
     if (!user && !request.cookies.get('guest_session_id')?.value) {
       setGuestSessionCookie(finalResponse, getGuestSessionId(request))
     }
@@ -106,31 +125,50 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-    // Validate request body
-    const validation = await validateRequestBody(addToCartSchema)(request)
+    const body = await request.json()
+    const validation = addToCartSchema.safeParse(body)
     if (!validation.success) {
-      log.warn('Cart validation failed', { validation })
-      return validation.response
+      log.warn('Cart validation failed', { errors: validation.error.issues })
+      return NextResponse.json(
+        { error: 'Invalid request', details: validation.error.issues },
+        { status: 400 },
+      )
     }
 
-    const { productId, variantId: rawVariantId, quantity } = validation.data
+    const { productId, stockItemId, quantity } = validation.data
 
-    log.info('Adding to cart', { productId, variantId: rawVariantId, quantity, userId: user?.id })
-    const variantId = rawVariantId ?? null
+    log.info('Adding to cart', { productId, stockItemId, quantity, userId: user?.id })
+
+    // Validate stock availability if stockItemId provided
+    if (stockItemId) {
+      const stockItem = await prisma.stockItem.findUnique({
+        where: { id: stockItemId },
+      })
+
+      if (!stockItem) {
+        return NextResponse.json(
+          { error: 'Stock item not found' },
+          { status: 404 },
+        )
+      }
+
+      if (stockItem.quantity < quantity) {
+        return NextResponse.json(
+          { error: 'Insufficient stock', available: stockItem.quantity },
+          { status: 400 },
+        )
+      }
+    }
 
     let cartItem
     let cacheKey
 
     if (user) {
-      // Authenticated user cart
-      const existingItem = await prisma.cartItem.findUnique({
+      const existingItem = await prisma.cartItem.findFirst({
         where: {
-          userId_productId_variantId: {
-            userId: user.id,
-            productId,
-            // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
-            variantId,
-          },
+          userId: user.id,
+          productId,
+          stockItemId: stockItemId || null,
         },
       })
 
@@ -144,7 +182,12 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
-            variant: true,
+            stockItem: {
+              include: {
+                sizeVariant: true,
+                colorVariant: true,
+              },
+            },
           },
         })
       } else {
@@ -152,7 +195,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: user.id,
             productId,
-            variantId,
+            stockItemId: stockItemId || null,
             quantity,
           },
           include: {
@@ -161,7 +204,12 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
-            variant: true,
+            stockItem: {
+              include: {
+                sizeVariant: true,
+                colorVariant: true,
+              },
+            },
           },
         })
       }
@@ -173,20 +221,16 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         entityType: 'cart_item',
         entityId: cartItem.id,
-        details: { productId, variantId, quantity },
+        details: { productId, stockItemId, quantity },
       })
     } else {
-      // Guest user cart
       const sessionId = getGuestSessionId(request)
 
-      const existingItem = await prisma.cartItem.findUnique({
+      const existingItem = await prisma.cartItem.findFirst({
         where: {
-          sessionId_productId_variantId: {
-            sessionId,
-            productId,
-            // @ts-ignore - Prisma doesn't fully support nullable fields in unique constraints
-            variantId,
-          },
+          sessionId,
+          productId,
+          stockItemId: stockItemId || null,
         },
       })
 
@@ -200,7 +244,12 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
-            variant: true,
+            stockItem: {
+              include: {
+                sizeVariant: true,
+                colorVariant: true,
+              },
+            },
           },
         })
       } else {
@@ -208,7 +257,7 @@ export async function POST(request: NextRequest) {
           data: {
             sessionId,
             productId,
-            variantId,
+            stockItemId: stockItemId || null,
             quantity,
           },
           include: {
@@ -217,7 +266,12 @@ export async function POST(request: NextRequest) {
                 images: { take: 1, orderBy: { order: 'asc' } },
               },
             },
-            variant: true,
+            stockItem: {
+              include: {
+                sizeVariant: true,
+                colorVariant: true,
+              },
+            },
           },
         })
       }
@@ -229,16 +283,14 @@ export async function POST(request: NextRequest) {
         sessionId,
         entityType: 'cart_item',
         entityId: cartItem.id,
-        details: { productId, variantId, quantity },
+        details: { productId, stockItemId, quantity },
       })
     }
 
-    // Invalidate cart cache
     await cache.del(cacheKey)
 
     const response = NextResponse.json(cartItem, { status: 201 })
 
-    // Set guest session cookie if needed
     if (!user && !request.cookies.get('guest_session_id')?.value) {
       setGuestSessionCookie(response, getGuestSessionId(request))
     }
@@ -264,11 +316,11 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const productId = searchParams.get('productId')
-    const variantId = searchParams.get('variantId')
+    const stockItemId = searchParams.get('stockItemId')
 
     log.info('DELETE cart request', {
       productId,
-      variantId,
+      stockItemId,
       userId: user?.id,
     })
 
@@ -283,8 +335,6 @@ export async function DELETE(request: NextRequest) {
     let cacheKey
 
     if (user) {
-      // Authenticated user cart
-      // Find cart item matching productId and variantId (or null)
       const items = await prisma.cartItem.findMany({
         where: {
           userId: user.id,
@@ -292,7 +342,12 @@ export async function DELETE(request: NextRequest) {
         },
         include: {
           product: true,
-          variant: true,
+          stockItem: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
         },
       })
 
@@ -303,23 +358,14 @@ export async function DELETE(request: NextRequest) {
         items: items.map(i => ({
           id: i.id,
           productId: i.productId,
-          variantId: i.variantId,
+          stockItemId: i.stockItemId,
           quantity: i.quantity,
         })),
       })
 
-      // Filter by variantId (handle null case)
       cartItem = items.find(item =>
-        variantId ? item.variantId === variantId : item.variantId === null
+        stockItemId ? item.stockItemId === stockItemId : item.stockItemId === null
       )
-
-      log.info('Filtered cart item', {
-        searchVariantId: variantId,
-        foundItem: cartItem ? {
-          id: cartItem.id,
-          variantId: cartItem.variantId,
-        } : null,
-      })
 
       cacheKey = CacheKeys.userCart(user.id)
 
@@ -329,14 +375,12 @@ export async function DELETE(request: NextRequest) {
           userId: user.id,
           entityType: 'cart_item',
           entityId: cartItem.id,
-          details: { productId, variantId, productName: cartItem.product.name },
+          details: { productId, stockItemId, productName: cartItem.product.name },
         })
       }
     } else {
-      // Guest user cart
       const sessionId = getGuestSessionId(request)
 
-      // Find cart item matching productId and variantId (or null)
       const items = await prisma.cartItem.findMany({
         where: {
           sessionId,
@@ -344,7 +388,12 @@ export async function DELETE(request: NextRequest) {
         },
         include: {
           product: true,
-          variant: true,
+          stockItem: {
+            include: {
+              sizeVariant: true,
+              colorVariant: true,
+            },
+          },
         },
       })
 
@@ -355,23 +404,14 @@ export async function DELETE(request: NextRequest) {
         items: items.map(i => ({
           id: i.id,
           productId: i.productId,
-          variantId: i.variantId,
+          stockItemId: i.stockItemId,
           quantity: i.quantity,
         })),
       })
 
-      // Filter by variantId (handle null case)
       cartItem = items.find(item =>
-        variantId ? item.variantId === variantId : item.variantId === null
+        stockItemId ? item.stockItemId === stockItemId : item.stockItemId === null
       )
-
-      log.info('Filtered cart item', {
-        searchVariantId: variantId,
-        foundItem: cartItem ? {
-          id: cartItem.id,
-          variantId: cartItem.variantId,
-        } : null,
-      })
 
       cacheKey = `guest_cart:${sessionId}`
 
@@ -381,7 +421,7 @@ export async function DELETE(request: NextRequest) {
           sessionId,
           entityType: 'cart_item',
           entityId: cartItem.id,
-          details: { productId, variantId, productName: cartItem.product.name },
+          details: { productId, stockItemId, productName: cartItem.product.name },
         })
       }
     }
@@ -389,7 +429,7 @@ export async function DELETE(request: NextRequest) {
     if (!cartItem) {
       log.warn('Cart item not found', {
         productId,
-        variantId,
+        stockItemId,
         userId: user?.id,
       })
       return NextResponse.json(
@@ -402,7 +442,6 @@ export async function DELETE(request: NextRequest) {
       where: { id: cartItem.id },
     })
 
-    // Invalidate cart cache
     await cache.del(cacheKey)
 
     const response = NextResponse.json(
@@ -410,7 +449,6 @@ export async function DELETE(request: NextRequest) {
       { status: 200 },
     )
 
-    // Set guest session cookie if needed
     if (!user && !request.cookies.get('guest_session_id')?.value) {
       setGuestSessionCookie(response, getGuestSessionId(request))
     }
