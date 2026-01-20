@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { verifyEmailToken } from '@/lib/verification'
+import { renderSimpleWelcomeEmail } from '@/lib/email-templates-new'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,35 +25,13 @@ export async function POST(request: NextRequest) {
 
       if (user) {
         // Send welcome email now that email is verified
-        const welcomeHtml = `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Welcome to Malmequer</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px; margin-bottom: 30px;">
-                <h1 style="color: white; margin: 0;">Welcome to Malmequer! 🌼</h1>
-              </div>
-              <div style="background: #f9f9f9; padding: 30px; border-radius: 10px;">
-                <h2>Hello ${user.name ?? 'User'}!</h2>
-                <p>Your email has been verified successfully! Welcome to our ecommerce platform.</p>
-                <p>You can now enjoy all the features of your account, including shopping, wishlist, and order tracking.</p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.NEXTAUTH_URL}" style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                    Start Shopping
-                  </a>
-                </div>
-                <p>Thank you for joining Malmequer!</p>
-              </div>
-            </body>
-          </html>
-        `
+        const welcomeHtml = renderSimpleWelcomeEmail({
+          userName: user.name ?? 'Cliente',
+        })
 
         sendEmail({
           to: user.email,
-          subject: 'Welcome to Malmequer! 🌼',
+          subject: 'Bem-vinda à Malmequer!',
           html: welcomeHtml,
         }).catch((error: any) =>
           console.error('Failed to send welcome email:', error),
@@ -100,90 +79,142 @@ export async function GET(request: NextRequest) {
 
       if (user) {
         // Send welcome email now that email is verified
-        const welcomeHtml = `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Welcome to Malmequer</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px; margin-bottom: 30px;">
-                <h1 style="color: white; margin: 0;">Welcome to Malmequer! 🌼</h1>
-              </div>
-              <div style="background: #f9f9f9; padding: 30px; border-radius: 10px;">
-                <h2>Hello ${user.name ?? 'User'}!</h2>
-                <p>Your email has been verified successfully! Welcome to our ecommerce platform.</p>
-                <p>You can now enjoy all the features of your account, including shopping, wishlist, and order tracking.</p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.NEXTAUTH_URL}" style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                    Start Shopping
-                  </a>
-                </div>
-                <p>Thank you for joining Malmequer!</p>
-              </div>
-            </body>
-          </html>
-        `
+        const welcomeHtml = renderSimpleWelcomeEmail({
+          userName: user.name ?? 'Cliente',
+        })
 
         sendEmail({
           to: user.email,
-          subject: 'Welcome to Malmequer! 🌼',
+          subject: 'Bem-vinda à Malmequer!',
           html: welcomeHtml,
         }).catch((error: any) =>
           console.error('Failed to send welcome email:', error),
         )
       }
 
-      // Return a simple HTML page with success message
+      // Return a simple HTML page with success message - following Malmequer design system
       const html = `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
-            <title>Email Verified - Malmequer</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Email Verificado - Malmequer</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
             <style>
+              :root {
+                --malmequer-gold: #E8A83E;
+                --malmequer-amber: #D4882A;
+                --ink: #1A1A1A;
+                --stone: #4A4A4A;
+                --mist: #8A8A8A;
+                --cloud: #F5F5F3;
+                --snow: #FAFAF9;
+                --white: #FFFFFF;
+                --success: #2D854C;
+                --error: #B83232;
+                --font-display: 'Cormorant Garamond', Georgia, serif;
+                --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
               body {
-                font-family: Arial, sans-serif;
+                font-family: var(--font-body);
                 line-height: 1.6;
-                color: #333;
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
+                color: var(--ink);
+                background-color: var(--snow);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+              }
+              .container {
+                max-width: 480px;
+                width: 100%;
                 text-align: center;
               }
-              .success {
-                background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-                color: white;
-                padding: 30px;
-                border-radius: 10px;
-                margin-bottom: 30px;
+              .logo {
+                font-family: var(--font-display);
+                font-size: 2rem;
+                font-weight: 500;
+                color: var(--malmequer-gold);
+                margin-bottom: 2rem;
               }
-              .content {
-                background: #f9f9f9;
-                padding: 30px;
-                border-radius: 10px;
+              .card {
+                background: var(--white);
+                padding: 3rem 2rem;
+                border: 1px solid var(--cloud);
+              }
+              .icon {
+                width: 64px;
+                height: 64px;
+                background-color: rgba(45, 133, 76, 0.1);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 1.5rem;
+              }
+              .icon svg {
+                width: 32px;
+                height: 32px;
+                color: var(--success);
+              }
+              h1 {
+                font-family: var(--font-display);
+                font-size: 1.75rem;
+                font-weight: 500;
+                color: var(--ink);
+                margin-bottom: 1rem;
+              }
+              p {
+                color: var(--stone);
+                font-size: 0.9375rem;
+                margin-bottom: 1rem;
               }
               .button {
-                background: #4CAF50;
-                color: white;
-                padding: 15px 30px;
-                text-decoration: none;
-                border-radius: 5px;
                 display: inline-block;
-                margin-top: 20px;
+                background: var(--ink);
+                color: var(--white);
+                padding: 0.875rem 2rem;
+                text-decoration: none;
+                font-size: 0.875rem;
+                font-weight: 500;
+                letter-spacing: 0.02em;
+                text-transform: uppercase;
+                margin-top: 1.5rem;
+                transition: background 200ms ease;
+              }
+              .button:hover {
+                background: var(--stone);
+              }
+              .footer {
+                margin-top: 2rem;
+                color: var(--mist);
+                font-size: 0.75rem;
               }
             </style>
           </head>
           <body>
-            <div class="success">
-              <h1>✅ Email Verified Successfully!</h1>
-            </div>
-            <div class="content">
-              <h2>Welcome to Malmequer!</h2>
-              <p>Your email has been verified successfully. You can now access all features of your account.</p>
-              <p>A welcome email has been sent to your inbox with more information.</p>
-              <a href="${process.env.NEXTAUTH_URL}" class="button">Go to Homepage</a>
+            <div class="container">
+              <div class="logo">Malmequer</div>
+              <div class="card">
+                <div class="icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h1>Email Verificado</h1>
+                <p>A tua conta foi verificada com sucesso. Já podes explorar toda a nossa coleção.</p>
+                <a href="${process.env.NEXTAUTH_URL}" class="button">Começar a Explorar</a>
+              </div>
+              <p class="footer">Malmequer - A tua loja online de confiança</p>
             </div>
           </body>
         </html>
@@ -193,61 +224,152 @@ export async function GET(request: NextRequest) {
         headers: { 'Content-Type': 'text/html' },
       })
     } else {
-      // Return error page
+      // Return error page - following Malmequer design system
       const html = `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
-            <title>Verification Failed - Malmequer</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Verificação Falhou - Malmequer</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
             <style>
+              :root {
+                --malmequer-gold: #E8A83E;
+                --malmequer-amber: #D4882A;
+                --ink: #1A1A1A;
+                --stone: #4A4A4A;
+                --mist: #8A8A8A;
+                --cloud: #F5F5F3;
+                --snow: #FAFAF9;
+                --white: #FFFFFF;
+                --success: #2D854C;
+                --error: #B83232;
+                --font-display: 'Cormorant Garamond', Georgia, serif;
+                --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
               body {
-                font-family: Arial, sans-serif;
+                font-family: var(--font-body);
                 line-height: 1.6;
-                color: #333;
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
+                color: var(--ink);
+                background-color: var(--snow);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+              }
+              .container {
+                max-width: 480px;
+                width: 100%;
                 text-align: center;
               }
-              .error {
-                background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-                color: white;
-                padding: 30px;
-                border-radius: 10px;
-                margin-bottom: 30px;
+              .logo {
+                font-family: var(--font-display);
+                font-size: 2rem;
+                font-weight: 500;
+                color: var(--malmequer-gold);
+                margin-bottom: 2rem;
               }
-              .content {
-                background: #f9f9f9;
-                padding: 30px;
-                border-radius: 10px;
+              .card {
+                background: var(--white);
+                padding: 3rem 2rem;
+                border: 1px solid var(--cloud);
+              }
+              .icon {
+                width: 64px;
+                height: 64px;
+                background-color: rgba(184, 50, 50, 0.1);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 1.5rem;
+              }
+              .icon svg {
+                width: 32px;
+                height: 32px;
+                color: var(--error);
+              }
+              h1 {
+                font-family: var(--font-display);
+                font-size: 1.75rem;
+                font-weight: 500;
+                color: var(--ink);
+                margin-bottom: 1rem;
+              }
+              p {
+                color: var(--stone);
+                font-size: 0.9375rem;
+                margin-bottom: 1rem;
+              }
+              .error-message {
+                background: rgba(184, 50, 50, 0.1);
+                color: var(--error);
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+                margin-bottom: 1rem;
+              }
+              ul {
+                text-align: left;
+                color: var(--stone);
+                font-size: 0.875rem;
+                margin: 1rem 0 1rem 1.5rem;
+              }
+              li {
+                margin-bottom: 0.5rem;
               }
               .button {
-                background: #2196F3;
-                color: white;
-                padding: 15px 30px;
-                text-decoration: none;
-                border-radius: 5px;
                 display: inline-block;
-                margin-top: 20px;
+                background: var(--ink);
+                color: var(--white);
+                padding: 0.875rem 2rem;
+                text-decoration: none;
+                font-size: 0.875rem;
+                font-weight: 500;
+                letter-spacing: 0.02em;
+                text-transform: uppercase;
+                margin-top: 1rem;
+                transition: background 200ms ease;
+              }
+              .button:hover {
+                background: var(--stone);
+              }
+              .footer {
+                margin-top: 2rem;
+                color: var(--mist);
+                font-size: 0.75rem;
               }
             </style>
           </head>
           <body>
-            <div class="error">
-              <h1>❌ Verification Failed</h1>
-            </div>
-            <div class="content">
-              <h2>Email Verification Error</h2>
-              <p><strong>Error:</strong> ${result.message}</p>
-              <p>This could happen if:</p>
-              <ul style="text-align: left;">
-                <li>The verification link has expired (tokens expire after 24 hours)</li>
-                <li>The link has already been used</li>
-                <li>The link is invalid</li>
-              </ul>
-              <p>If you need a new verification email, please contact support or try registering again.</p>
-              <a href="${process.env.NEXTAUTH_URL}" class="button">Go to Homepage</a>
+            <div class="container">
+              <div class="logo">Malmequer</div>
+              <div class="card">
+                <div class="icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h1>Verificação Falhou</h1>
+                <div class="error-message">${result.message}</div>
+                <p>Isto pode acontecer se:</p>
+                <ul>
+                  <li>O link de verificação expirou (válido por 24 horas)</li>
+                  <li>O link já foi utilizado</li>
+                  <li>O link é inválido</li>
+                </ul>
+                <p>Se precisas de um novo email de verificação, tenta registar novamente ou contacta o suporte.</p>
+                <a href="${process.env.NEXTAUTH_URL}" class="button">Ir para a Homepage</a>
+              </div>
+              <p class="footer">Malmequer - A tua loja online de confiança</p>
             </div>
           </body>
         </html>
@@ -266,12 +388,122 @@ export async function GET(request: NextRequest) {
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Verification Error - Malmequer</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Erro - Malmequer</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+          <style>
+            :root {
+              --malmequer-gold: #E8A83E;
+              --ink: #1A1A1A;
+              --stone: #4A4A4A;
+              --mist: #8A8A8A;
+              --cloud: #F5F5F3;
+              --snow: #FAFAF9;
+              --white: #FFFFFF;
+              --error: #B83232;
+              --font-display: 'Cormorant Garamond', Georgia, serif;
+              --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: var(--font-body);
+              line-height: 1.6;
+              color: var(--ink);
+              background-color: var(--snow);
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 1rem;
+            }
+            .container {
+              max-width: 480px;
+              width: 100%;
+              text-align: center;
+            }
+            .logo {
+              font-family: var(--font-display);
+              font-size: 2rem;
+              font-weight: 500;
+              color: var(--malmequer-gold);
+              margin-bottom: 2rem;
+            }
+            .card {
+              background: var(--white);
+              padding: 3rem 2rem;
+              border: 1px solid var(--cloud);
+            }
+            .icon {
+              width: 64px;
+              height: 64px;
+              background-color: rgba(184, 50, 50, 0.1);
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 1.5rem;
+            }
+            .icon svg {
+              width: 32px;
+              height: 32px;
+              color: var(--error);
+            }
+            h1 {
+              font-family: var(--font-display);
+              font-size: 1.75rem;
+              font-weight: 500;
+              color: var(--ink);
+              margin-bottom: 1rem;
+            }
+            p {
+              color: var(--stone);
+              font-size: 0.9375rem;
+              margin-bottom: 1rem;
+            }
+            .button {
+              display: inline-block;
+              background: var(--ink);
+              color: var(--white);
+              padding: 0.875rem 2rem;
+              text-decoration: none;
+              font-size: 0.875rem;
+              font-weight: 500;
+              letter-spacing: 0.02em;
+              text-transform: uppercase;
+              margin-top: 1rem;
+              transition: background 200ms ease;
+            }
+            .button:hover {
+              background: var(--stone);
+            }
+            .footer {
+              margin-top: 2rem;
+              color: var(--mist);
+              font-size: 0.75rem;
+            }
+          </style>
         </head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-          <h1>❌ Internal Server Error</h1>
-          <p>An error occurred while verifying your email. Please try again later.</p>
-          <a href="${process.env.NEXTAUTH_URL}" style="background: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">Go to Homepage</a>
+        <body>
+          <div class="container">
+            <div class="logo">Malmequer</div>
+            <div class="card">
+              <div class="icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h1>Erro Interno</h1>
+              <p>Ocorreu um erro ao verificar o teu email. Por favor, tenta novamente mais tarde.</p>
+              <a href="${process.env.NEXTAUTH_URL}" class="button">Ir para a Homepage</a>
+            </div>
+            <p class="footer">Malmequer - A tua loja online de confiança</p>
+          </div>
         </body>
       </html>
     `
