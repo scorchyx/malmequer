@@ -111,11 +111,14 @@ export async function GET(request: NextRequest) {
 
     return finalResponse
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
     log.error('Failed to fetch cart', {
-      error: error instanceof Error ? error : String(error),
+      error: errorMessage,
+      stack: errorStack,
     })
     return NextResponse.json(
-      { error: 'Failed to fetch cart' },
+      { error: 'Failed to fetch cart', details: errorMessage },
       { status: 500 },
     )
   }
