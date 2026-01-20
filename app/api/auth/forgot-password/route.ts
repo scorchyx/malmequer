@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     try {
       await NotificationService.sendPasswordReset(
         user.email,
-        user.name || 'User',
+        user.name || 'Utilizador',
         resetUrl,
         user.id,
       )
@@ -90,6 +90,10 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         details: { email: user.email, success: true },
       })
+
+      return NextResponse.json({
+        message: 'If that email exists, we sent a password reset link',
+      })
     } catch (emailError) {
       log.error('Failed to send password reset email', {
         error: emailError instanceof Error ? emailError.message : String(emailError),
@@ -97,12 +101,16 @@ export async function POST(request: NextRequest) {
         email: user.email,
       })
 
-      // Still return success to user (don't reveal email sending failures)
-    }
+      // Delete the token since email failed - user should try again
+      await prisma.verificationToken.deleteMany({
+        where: { identifier: `reset:${user.email}` },
+      })
 
-    return NextResponse.json({
-      message: 'If that email exists, we sent a password reset link',
-    })
+      return NextResponse.json(
+        { error: 'Não foi possível enviar o email. Por favor, tente novamente.' },
+        { status: 500 },
+      )
+    }
   } catch (error) {
     log.error('Password reset request failed', {
       error: error instanceof Error ? error.message : String(error),

@@ -1,6 +1,7 @@
 import { sendEmail } from './email'
 import {
   renderSimpleWelcomeEmail,
+  renderPasswordResetEmail,
 } from './email-templates-new'
 import { prisma } from './prisma'
 
@@ -149,8 +150,11 @@ export class NotificationService {
           break
 
         case NotificationType.PASSWORD_RESET:
-          subject = 'Reset your password - Malmequer'
-          html = `<h1>Password Reset</h1><p>Hello ${data.recipientName}, click the link to reset your password: <a href="${data.resetUrl}">Reset Password</a></p>`
+          subject = 'Recuperar Password - Malmequer'
+          html = renderPasswordResetEmail({
+            userName: data.recipientName,
+            resetUrl: data.resetUrl,
+          })
           break
 
         case NotificationType.STOCK_ALERT:
