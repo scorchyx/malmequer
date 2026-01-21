@@ -32,8 +32,7 @@ interface Address {
 }
 
 interface AddressFormData {
-  firstName: string
-  lastName: string
+  fullName: string
   phone: string
   addressLine1: string
   addressLine2: string
@@ -46,8 +45,7 @@ interface AddressFormData {
 }
 
 const emptyFormData: AddressFormData = {
-  firstName: '',
-  lastName: '',
+  fullName: '',
   phone: '',
   addressLine1: '',
   addressLine2: '',
@@ -150,8 +148,7 @@ export default function AddressManager() {
   const handleEdit = (address: Address) => {
     setEditingId(address.id)
     setFormData({
-      firstName: address.firstName,
-      lastName: address.lastName,
+      fullName: `${address.firstName} ${address.lastName}`.trim(),
       phone: address.phone || '',
       addressLine1: address.addressLine1,
       addressLine2: address.addressLine2 || '',
@@ -218,6 +215,11 @@ export default function AddressManager() {
 
     setIsSaving(true)
 
+    // Split full name into first name and last name
+    const nameParts = formData.fullName.trim().split(/\s+/)
+    const firstName = nameParts[0] || ''
+    const lastName = nameParts.slice(1).join(' ') || ''
+
     try {
       const url = editingId
         ? `/api/user/addresses/${editingId}`
@@ -227,8 +229,17 @@ export default function AddressManager() {
         method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          firstName,
+          lastName,
           phone: formData.phone.replace(/\s/g, ''),
+          addressLine1: formData.addressLine1,
+          addressLine2: formData.addressLine2,
+          locality: formData.locality,
+          city: formData.city,
+          state: formData.state,
+          postalCode: formData.postalCode,
+          country: formData.country,
+          isDefault: formData.isDefault,
         }),
       })
 
@@ -295,18 +306,11 @@ export default function AddressManager() {
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Nome"
+              label="Nome completo"
               required
-              value={formData.firstName}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              placeholder="Nome"
-            />
-            <Input
-              label="Apelido"
-              required
-              value={formData.lastName}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              placeholder="Apelido"
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              placeholder="Nome completo"
             />
 
             <div>
