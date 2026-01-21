@@ -9,6 +9,7 @@ import Loading from '../components/ui/Loading'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
+import AddressManager from '../components/profile/AddressManager'
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -195,12 +196,7 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                {activeTab === 'addresses' && (
-                  <div>
-                    <h2 className="text-xl font-semibold mb-6">Moradas de Envio</h2>
-                    <p className="text-gray-600 mb-4">Em desenvolvimento...</p>
-                  </div>
-                )}
+                {activeTab === 'addresses' && <AddressManager />}
               </div>
             </div>
           </div>
