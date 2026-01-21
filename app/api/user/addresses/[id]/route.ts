@@ -169,6 +169,23 @@ export async function DELETE(
       )
     }
 
+    // Check if address is used in any orders
+    const ordersUsingAddress = await prisma.order.count({
+      where: {
+        OR: [
+          { shippingAddressId: id },
+          { billingAddressId: id },
+        ],
+      },
+    })
+
+    if (ordersUsingAddress > 0) {
+      return NextResponse.json(
+        { error: 'Esta morada está associada a encomendas e não pode ser eliminada. Pode criar uma nova morada em vez disso.' },
+        { status: 400 },
+      )
+    }
+
     await prisma.address.delete({
       where: { id },
     })
