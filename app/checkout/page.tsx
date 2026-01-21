@@ -23,8 +23,7 @@ export default function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState('')
 
   const [shippingData, setShippingData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     phone: '',
     addressLine1: '',
@@ -48,19 +47,35 @@ export default function CheckoutPage() {
     setIsLoading(true)
 
     try {
+      // Split full name into firstName and lastName for API
+      const nameParts = shippingData.fullName.trim().split(/\s+/)
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || firstName // Use firstName if no lastName
+
       // Create payment intent and order
       const response = await fetch('/api/payments/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          shippingAddress: shippingData,
+          shippingAddress: {
+            firstName,
+            lastName,
+            email: shippingData.email,
+            phone: shippingData.phone,
+            addressLine1: shippingData.addressLine1,
+            addressLine2: shippingData.addressLine2,
+            city: shippingData.city,
+            state: shippingData.state,
+            postalCode: shippingData.postalCode,
+            country: shippingData.country,
+          },
           paymentMethod,
         }),
       })
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Erro ao processar')
+        throw new Error(error.details || error.error || 'Erro ao processar')
       }
 
       const data = await response.json()
@@ -130,18 +145,14 @@ export default function CheckoutPage() {
               <form onSubmit={handleSubmitShipping}>
                 <h2 className="text-lg font-semibold text-ink mb-6">Informações de Envio</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Nome"
-                    required
-                    value={shippingData.firstName}
-                    onChange={(e) => setShippingData({ ...shippingData, firstName: e.target.value })}
-                  />
-                  <Input
-                    label="Apelido"
-                    required
-                    value={shippingData.lastName}
-                    onChange={(e) => setShippingData({ ...shippingData, lastName: e.target.value })}
-                  />
+                  <div className="md:col-span-2">
+                    <Input
+                      label="Nome completo"
+                      required
+                      value={shippingData.fullName}
+                      onChange={(e) => setShippingData({ ...shippingData, fullName: e.target.value })}
+                    />
+                  </div>
                   <Input
                     label="Email"
                     type="email"

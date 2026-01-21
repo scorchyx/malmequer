@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { cache, CacheKeys } from '@/lib/cache'
 import { getGuestSessionId } from '@/lib/guest-session'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
@@ -14,13 +13,15 @@ export async function POST(request: NextRequest) {
 
     if (!shippingAddress) {
       return NextResponse.json(
-        { error: 'Shipping address is required' },
+        { error: 'Morada de envio é obrigatória' },
         { status: 400 },
       )
     }
 
-    // Get cart items
+    // Get cart items - try user first, then guest session
     let cartItems
+    const sessionId = getGuestSessionId(request)
+
     if (user) {
       cartItems = await prisma.cartItem.findMany({
         where: { userId: user.id },
@@ -34,8 +35,10 @@ export async function POST(request: NextRequest) {
           },
         },
       })
-    } else {
-      const sessionId = getGuestSessionId(request)
+    }
+
+    // If user has no cart items, also check guest session (in case they added before logging in)
+    if ((!cartItems || cartItems.length === 0) && sessionId) {
       cartItems = await prisma.cartItem.findMany({
         where: { sessionId },
         include: {
@@ -51,8 +54,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!cartItems || cartItems.length === 0) {
+      console.log('Cart empty - user:', user?.id, 'sessionId:', sessionId)
       return NextResponse.json(
-        { error: 'Cart is empty' },
+        { error: 'O carrinho está vazio' },
         { status: 400 },
       )
     }
@@ -204,8 +208,9 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error creating payment intent:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
-      { error: 'Failed to create payment intent' },
+      { error: 'Failed to create payment intent', details: errorMessage },
       { status: 500 },
     )
   }
