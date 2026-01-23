@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { Mail, Phone } from 'lucide-react'
 
 // TikTok Icon Component
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -18,7 +17,7 @@ export default function Footer() {
     <footer className="bg-white text-ink">
       {/* Main Footer */}
       <div className="container-malmequer py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* About */}
           <div>
             <h3 className="font-display text-2xl text-ink mb-4">Malmequer</h3>
@@ -94,13 +93,18 @@ export default function Footer() {
             <h3 className="text-ink font-semibold text-sm uppercase tracking-wider mb-4">Apoio ao Cliente</h3>
             <ul className="space-y-2 text-sm text-stone">
               <li>
-                <Link href="/carrinho" className="hover:text-malmequer-gold transition-colors duration-200">
-                  Carrinho de Compras
+                <Link href="/contacto" className="hover:text-malmequer-gold transition-colors duration-200">
+                  Contacto
                 </Link>
               </li>
               <li>
-                <Link href="/checkout" className="hover:text-malmequer-gold transition-colors duration-200">
-                  Finalizar Compra
+                <Link href="/envios" className="hover:text-malmequer-gold transition-colors duration-200">
+                  Informação de Envios
+                </Link>
+              </li>
+              <li>
+                <Link href="/devolucoes" className="hover:text-malmequer-gold transition-colors duration-200">
+                  Devoluções e Trocas
                 </Link>
               </li>
               <li>
@@ -108,32 +112,36 @@ export default function Footer() {
                   Rastrear Encomenda
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* About */}
+          <div>
+            <h3 className="text-ink font-semibold text-sm uppercase tracking-wider mb-4">Sobre</h3>
+            <ul className="space-y-2 text-sm text-stone">
               <li>
-                <Link href="/definicoes" className="hover:text-malmequer-gold transition-colors duration-200">
-                  Definições
+                <Link href="/sobre" className="hover:text-malmequer-gold transition-colors duration-200">
+                  Sobre Nós
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacidade" className="hover:text-malmequer-gold transition-colors duration-200">
+                  Política de Privacidade
+                </Link>
+              </li>
+              <li>
+                <Link href="/termos" className="hover:text-malmequer-gold transition-colors duration-200">
+                  Termos e Condições
+                </Link>
+              </li>
+              <li>
+                <Link href="/cookies" className="hover:text-malmequer-gold transition-colors duration-200">
+                  Política de Cookies
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Contact */}
-          <div>
-            <h3 className="text-ink font-semibold text-sm uppercase tracking-wider mb-4">Contacto</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-mist flex-shrink-0" />
-                <a href="tel:+351123456789" className="text-stone hover:text-malmequer-gold transition-colors duration-200">
-                  +351 123 456 789
-                </a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-mist flex-shrink-0" />
-                <a href="mailto:info@malmequer.pt" className="text-stone hover:text-malmequer-gold transition-colors duration-200">
-                  info@malmequer.pt
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
       </div>
 
@@ -141,12 +149,12 @@ export default function Footer() {
       <div className="border-t border-cloud">
         <div className="container-malmequer py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-mist">
-            <p>© 2024 Malmequer. Todos os direitos reservados.</p>
+            <p>© {new Date().getFullYear()} Malmequer. Todos os direitos reservados.</p>
             <div className="flex gap-6">
-              <Link href="/terms" className="hover:text-ink transition-colors duration-200">
+              <Link href="/termos" className="hover:text-ink transition-colors duration-200">
                 Termos
               </Link>
-              <Link href="/privacy" className="hover:text-ink transition-colors duration-200">
+              <Link href="/privacidade" className="hover:text-ink transition-colors duration-200">
                 Privacidade
               </Link>
               <Link href="/cookies" className="hover:text-ink transition-colors duration-200">

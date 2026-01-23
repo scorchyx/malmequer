@@ -1,0 +1,27 @@
+# Robots.txt for Malmequer
+# https://malmequer.pt
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /perfil/
+Disallow: /checkout/
+Disallow: /carrinho/
+Disallow: /encomendas/
+Disallow: /favoritos/
+Disallow: /definicoes/
+
+# Disallow authentication pages
+Disallow: /login
+Disallow: /registar
+Disallow: /recuperar-password
+Disallow: /redefinir-password
+
+# Allow CSS and JS
+Allow: /_next/static/
+
+# Sitemap
+Sitemap: https://malmequer.pt/sitemap.xml

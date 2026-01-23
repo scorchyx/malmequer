@@ -184,6 +184,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             alt={item.product.images[0].alt || item.product.name}
                             fill
                             className="object-cover"
+                            sizes="80px"
                           />
                         </div>
                       )}

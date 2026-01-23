@@ -159,6 +159,7 @@ export default function CartPage() {
                         alt={item.product.images[0]?.alt || item.product.name}
                         fill
                         className="object-cover rounded"
+                        sizes="96px"
                       />
                     </div>
 

@@ -139,6 +139,7 @@ export default function WishlistPage() {
                           alt={item.product.images[0]?.alt || item.product.name}
                           fill
                           className="object-cover rounded-t-lg"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         />
                       </div>
                     </Link>

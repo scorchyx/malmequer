@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,6 +12,71 @@ interface ProductPageProps {
   params: Promise<{
     slug: string
   }>
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://malmequer.pt'
+
+  const product = await prisma.product.findUnique({
+    where: {
+      slug: slug,
+      status: 'ACTIVE',
+    },
+    include: {
+      images: {
+        orderBy: { order: 'asc' },
+        take: 1,
+      },
+      category: true,
+    },
+  })
+
+  if (!product) {
+    return {
+      title: 'Produto não encontrado | Malmequer',
+    }
+  }
+
+  const price = Number(product.price).toFixed(2)
+  const description = product.description
+    ? product.description.substring(0, 160)
+    : `${product.name} - ${product.category.name}. Compre online na Malmequer.`
+
+  const imageUrl = product.images[0]?.url
+
+  return {
+    title: `${product.name} | Malmequer`,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      url: `${baseUrl}/produto/${product.slug}`,
+      siteName: 'Malmequer',
+      type: 'website',
+      locale: 'pt_PT',
+      ...(imageUrl && {
+        images: [
+          {
+            url: imageUrl,
+            width: 800,
+            height: 1067,
+            alt: product.name,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description,
+      ...(imageUrl && { images: [imageUrl] }),
+    },
+    other: {
+      'product:price:amount': price,
+      'product:price:currency': 'EUR',
+    },
+  }
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -48,9 +114,78 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   // Calculate total stock
   const totalStock = product.stockItems.reduce((sum, item) => sum + item.quantity, 0)
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://malmequer.pt'
+
+  // Schema.org JSON-LD for Product
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description ?? `${product.name} - ${product.category.name}`,
+    image: product.images.map((img) => img.url),
+    sku: product.id,
+    brand: {
+      '@type': 'Brand',
+      name: 'Malmequer',
+    },
+    offers: {
+      '@type': 'Offer',
+      url: `${baseUrl}/produto/${product.slug}`,
+      priceCurrency: 'EUR',
+      price: Number(product.price).toFixed(2),
+      availability: totalStock > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      seller: {
+        '@type': 'Organization',
+        name: 'Malmequer',
+      },
+    },
+    category: product.category.name,
+  }
+
+  // Breadcrumb JSON-LD
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Início',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Produtos',
+        item: `${baseUrl}/ver-tudo`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: product.category.name,
+        item: `${baseUrl}/categories/${product.category.slug}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: product.name,
+        item: `${baseUrl}/produto/${product.slug}`,
+      },
+    ],
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-snow">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <Header />
 
       <main className="flex-1">

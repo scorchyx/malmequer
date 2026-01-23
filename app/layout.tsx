@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Inter, Imperial_Script } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
+import GoogleAnalytics from './components/analytics/GoogleAnalytics'
 
 // Design System Typography
 const cormorantGaramond = Cormorant_Garamond({
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body
         className={`${cormorantGaramond.variable} ${inter.variable} ${imperialScript.variable} antialiased`}
       >
+        <GoogleAnalytics />
         <Providers>
           {children}
         </Providers>

@@ -135,6 +135,7 @@ export default function ReviewList({ reviews, productId }: ReviewListProps) {
                           alt={image.alt || `Review image ${index + 1}`}
                           fill
                           className="object-cover rounded"
+                          sizes="80px"
                         />
                       </div>
                     ))}
